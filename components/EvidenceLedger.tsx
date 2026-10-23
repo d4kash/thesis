@@ -1,12 +1,19 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import type { EvidenceStatus, ThesisProject } from "@/lib/thesis-types";
+import type { EvidenceSource, EvidenceStatus, ThesisProject } from "@/lib/thesis-types";
 
 interface EvidenceLedgerProps {
   project: ThesisProject;
   onChange: (project: ThesisProject) => void;
 }
+
+const sourceKindLabels: Record<EvidenceSource["kind"], string> = {
+  "literature-map": "Literature source — background, method, or comparison",
+  dataset: "Dataset or data record",
+  "field-note": "Fieldwork or analysis record",
+  "policy-record": "Policy or institutional record",
+};
 
 function nextId(prefix: "SRC" | "RES", ids: string[]) {
   const highest = ids.reduce((current, id) => {
@@ -20,6 +27,7 @@ function nextId(prefix: "SRC" | "RES", ids: string[]) {
 export function EvidenceLedger({ project, onChange }: EvidenceLedgerProps) {
   const [sourceLabel, setSourceLabel] = useState("");
   const [sourceNote, setSourceNote] = useState("");
+  const [sourceKind, setSourceKind] = useState<EvidenceSource["kind"]>("literature-map");
   const [sourceStatus, setSourceStatus] = useState<EvidenceStatus>("planned");
   const [resultLabel, setResultLabel] = useState("");
   const [resultNote, setResultNote] = useState("");
@@ -27,8 +35,8 @@ export function EvidenceLedger({ project, onChange }: EvidenceLedgerProps) {
   const [resultSourceId, setResultSourceId] = useState("");
   const [message, setMessage] = useState("");
 
-  const verifiedSources = useMemo(
-    () => project.sources.filter((source) => source.status === "verified"),
+  const verifiedDirectEvidenceSources = useMemo(
+    () => project.sources.filter((source) => source.status === "verified" && source.kind !== "literature-map"),
     [project.sources],
   );
 
@@ -48,7 +56,7 @@ export function EvidenceLedger({ project, onChange }: EvidenceLedgerProps) {
         {
           id: nextId("SRC", project.sources.map((source) => source.id)),
           label,
-          kind: "literature-map",
+          kind: sourceKind,
           status: sourceStatus,
           note,
         },
@@ -56,6 +64,7 @@ export function EvidenceLedger({ project, onChange }: EvidenceLedgerProps) {
     });
     setSourceLabel("");
     setSourceNote("");
+    setSourceKind("literature-map");
     setSourceStatus("planned");
     setMessage("Source record added.");
   }
@@ -70,7 +79,7 @@ export function EvidenceLedger({ project, onChange }: EvidenceLedgerProps) {
     }
 
     if (resultStatus === "verified" && !resultSourceId) {
-      setMessage("A verified result must link to a verified source record.");
+      setMessage("A verified result must link to a verified data or record source, not a literature source.");
       return;
     }
 
@@ -144,13 +153,20 @@ export function EvidenceLedger({ project, onChange }: EvidenceLedgerProps) {
         </div>
         <span className="status-pill">Local only</span>
       </div>
-      <p className="field-note">Add source records before writing literature claims. A verified result must link to a verified source record.</p>
+      <p className="field-note">Classify each record before using it. Literature supports background or comparison; a verified result needs a verified data, fieldwork, or policy record.</p>
+      <p className="evidence-ledger__boundary">Checking a record here does not confirm ethics approval, consent, permission, or a completed study. Record only what you can personally trace.</p>
 
       <div className="ledger-form">
         <h3>Add source record</h3>
         <label>
-          Source title or citation
+          Source title, data record, or citation
           <input onChange={(event) => setSourceLabel(event.target.value)} value={sourceLabel} />
+        </label>
+        <label>
+          Record type
+          <select onChange={(event) => setSourceKind(event.target.value as EvidenceSource["kind"])} value={sourceKind}>
+            {Object.entries(sourceKindLabels).map(([value, label]) => <option key={value} value={value}>{label}</option>)}
+          </select>
         </label>
         <label>
           Relevance and verification note
@@ -173,7 +189,7 @@ export function EvidenceLedger({ project, onChange }: EvidenceLedgerProps) {
             <div>
               <strong>{source.id} · {source.status}</strong>
               <span>{source.label}</span>
-              <small>{source.note}</small>
+              <small>{sourceKindLabels[source.kind]} · {source.note}</small>
               <label className="ledger-inline-control">
                 Status
                 <select aria-label={`${source.id} status`} onChange={(event) => updateSourceStatus(source.id, event.target.value as EvidenceStatus)} value={source.status}>
@@ -206,10 +222,10 @@ export function EvidenceLedger({ project, onChange }: EvidenceLedgerProps) {
           </select>
         </label>
         <label>
-          Verified source link {resultStatus === "verified" ? "(required)" : "(optional)"}
+          Verified data or record link {resultStatus === "verified" ? "(required)" : "(optional)"}
           <select onChange={(event) => setResultSourceId(event.target.value)} value={resultSourceId}>
-            <option value="">No verified source selected</option>
-            {verifiedSources.map((source) => <option key={source.id} value={source.id}>{source.id} · {source.label}</option>)}
+            <option value="">No verified data or record selected</option>
+            {verifiedDirectEvidenceSources.map((source) => <option key={source.id} value={source.id}>{source.id} · {source.label}</option>)}
           </select>
         </label>
         <button className="button button--compact" onClick={addResult} type="button">Add result</button>
@@ -231,10 +247,10 @@ export function EvidenceLedger({ project, onChange }: EvidenceLedgerProps) {
                   </select>
                 </label>
                 <label className="ledger-inline-control">
-                  Evidence link
+                  Data or record link
                   <select aria-label={`${result.id} evidence link`} onChange={(event) => updateResult(result.id, { sourceId: event.target.value })} value={result.sourceIds[0] ?? ""}>
-                    <option value="">No verified source selected</option>
-                    {verifiedSources.map((source) => <option key={source.id} value={source.id}>{source.id}</option>)}
+                    <option value="">No verified data or record selected</option>
+                    {verifiedDirectEvidenceSources.map((source) => <option key={source.id} value={source.id}>{source.id}</option>)}
                   </select>
                 </label>
               </div>

@@ -4,6 +4,7 @@ import { createElement } from "react";
 import { renderToStaticMarkup } from "react-dom/server";
 import { ExportActions } from "../components/ExportActions";
 import { DissertationRoadmap } from "../components/DissertationRoadmap";
+import { EvidenceLedger } from "../components/EvidenceLedger";
 import { GettingStartedGuide } from "../components/GettingStartedGuide";
 import { LiteratureEvidenceMatrix } from "../components/LiteratureEvidenceMatrix";
 import { PriorResearchLibrary } from "../components/PriorResearchLibrary";
@@ -223,6 +224,12 @@ test("the chapter plan links verified local records without inventing literature
       kind: "literature-map" as const,
       status: "verified" as const,
       note: "Synthetic test record with a checked source location and relevance note for planning only.",
+    }, {
+      id: "SRC-02",
+      label: "Synthetic verified analysis record source",
+      kind: "dataset" as const,
+      status: "verified" as const,
+      note: "Synthetic test dataset record used only to verify evidence-link planning behavior.",
     }],
     literatureNotes: [
       {
@@ -247,7 +254,7 @@ test("the chapter plan links verified local records without inventing literature
       label: "Synthetic verified analysis record",
       verification: "verified" as const,
       note: "Synthetic test record used only to verify result-to-source planning behavior.",
-      sourceIds: ["SRC-01"],
+      sourceIds: ["SRC-02"],
     }],
   };
   const roadmap = buildDissertationRoadmap(project);
@@ -434,6 +441,32 @@ test("a verified result with a verified evidence link can remain a working draft
   assert.equal(review.verifiedResultCount, 1);
 });
 
+test("a verified result cannot use a literature source as its direct evidence", () => {
+  const project = {
+    ...DEMO_PROJECTS[0],
+    sources: [{
+      id: "SRC-01",
+      label: "Verified literature record for result discussion",
+      kind: "literature-map" as const,
+      status: "verified" as const,
+      note: "Checked scholarly source with stable citation details and relevance notes for comparison planning.",
+    }],
+    results: [{
+      id: "RES-01",
+      label: "Held-out evaluation summary",
+      verification: "verified" as const,
+      note: "A traceable summary was recorded for this synthetic test fixture.",
+      sourceIds: ["SRC-01"],
+    }],
+  };
+  const review = reviewProject(project, generateDraft(project));
+  const roadmap = buildDissertationRoadmap(project);
+
+  assert.equal(review.canExportAsDraft, false);
+  assert.equal(review.issues.some((item) => item.id === "result-traceability-RES-01"), true);
+  assert.equal(roadmap.items.find((item) => item.id === "results")?.status, "needs-data");
+});
+
 test("duplicate result identifiers block an otherwise traceable draft", () => {
   const project = {
     ...DEMO_PROJECTS[0],
@@ -591,4 +624,15 @@ test("the literature evidence matrix requests an own-words note and a source loc
   assert.match(markup, /short paraphrase in your own words/i);
   assert.match(markup, /Page, section, table, figure, or stable passage label/i);
   assert.match(markup, /Do not paste long excerpts/i);
+});
+
+test("the evidence ledger separates literature from direct result records", () => {
+  const markup = renderToStaticMarkup(
+    createElement(EvidenceLedger, { project: DEMO_PROJECTS[0], onChange: () => undefined }),
+  );
+
+  assert.match(markup, /Record type/);
+  assert.match(markup, /Literature source/);
+  assert.match(markup, /Verified data or record link/);
+  assert.match(markup, /does not confirm ethics approval, consent, permission, or a completed study/i);
 });

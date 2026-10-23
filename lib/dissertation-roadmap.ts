@@ -135,6 +135,10 @@ function isUsableVerifiedSource(source: EvidenceSource | undefined): boolean {
   return source?.status === "verified" && source.label.trim().length >= 5 && source.note.trim().length >= 12;
 }
 
+function isUsableVerifiedDirectEvidence(source: EvidenceSource | undefined): boolean {
+  return isUsableVerifiedSource(source) && source?.kind !== "literature-map";
+}
+
 interface RoadmapEvidenceContext {
   verifiedLiteratureNotes: LiteratureEvidenceNote[];
   verifiedMethodNotes: LiteratureEvidenceNote[];
@@ -154,7 +158,7 @@ function buildEvidenceContext(project: ThesisProject): RoadmapEvidenceContext {
   const verifiedSources = project.sources.filter(isUsableVerifiedSource);
   const verifiedResults = project.results.filter((result) =>
     result.verification === "verified"
-      && result.sourceIds.some((sourceId) => isUsableVerifiedSource(sourceById.get(sourceId))),
+      && result.sourceIds.some((sourceId) => isUsableVerifiedDirectEvidence(sourceById.get(sourceId))),
   );
 
   return {
@@ -343,7 +347,11 @@ function buildOriginalityChecks(project: ThesisProject): OriginalityCheckpoint[]
     record.findings,
     record.limitations,
   ].some((value) => value.trim().length >= 12)).length;
-  const verifiedResults = project.results.filter((result) => result.verification === "verified").length;
+  const sourceById = new Map(project.sources.map((source) => [source.id, source]));
+  const verifiedResults = project.results.filter((result) =>
+    result.verification === "verified"
+      && result.sourceIds.some((sourceId) => isUsableVerifiedDirectEvidence(sourceById.get(sourceId))),
+  ).length;
 
   return [
     {

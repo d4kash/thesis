@@ -15,6 +15,10 @@ function isUsableVerifiedSource(source: EvidenceSource | undefined): boolean {
   return source?.status === "verified" && source.label.trim().length >= 5 && source.note.trim().length >= 12;
 }
 
+function isUsableVerifiedDirectEvidence(source: EvidenceSource | undefined): boolean {
+  return isUsableVerifiedSource(source) && source?.kind !== "literature-map";
+}
+
 function issue(
   id: string,
   severity: QualityIssue["severity"],
@@ -293,16 +297,16 @@ export function reviewProject(project: ThesisProject, draft: DraftSection[]): Qu
     }
 
     const linkedSources = result.sourceIds.map((id) => sourceById.get(id));
-    const hasVerifiedEvidence = linkedSources.some(isUsableVerifiedSource);
+    const hasVerifiedDirectEvidence = linkedSources.some(isUsableVerifiedDirectEvidence);
 
-    if (result.sourceIds.length === 0 || !hasVerifiedEvidence) {
+    if (result.sourceIds.length === 0 || !hasVerifiedDirectEvidence) {
       issues.push(
         issue(
           `result-traceability-${result.id}`,
           "critical",
-          "Verified result has no verified evidence link",
-          `${result.id} is marked verified but does not link to a usable verified source record.`,
-          "Link the result to a verified source, dataset, or approved result record with identifying and relevance information.",
+          "Verified result lacks a direct evidence record",
+          `${result.id} is marked verified but does not link to a usable verified dataset, fieldwork, or policy record. Literature sources can support context or comparison, but not the student's own result.`,
+          "Link the result to a verified direct record with identifying and relevance information, or keep it unverified until that record exists.",
         ),
       );
     }
