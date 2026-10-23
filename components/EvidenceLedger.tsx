@@ -33,6 +33,7 @@ export function EvidenceLedger({ project, onChange }: EvidenceLedgerProps) {
   const [resultNote, setResultNote] = useState("");
   const [resultStatus, setResultStatus] = useState<"unverified" | "verified">("unverified");
   const [resultSourceId, setResultSourceId] = useState("");
+  const [resultMethodId, setResultMethodId] = useState("");
   const [message, setMessage] = useState("");
 
   const verifiedDirectEvidenceSources = useMemo(
@@ -78,8 +79,8 @@ export function EvidenceLedger({ project, onChange }: EvidenceLedgerProps) {
       return;
     }
 
-    if (resultStatus === "verified" && !resultSourceId) {
-      setMessage("A verified result must link to a verified data or record source, not a literature source.");
+    if (resultStatus === "verified" && (!resultSourceId || !resultMethodId)) {
+      setMessage("A verified result needs both a verified data or record source and the planned method that produced it.");
       return;
     }
 
@@ -93,6 +94,7 @@ export function EvidenceLedger({ project, onChange }: EvidenceLedgerProps) {
           verification: resultStatus,
           note,
           sourceIds: resultSourceId ? [resultSourceId] : [],
+          methodIds: resultMethodId ? [resultMethodId] : [],
         },
       ],
     });
@@ -100,6 +102,7 @@ export function EvidenceLedger({ project, onChange }: EvidenceLedgerProps) {
     setResultNote("");
     setResultStatus("unverified");
     setResultSourceId("");
+    setResultMethodId("");
     setMessage("Result ledger entry added.");
   }
 
@@ -124,15 +127,29 @@ export function EvidenceLedger({ project, onChange }: EvidenceLedgerProps) {
     setMessage(`${id} marked ${status}.`);
   }
 
-  function updateResult(id: string, changes: { verification?: "unverified" | "verified"; sourceId?: string }) {
+  function updateResult(id: string, changes: { verification?: "unverified" | "verified"; sourceId?: string; methodId?: string }) {
+    const current = project.results.find((result) => result.id === id);
+    if (!current) return;
+    const nextVerification = changes.verification ?? current.verification;
+    const nextSourceIds = changes.sourceId === undefined ? current.sourceIds : changes.sourceId ? [changes.sourceId] : [];
+    const nextMethodIds = changes.methodId === undefined ? current.methodIds : changes.methodId ? [changes.methodId] : [];
+    const hasDirectEvidence = nextSourceIds.some((sourceId) => verifiedDirectEvidenceSources.some((source) => source.id === sourceId));
+    const hasPlannedMethod = nextMethodIds.some((methodId) => project.methods.some((method) => method.id === methodId));
+
+    if (nextVerification === "verified" && (!hasDirectEvidence || !hasPlannedMethod)) {
+      setMessage("Keep this result unverified until it links to both a verified direct record and a planned method.");
+      return;
+    }
+
     onChange({
       ...project,
       results: project.results.map((result) => {
         if (result.id !== id) return result;
         return {
           ...result,
-          verification: changes.verification ?? result.verification,
-          sourceIds: changes.sourceId === undefined ? result.sourceIds : changes.sourceId ? [changes.sourceId] : [],
+          verification: nextVerification,
+          sourceIds: nextSourceIds,
+          methodIds: nextMethodIds,
         };
       }),
     });
@@ -153,8 +170,8 @@ export function EvidenceLedger({ project, onChange }: EvidenceLedgerProps) {
         </div>
         <span className="status-pill">Local only</span>
       </div>
-      <p className="field-note">Classify each record before using it. Literature supports background or comparison; a verified result needs a verified data, fieldwork, or policy record.</p>
-      <p className="evidence-ledger__boundary">Checking a record here does not confirm ethics approval, consent, permission, or a completed study. Record only what you can personally trace.</p>
+      <p className="field-note">Classify each record before using it. Literature supports background or comparison; a verified result needs a verified data, fieldwork, or policy record and its planned method.</p>
+      <p className="evidence-ledger__boundary">Checking a record here does not confirm ethics approval, consent, permission, or a completed study. Linking a result to a method does not approve that method. Record only what you can personally trace.</p>
 
       <div className="ledger-form">
         <h3>Add source record</h3>
@@ -228,6 +245,13 @@ export function EvidenceLedger({ project, onChange }: EvidenceLedgerProps) {
             {verifiedDirectEvidenceSources.map((source) => <option key={source.id} value={source.id}>{source.id} · {source.label}</option>)}
           </select>
         </label>
+        <label>
+          Planned method link {resultStatus === "verified" ? "(required)" : "(optional)"}
+          <select onChange={(event) => setResultMethodId(event.target.value)} value={resultMethodId}>
+            <option value="">No planned method selected</option>
+            {project.methods.map((method) => <option key={method.id} value={method.id}>{method.id} · {method.text}</option>)}
+          </select>
+        </label>
         <button className="button button--compact" onClick={addResult} type="button">Add result</button>
       </div>
 
@@ -237,7 +261,7 @@ export function EvidenceLedger({ project, onChange }: EvidenceLedgerProps) {
             <div>
               <strong>{result.id} · {result.verification}</strong>
               <span>{result.label}</span>
-              <small>{result.note} {result.sourceIds.length > 0 ? `Linked: ${result.sourceIds.join(", ")}.` : "No source linked."}</small>
+              <small>{result.note} {result.sourceIds.length > 0 ? `Data record: ${result.sourceIds.join(", ")}.` : "No data record linked."} {result.methodIds.length > 0 ? `Method: ${result.methodIds.join(", ")}.` : "No planned method linked."}</small>
               <div className="ledger-inline-controls">
                 <label className="ledger-inline-control">
                   Status
@@ -251,6 +275,13 @@ export function EvidenceLedger({ project, onChange }: EvidenceLedgerProps) {
                   <select aria-label={`${result.id} evidence link`} onChange={(event) => updateResult(result.id, { sourceId: event.target.value })} value={result.sourceIds[0] ?? ""}>
                     <option value="">No verified data or record selected</option>
                     {verifiedDirectEvidenceSources.map((source) => <option key={source.id} value={source.id}>{source.id}</option>)}
+                  </select>
+                </label>
+                <label className="ledger-inline-control">
+                  Planned method
+                  <select aria-label={`${result.id} method link`} onChange={(event) => updateResult(result.id, { methodId: event.target.value })} value={result.methodIds[0] ?? ""}>
+                    <option value="">No planned method selected</option>
+                    {project.methods.map((method) => <option key={method.id} value={method.id}>{method.id}</option>)}
                   </select>
                 </label>
               </div>

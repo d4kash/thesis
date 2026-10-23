@@ -38,7 +38,12 @@ export function reviewProject(project: ThesisProject, draft: DraftSection[]): Qu
   const literatureNoteIds = new Set<string>();
   const resultIds = new Set<string>();
   const sourceById = new Map(project.sources.map((source) => [source.id, source]));
+  const methodById = new Map(project.methods.map((method) => [method.id, method]));
   const literatureNotes = project.literatureNotes ?? [];
+  const isTraceableVerifiedResult = (result: ThesisProject["results"][number]) =>
+    result.verification === "verified"
+      && result.sourceIds.some((id) => isUsableVerifiedDirectEvidence(sourceById.get(id)))
+      && result.methodIds.some((id) => methodById.has(id));
 
   if (!hasTopic(project)) {
     issues.push(
@@ -283,6 +288,19 @@ export function reviewProject(project: ThesisProject, draft: DraftSection[]): Qu
       );
     }
 
+    const unknownMethodIds = result.methodIds.filter((id) => !methodById.has(id));
+    if (unknownMethodIds.length > 0) {
+      issues.push(
+        issue(
+          `result-method-reference-${result.id}`,
+          result.verification === "verified" ? "critical" : "warning",
+          "Result references an unknown method",
+          `${result.id} lists method IDs that are not in the research-design plan: ${unknownMethodIds.join(", ")}.`,
+          "Add the missing planned method or relink this result before relying on it.",
+        ),
+      );
+    }
+
     if (result.verification === "unverified") {
       issues.push(
         issue(
@@ -310,6 +328,18 @@ export function reviewProject(project: ThesisProject, draft: DraftSection[]): Qu
         ),
       );
     }
+
+    if (!result.methodIds.some((id) => methodById.has(id))) {
+      issues.push(
+        issue(
+          `result-method-traceability-${result.id}`,
+          "critical",
+          "Verified result lacks a planned method link",
+          `${result.id} is marked verified but does not identify the planned method that produced or analyzed the record.`,
+          "Link the result to an existing method record, or keep it unverified until that method is documented.",
+        ),
+      );
+    }
   }
 
   for (const section of draft) {
@@ -327,7 +357,7 @@ export function reviewProject(project: ThesisProject, draft: DraftSection[]): Qu
     }
 
     if (outcomeClaimSections.has(section.id) && unsupportedOutcomePattern.test(section.body)) {
-      const hasVerifiedResult = project.results.some((result) => result.verification === "verified");
+      const hasVerifiedResult = project.results.some(isTraceableVerifiedResult);
       if (!hasVerifiedResult) {
         issues.push(
           issue(
@@ -357,6 +387,6 @@ export function reviewProject(project: ThesisProject, draft: DraftSection[]): Qu
     literatureNoteCount: literatureNotes.length,
     verifiedLiteratureNoteCount: literatureNotes.filter((note) => note.status === "verified").length,
     resultCount: project.results.length,
-    verifiedResultCount: project.results.filter((result) => result.verification === "verified").length,
+    verifiedResultCount: project.results.filter(isTraceableVerifiedResult).length,
   };
 }

@@ -46,6 +46,7 @@ export interface ResultLedgerItem {
   verification: "unverified" | "verified";
   note: string;
   sourceIds: string[];
+  methodIds: string[];
 }
 
 export interface PriorResearchRecord {

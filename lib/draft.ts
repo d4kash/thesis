@@ -20,7 +20,7 @@ export function generateDraft(project: ThesisProject): DraftSection[] {
     ? list(sourceLines)
     : "No source records have been added. Add a source record before turning this outline into a literature review.";
   const resultLines = project.results.map(
-    (result) => `${result.id} (${result.verification}; sources: ${result.sourceIds.join(", ") || "none"}): ${result.label}. ${result.note}`,
+    (result) => `${result.id} (${result.verification}; sources: ${result.sourceIds.join(", ") || "none"}; methods: ${result.methodIds.join(", ") || "none"}): ${result.label}. ${result.note}`,
   );
   const priorResearchLines = landscape.matches
     .filter((match) => match.matchedTerms.length > 0)
@@ -73,7 +73,7 @@ export function generateDraft(project: ThesisProject): DraftSection[] {
       body:
         resultLines.length === 0
           ? "No results are stated. This project is a research plan and has no collected or verified findings."
-          : `Result ledger\n${list(resultLines)}\n\nOnly verified results with linked source records may support outcome language in the discussion or conclusion.`,
+          : `Result ledger\n${list(resultLines)}\n\nOnly verified results with linked direct records and planned methods may support outcome language in the discussion or conclusion.`,
       claimIds: project.results.map((result) => result.id),
     },
     {

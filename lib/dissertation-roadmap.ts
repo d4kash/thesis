@@ -149,6 +149,7 @@ interface RoadmapEvidenceContext {
 
 function buildEvidenceContext(project: ThesisProject): RoadmapEvidenceContext {
   const sourceById = new Map(project.sources.map((source) => [source.id, source]));
+  const methodIds = new Set(project.methods.map((method) => method.id));
   const verifiedLiteratureNotes = (project.literatureNotes ?? []).filter((note) =>
     note.status === "verified"
       && note.claim.trim().length >= 12
@@ -158,7 +159,8 @@ function buildEvidenceContext(project: ThesisProject): RoadmapEvidenceContext {
   const verifiedSources = project.sources.filter(isUsableVerifiedSource);
   const verifiedResults = project.results.filter((result) =>
     result.verification === "verified"
-      && result.sourceIds.some((sourceId) => isUsableVerifiedDirectEvidence(sourceById.get(sourceId))),
+      && result.sourceIds.some((sourceId) => isUsableVerifiedDirectEvidence(sourceById.get(sourceId)))
+      && result.methodIds.some((methodId) => methodIds.has(methodId)),
   );
 
   return {
@@ -348,9 +350,11 @@ function buildOriginalityChecks(project: ThesisProject): OriginalityCheckpoint[]
     record.limitations,
   ].some((value) => value.trim().length >= 12)).length;
   const sourceById = new Map(project.sources.map((source) => [source.id, source]));
+  const methodIds = new Set(project.methods.map((method) => method.id));
   const verifiedResults = project.results.filter((result) =>
     result.verification === "verified"
-      && result.sourceIds.some((sourceId) => isUsableVerifiedDirectEvidence(sourceById.get(sourceId))),
+      && result.sourceIds.some((sourceId) => isUsableVerifiedDirectEvidence(sourceById.get(sourceId)))
+      && result.methodIds.some((methodId) => methodIds.has(methodId)),
   ).length;
 
   return [

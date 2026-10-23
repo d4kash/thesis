@@ -255,6 +255,7 @@ test("the chapter plan links verified local records without inventing literature
       verification: "verified" as const,
       note: "Synthetic test record used only to verify result-to-source planning behavior.",
       sourceIds: ["SRC-02"],
+      methodIds: ["MTH-01"],
     }],
   };
   const roadmap = buildDissertationRoadmap(project);
@@ -421,7 +422,7 @@ test("a verified result must link to a verified evidence record", () => {
   const project = {
     ...DEMO_PROJECTS[0],
     sources: [{ ...DEMO_PROJECTS[0].sources[0], status: "verified" as const, note: "Verified dataset record with license, access date, and relevance notes." }],
-    results: [{ id: "RES-01", label: "Held-out evaluation summary", verification: "verified" as const, note: "A traceable summary was recorded.", sourceIds: [] }],
+    results: [{ id: "RES-01", label: "Held-out evaluation summary", verification: "verified" as const, note: "A traceable summary was recorded.", sourceIds: [], methodIds: ["MTH-01"] }],
   };
   const review = reviewProject(project, generateDraft(project));
 
@@ -429,11 +430,25 @@ test("a verified result must link to a verified evidence record", () => {
   assert.equal(review.issues.some((item) => item.id === "result-traceability-RES-01"), true);
 });
 
+test("a verified result must link to a planned method", () => {
+  const project = {
+    ...DEMO_PROJECTS[0],
+    sources: [{ ...DEMO_PROJECTS[0].sources[0], status: "verified" as const, note: "Verified dataset record with license, access date, and relevance notes." }],
+    results: [{ id: "RES-01", label: "Held-out evaluation summary", verification: "verified" as const, note: "A traceable summary was recorded.", sourceIds: ["SRC-01"], methodIds: [] }],
+  };
+  const review = reviewProject(project, generateDraft(project));
+  const roadmap = buildDissertationRoadmap(project);
+
+  assert.equal(review.canExportAsDraft, false);
+  assert.equal(review.issues.some((item) => item.id === "result-method-traceability-RES-01"), true);
+  assert.equal(roadmap.items.find((item) => item.id === "results")?.status, "needs-data");
+});
+
 test("a verified result with a verified evidence link can remain a working draft", () => {
   const project = {
     ...DEMO_PROJECTS[0],
     sources: [{ ...DEMO_PROJECTS[0].sources[0], status: "verified" as const, note: "Verified dataset record with license, access date, and relevance notes." }],
-    results: [{ id: "RES-01", label: "Held-out evaluation summary", verification: "verified" as const, note: "A traceable summary was recorded.", sourceIds: ["SRC-01"] }],
+    results: [{ id: "RES-01", label: "Held-out evaluation summary", verification: "verified" as const, note: "A traceable summary was recorded.", sourceIds: ["SRC-01"], methodIds: ["MTH-01"] }],
   };
   const review = reviewProject(project, generateDraft(project));
 
@@ -457,6 +472,7 @@ test("a verified result cannot use a literature source as its direct evidence", 
       verification: "verified" as const,
       note: "A traceable summary was recorded for this synthetic test fixture.",
       sourceIds: ["SRC-01"],
+      methodIds: ["MTH-01"],
     }],
   };
   const review = reviewProject(project, generateDraft(project));
@@ -472,8 +488,8 @@ test("duplicate result identifiers block an otherwise traceable draft", () => {
     ...DEMO_PROJECTS[0],
     sources: [{ ...DEMO_PROJECTS[0].sources[0], status: "verified" as const, note: "Verified dataset record with license, access date, and relevance notes." }],
     results: [
-      { id: "RES-01", label: "First evaluation summary", verification: "verified" as const, note: "A traceable evaluation summary was recorded.", sourceIds: ["SRC-01"] },
-      { id: "RES-01", label: "Second evaluation summary", verification: "verified" as const, note: "A separate traceable evaluation summary was recorded.", sourceIds: ["SRC-01"] },
+      { id: "RES-01", label: "First evaluation summary", verification: "verified" as const, note: "A traceable evaluation summary was recorded.", sourceIds: ["SRC-01"], methodIds: ["MTH-01"] },
+      { id: "RES-01", label: "Second evaluation summary", verification: "verified" as const, note: "A separate traceable evaluation summary was recorded.", sourceIds: ["SRC-01"], methodIds: ["MTH-01"] },
     ],
   };
   const review = reviewProject(project, generateDraft(project));
@@ -505,7 +521,7 @@ test("a verified result cannot rely on a thin verified source record", () => {
   const project = {
     ...DEMO_PROJECTS[0],
     sources: [{ ...DEMO_PROJECTS[0].sources[0], status: "verified" as const, label: "x", note: "x" }],
-    results: [{ id: "RES-01", label: "Held-out evaluation summary", verification: "verified" as const, note: "A traceable summary was recorded.", sourceIds: ["SRC-01"] }],
+    results: [{ id: "RES-01", label: "Held-out evaluation summary", verification: "verified" as const, note: "A traceable summary was recorded.", sourceIds: ["SRC-01"], methodIds: ["MTH-01"] }],
   };
   const review = reviewProject(project, generateDraft(project));
 
@@ -517,7 +533,7 @@ test("a verified result needs a usable label and supporting record note", () => 
   const project = {
     ...DEMO_PROJECTS[0],
     sources: [{ ...DEMO_PROJECTS[0].sources[0], status: "verified" as const, note: "Verified dataset record with license, access date, and relevance notes." }],
-    results: [{ id: "RES-01", label: "", verification: "verified" as const, note: "", sourceIds: ["SRC-01"] }],
+    results: [{ id: "RES-01", label: "", verification: "verified" as const, note: "", sourceIds: ["SRC-01"], methodIds: ["MTH-01"] }],
   };
   const review = reviewProject(project, generateDraft(project));
 
@@ -529,7 +545,7 @@ test("a verified result cannot retain an unknown evidence reference", () => {
   const project = {
     ...DEMO_PROJECTS[0],
     sources: [{ ...DEMO_PROJECTS[0].sources[0], status: "verified" as const, note: "Verified dataset record with license, access date, and relevance notes." }],
-    results: [{ id: "RES-01", label: "Held-out evaluation summary", verification: "verified" as const, note: "A traceable summary was recorded.", sourceIds: ["SRC-01", "SRC-MISSING"] }],
+    results: [{ id: "RES-01", label: "Held-out evaluation summary", verification: "verified" as const, note: "A traceable summary was recorded.", sourceIds: ["SRC-01", "SRC-MISSING"], methodIds: ["MTH-01"] }],
   };
   const review = reviewProject(project, generateDraft(project));
 
@@ -634,5 +650,6 @@ test("the evidence ledger separates literature from direct result records", () =
   assert.match(markup, /Record type/);
   assert.match(markup, /Literature source/);
   assert.match(markup, /Verified data or record link/);
+  assert.match(markup, /Planned method link/);
   assert.match(markup, /does not confirm ethics approval, consent, permission, or a completed study/i);
 });
