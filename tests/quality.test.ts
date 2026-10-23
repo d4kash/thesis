@@ -258,6 +258,25 @@ test("duplicate result identifiers block an otherwise traceable draft", () => {
   assert.equal(review.issues.some((item) => item.id === "duplicate-result-RES-01"), true);
 });
 
+test("duplicate research-design identifiers block an otherwise mapped draft", () => {
+  const project = {
+    ...DEMO_PROJECTS[0],
+    objectives: [
+      { id: "OBJ-01", text: "Define the research setting." },
+      { id: "OBJ-01", text: "Compare the selected prior research." },
+    ],
+    methods: [
+      { id: "MTH-01", objectiveIds: ["OBJ-01"], text: "Use an auditable comparison protocol." },
+      { id: "MTH-01", objectiveIds: ["OBJ-01"], text: "Use a separate approved analysis protocol." },
+    ],
+  };
+  const review = reviewProject(project, generateDraft(project));
+
+  assert.equal(review.canExportAsDraft, false);
+  assert.equal(review.issues.some((item) => item.id === "duplicate-objective-OBJ-01"), true);
+  assert.equal(review.issues.some((item) => item.id === "duplicate-method-MTH-01"), true);
+});
+
 test("a verified result cannot rely on a thin verified source record", () => {
   const project = {
     ...DEMO_PROJECTS[0],

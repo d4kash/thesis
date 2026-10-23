@@ -27,7 +27,8 @@ function issue(
 
 export function reviewProject(project: ThesisProject, draft: DraftSection[]): QualityReport {
   const issues: QualityIssue[] = [];
-  const objectiveIds = new Set(project.objectives.map((objective) => objective.id));
+  const objectiveIds = new Set<string>();
+  const methodIds = new Set<string>();
   const sourceIds = new Set<string>();
   const priorResearchIds = new Set<string>();
   const resultIds = new Set<string>();
@@ -43,6 +44,21 @@ export function reviewProject(project: ThesisProject, draft: DraftSection[]): Qu
         "Enter a topic or working title, then create or revise the starter outline before exporting.",
       ),
     );
+  }
+
+  for (const objective of project.objectives) {
+    if (objectiveIds.has(objective.id)) {
+      issues.push(
+        issue(
+          `duplicate-objective-${objective.id}`,
+          "critical",
+          "Duplicate objective identifier",
+          `${objective.id} appears more than once in the research-design plan.`,
+          "Give every research objective a unique stable identifier.",
+        ),
+      );
+    }
+    objectiveIds.add(objective.id);
   }
 
   for (const source of project.sources) {
@@ -126,6 +142,19 @@ export function reviewProject(project: ThesisProject, draft: DraftSection[]): Qu
   }
 
   for (const method of project.methods) {
+    if (methodIds.has(method.id)) {
+      issues.push(
+        issue(
+          `duplicate-method-${method.id}`,
+          "critical",
+          "Duplicate method identifier",
+          `${method.id} appears more than once in the research-design plan.`,
+          "Give every method record a unique stable identifier.",
+        ),
+      );
+    }
+    methodIds.add(method.id);
+
     if (method.objectiveIds.length === 0 || method.objectiveIds.some((id) => !objectiveIds.has(id))) {
       issues.push(
         issue(
