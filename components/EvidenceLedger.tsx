@@ -98,12 +98,13 @@ export function EvidenceLedger({ project, onChange }: EvidenceLedgerProps) {
     onChange({
       ...project,
       sources: project.sources.filter((source) => source.id !== id),
+      literatureNotes: (project.literatureNotes ?? []).filter((note) => note.sourceId !== id),
       results: project.results.map((result) => ({
         ...result,
         sourceIds: result.sourceIds.filter((sourceId) => sourceId !== id),
       })),
     });
-    setMessage(`${id} removed. Any linked result will require a new verified evidence link.`);
+    setMessage(`${id} removed. Linked evidence notes were removed, and any linked result will require a new verified evidence link.`);
   }
 
   function updateSourceStatus(id: string, status: EvidenceStatus) {

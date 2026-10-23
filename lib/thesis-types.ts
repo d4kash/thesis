@@ -1,4 +1,6 @@
 export type EvidenceStatus = "planned" | "reviewed" | "verified";
+export type LiteratureEvidenceStatus = "reviewed" | "verified";
+export type LiteratureUse = "background" | "method" | "comparison" | "limitation";
 export type IssueSeverity = "critical" | "warning" | "info";
 export type DraftSectionKey =
   | "overview"
@@ -16,6 +18,15 @@ export interface EvidenceSource {
   kind: "dataset" | "literature-map" | "policy-record" | "field-note";
   status: EvidenceStatus;
   note: string;
+}
+
+export interface LiteratureEvidenceNote {
+  id: string;
+  sourceId: string;
+  claim: string;
+  locator: string;
+  use: LiteratureUse;
+  status: LiteratureEvidenceStatus;
 }
 
 export interface ResearchObjective {
@@ -67,6 +78,7 @@ export interface ThesisProject {
   synopsis?: SynopsisDetails;
   priorResearch: PriorResearchRecord[];
   sources: EvidenceSource[];
+  literatureNotes?: LiteratureEvidenceNote[];
   results: ResultLedgerItem[];
 }
 
@@ -93,6 +105,8 @@ export interface QualityReport {
   verifiedSourceCount: number;
   priorResearchCount: number;
   verifiedPriorResearchCount: number;
+  literatureNoteCount: number;
+  verifiedLiteratureNoteCount: number;
   resultCount: number;
   verifiedResultCount: number;
 }

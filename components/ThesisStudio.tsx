@@ -6,6 +6,7 @@ import { DissertationRoadmap } from "@/components/DissertationRoadmap";
 import { EvidenceLedger } from "@/components/EvidenceLedger";
 import { ExportActions } from "@/components/ExportActions";
 import { GettingStartedGuide } from "@/components/GettingStartedGuide";
+import { LiteratureEvidenceMatrix } from "@/components/LiteratureEvidenceMatrix";
 import { ProjectEditor } from "@/components/ProjectEditor";
 import { ProjectPicker } from "@/components/ProjectPicker";
 import { PriorResearchLibrary } from "@/components/PriorResearchLibrary";
@@ -36,6 +37,7 @@ function createBlankProject(): ThesisProject {
     ],
     priorResearch: [],
     sources: [],
+    literatureNotes: [],
     results: [],
   };
 }
@@ -110,6 +112,7 @@ export function ThesisStudio() {
           <WritingCoach project={project} />
           <PriorResearchLibrary key={`${project.id}-prior-research`} onChange={setProject} project={project} />
           <EvidenceLedger onChange={setProject} project={project} />
+          <LiteratureEvidenceMatrix onChange={setProject} project={project} />
         </div>
         <div className="draft-stack">
           <ResearchLandscape project={project} />

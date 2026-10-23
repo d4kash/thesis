@@ -5,6 +5,7 @@ import { renderToStaticMarkup } from "react-dom/server";
 import { ExportActions } from "../components/ExportActions";
 import { DissertationRoadmap } from "../components/DissertationRoadmap";
 import { GettingStartedGuide } from "../components/GettingStartedGuide";
+import { LiteratureEvidenceMatrix } from "../components/LiteratureEvidenceMatrix";
 import { PriorResearchLibrary } from "../components/PriorResearchLibrary";
 import { SynopsisBuilder } from "../components/SynopsisBuilder";
 import { DEMO_PROJECTS } from "../lib/demo-projects";
@@ -484,4 +485,59 @@ test("unresolved data in a conclusion blocks export", () => {
 
   assert.equal(review.canExportAsDraft, false);
   assert.equal(review.issues.some((item) => item.id === "unresolved-conclusion"), true);
+});
+
+test("a verified literature note traces an own-words note to a checked source location", () => {
+  const project = {
+    ...DEMO_PROJECTS[0],
+    sources: [{
+      id: "SRC-01",
+      label: "Verified literature record for explanation planning",
+      kind: "literature-map" as const,
+      status: "verified" as const,
+      note: "Original article, stable citation, relevance, and access details were checked by the researcher.",
+    }],
+    literatureNotes: [{
+      id: "LIT-01",
+      sourceId: "SRC-01",
+      claim: "The source frames explanation checking as a planned evaluation step rather than a completed result.",
+      locator: "Section 2.1, p. 6",
+      use: "method" as const,
+      status: "verified" as const,
+    }],
+  };
+  const review = reviewProject(project, generateDraft(project));
+
+  assert.equal(review.canExportAsDraft, true);
+  assert.equal(review.verifiedLiteratureNoteCount, 1);
+  assert.equal(review.issues.some((item) => item.id === "literature-note-traceability-LIT-01"), false);
+});
+
+test("a verified literature note cannot rely on an unverified source record", () => {
+  const project = {
+    ...DEMO_PROJECTS[0],
+    literatureNotes: [{
+      id: "LIT-01",
+      sourceId: "SRC-01",
+      claim: "This note identifies a source-supported background point for later literature review.",
+      locator: "p. 4",
+      use: "background" as const,
+      status: "verified" as const,
+    }],
+  };
+  const review = reviewProject(project, generateDraft(project));
+
+  assert.equal(review.canExportAsDraft, false);
+  assert.equal(review.issues.some((item) => item.id === "literature-note-traceability-LIT-01"), true);
+});
+
+test("the literature evidence matrix requests an own-words note and a source locator", () => {
+  const markup = renderToStaticMarkup(
+    createElement(LiteratureEvidenceMatrix, { project: DEMO_PROJECTS[0], onChange: () => undefined }),
+  );
+
+  assert.match(markup, /Link each literature note to a source/);
+  assert.match(markup, /short paraphrase in your own words/i);
+  assert.match(markup, /Page, section, table, figure, or stable passage label/i);
+  assert.match(markup, /Do not paste long excerpts/i);
 });

@@ -31,8 +31,10 @@ export function reviewProject(project: ThesisProject, draft: DraftSection[]): Qu
   const methodIds = new Set<string>();
   const sourceIds = new Set<string>();
   const priorResearchIds = new Set<string>();
+  const literatureNoteIds = new Set<string>();
   const resultIds = new Set<string>();
   const sourceById = new Map(project.sources.map((source) => [source.id, source]));
+  const literatureNotes = project.literatureNotes ?? [];
 
   if (!hasTopic(project)) {
     issues.push(
@@ -194,6 +196,50 @@ export function reviewProject(project: ThesisProject, draft: DraftSection[]): Qu
     );
   }
 
+  for (const note of literatureNotes) {
+    if (literatureNoteIds.has(note.id)) {
+      issues.push(
+        issue(
+          `duplicate-literature-note-${note.id}`,
+          "critical",
+          "Duplicate literature-note identifier",
+          `${note.id} appears more than once in the literature evidence matrix.`,
+          "Give every literature evidence note a unique stable identifier.",
+        ),
+      );
+    }
+    literatureNoteIds.add(note.id);
+
+    const source = sourceById.get(note.sourceId);
+    if (!source) {
+      issues.push(
+        issue(
+          `literature-note-source-reference-${note.id}`,
+          note.status === "verified" ? "critical" : "warning",
+          "Literature note references an unknown source",
+          `${note.id} points to ${note.sourceId}, which is not in the evidence ledger.`,
+          "Add the source record or relink this note before using it in a literature claim.",
+        ),
+      );
+    }
+
+    if (note.status === "verified") {
+      const hasParaphrase = note.claim.trim().length >= 12;
+      const hasLocator = note.locator.trim().length >= 2;
+      if (!hasParaphrase || !hasLocator || !isUsableVerifiedSource(source)) {
+        issues.push(
+          issue(
+            `literature-note-traceability-${note.id}`,
+            "critical",
+            "Verified literature note lacks a complete source trace",
+            `${note.id} needs a usable verified source record, an own-words evidence note, and a page, section, table, or other locator.`,
+            "Verify the original source, add a short paraphrase and locator, then mark the note verified.",
+          ),
+        );
+      }
+    }
+  }
+
   for (const result of project.results) {
     if (resultIds.has(result.id)) {
       issues.push(
@@ -304,6 +350,8 @@ export function reviewProject(project: ThesisProject, draft: DraftSection[]): Qu
     verifiedSourceCount: project.sources.filter((source) => source.status === "verified").length,
     priorResearchCount: project.priorResearch.length,
     verifiedPriorResearchCount: project.priorResearch.filter((record) => record.status === "verified").length,
+    literatureNoteCount: literatureNotes.length,
+    verifiedLiteratureNoteCount: literatureNotes.filter((note) => note.status === "verified").length,
     resultCount: project.results.length,
     verifiedResultCount: project.results.filter((result) => result.verification === "verified").length,
   };
