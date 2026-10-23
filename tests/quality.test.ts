@@ -55,7 +55,7 @@ test("the topic map ranks supplied prior research and keeps limitations as candi
   assert.equal(landscape.matches[0]?.record.id, "PRV-01");
   assert.equal(landscape.matches[0]?.matchedTerms.includes("leaf"), true);
   assert.equal(landscape.verifiedMatchCount, 1);
-  assert.equal(landscape.candidateGaps[0]?.recordId, "PRV-01");
+  assert.deepEqual(landscape.candidateGaps.map((gap) => gap.recordId), ["PRV-01"]);
   assert.match(landscape.prompts.join(" "), /candidate gap/i);
 });
 

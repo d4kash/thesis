@@ -77,11 +77,11 @@ export function buildResearchLandscape(project: ThesisProject): ResearchLandscap
     })
     .sort((a, b) => b.relevance - a.relevance || a.record.title.localeCompare(b.record.title));
 
-  const candidateGaps = matches
+  const matchedRecords = matches.filter((match) => match.matchedTerms.length > 0);
+  const candidateGaps = matchedRecords
     .filter((match) => match.record.limitations.trim().length > 0)
     .slice(0, 5)
     .map((match) => ({ recordId: match.record.id, text: match.record.limitations.trim() }));
-  const matchedRecords = matches.filter((match) => match.matchedTerms.length > 0);
   const verifiedMatchCount = matchedRecords.filter((match) => match.record.status === "verified").length;
   const prompts = unique([
     matchedRecords.length > 0
