@@ -160,6 +160,19 @@ export function reviewProject(project: ThesisProject, draft: DraftSection[]): Qu
   }
 
   for (const result of project.results) {
+    const unknownSourceIds = result.sourceIds.filter((id) => !sourceById.has(id));
+    if (unknownSourceIds.length > 0) {
+      issues.push(
+        issue(
+          `result-source-reference-${result.id}`,
+          result.verification === "verified" ? "critical" : "warning",
+          "Result references unknown evidence",
+          `${result.id} lists evidence record IDs that are not in the ledger: ${unknownSourceIds.join(", ")}.`,
+          "Add the missing evidence record or remove its ID before relying on this result.",
+        ),
+      );
+    }
+
     if (result.verification === "unverified") {
       issues.push(
         issue(

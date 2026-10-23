@@ -222,6 +222,18 @@ test("a verified result with a verified evidence link can remain a working draft
   assert.equal(review.verifiedResultCount, 1);
 });
 
+test("a verified result cannot retain an unknown evidence reference", () => {
+  const project = {
+    ...DEMO_PROJECTS[0],
+    sources: [{ ...DEMO_PROJECTS[0].sources[0], status: "verified" as const, note: "Verified dataset record with license, access date, and relevance notes." }],
+    results: [{ id: "RES-01", label: "Held-out evaluation summary", verification: "verified" as const, note: "A traceable summary was recorded.", sourceIds: ["SRC-01", "SRC-MISSING"] }],
+  };
+  const review = reviewProject(project, generateDraft(project));
+
+  assert.equal(review.canExportAsDraft, false);
+  assert.equal(review.issues.some((item) => item.id === "result-source-reference-RES-01"), true);
+});
+
 test("a plan that explicitly says it has no findings is not mistaken for an unsupported result", () => {
   const project = DEMO_PROJECTS[0];
   const review = reviewProject(project, generateDraft(project));
