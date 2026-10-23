@@ -31,6 +31,10 @@ export function ReviewPanel({ review }: ReviewPanelProps) {
           <dd>{review.verifiedSourceCount}/{review.sourceCount} verified</dd>
         </div>
         <div>
+          <dt>Prior works</dt>
+          <dd>{review.verifiedPriorResearchCount}/{review.priorResearchCount} verified</dd>
+        </div>
+        <div>
           <dt>Results</dt>
           <dd>{review.verifiedResultCount}/{review.resultCount} verified</dd>
         </div>

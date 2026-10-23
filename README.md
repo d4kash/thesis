@@ -1,6 +1,6 @@
 # Thesis Studio
 
-Thesis Studio is an evidence-aware research-planning workspace. It creates a seven-part working draft from a project brief, maps methods to objectives, keeps a source/result ledger, and reviews output before export.
+Thesis Studio is an evidence-aware research-planning workspace. Give it a topic and research brief, add notes from prior theses or papers, and it creates an eight-part working draft with a source-linked research landscape, method map, source/result ledger, and structural review before export.
 
 It ships with two **synthetic demonstration projects**:
 
@@ -32,7 +32,10 @@ npm run build
 
 ## What the upgraded workspace does
 
-- Lets a researcher build a seven-part thesis scaffold from their own project brief.
+- Lets a researcher turn a topic and research brief into an eight-part thesis scaffold.
+- Provides an evidence-safe starter action that turns a new topic into a research question, scope, objectives, and auditable method plan while leaving results and citations empty.
+- Stores prior-thesis or paper notes locally: source trace, setting, question, method, reported finding, and stated limitation.
+- Builds a transparent topic map that ranks local prior-work records by term overlap and surfaces only **candidate** gaps from notes supplied by the researcher.
 - Adds source records and result-ledger entries locally, with verified-results required to link to a verified evidence record.
 - Keeps the two bundled projects clearly marked as synthetic demonstrations with no findings or citations.
 - Exports a clearly watermarked Markdown working draft only after the structural review has no critical issues.
@@ -46,4 +49,4 @@ The Eve agent also includes a source-grounded drafting skill for conversations t
 
 ## Research guardrails
 
-A final thesis requires verified sources, approved research methods, and traceable result records. The structural review is a quality aid, not an academic approval process.
+A final thesis requires verified sources, approved research methods, and traceable result records. The structural review and topic map are quality aids, not academic approval or automatic literature review systems.

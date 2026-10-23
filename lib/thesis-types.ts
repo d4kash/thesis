@@ -2,6 +2,7 @@ export type EvidenceStatus = "planned" | "reviewed" | "verified";
 export type IssueSeverity = "critical" | "warning" | "info";
 export type DraftSectionKey =
   | "overview"
+  | "research-landscape"
   | "literature-plan"
   | "research-design"
   | "evidence-plan"
@@ -36,6 +37,18 @@ export interface ResultLedgerItem {
   sourceIds: string[];
 }
 
+export interface PriorResearchRecord {
+  id: string;
+  title: string;
+  citation: string;
+  context: string;
+  researchQuestion: string;
+  methodology: string;
+  findings: string;
+  limitations: string;
+  status: EvidenceStatus;
+}
+
 export interface ThesisProject {
   id: string;
   demoLabel: string;
@@ -45,6 +58,7 @@ export interface ThesisProject {
   scope: string;
   objectives: ResearchObjective[];
   methods: ResearchMethod[];
+  priorResearch: PriorResearchRecord[];
   sources: EvidenceSource[];
   results: ResultLedgerItem[];
 }
@@ -70,6 +84,8 @@ export interface QualityReport {
   canExportAsDraft: boolean;
   sourceCount: number;
   verifiedSourceCount: number;
+  priorResearchCount: number;
+  verifiedPriorResearchCount: number;
   resultCount: number;
   verifiedResultCount: number;
 }

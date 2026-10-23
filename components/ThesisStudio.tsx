@@ -6,6 +6,8 @@ import { EvidenceLedger } from "@/components/EvidenceLedger";
 import { ExportActions } from "@/components/ExportActions";
 import { ProjectEditor } from "@/components/ProjectEditor";
 import { ProjectPicker } from "@/components/ProjectPicker";
+import { PriorResearchLibrary } from "@/components/PriorResearchLibrary";
+import { ResearchLandscape } from "@/components/ResearchLandscape";
 import { ReviewPanel } from "@/components/ReviewPanel";
 import { StudioHeader } from "@/components/StudioHeader";
 import { DEFAULT_PROJECT_ID, DEMO_PROJECTS } from "@/lib/demo-projects";
@@ -28,6 +30,7 @@ function createBlankProject(): ThesisProject {
     methods: [
       { id: "MTH-01", objectiveIds: ["OBJ-01"], text: "Describe a method that can be audited and approved." },
     ],
+    priorResearch: [],
     sources: [],
     results: [],
   };
@@ -97,9 +100,13 @@ export function ThesisStudio() {
       <div aria-busy={isSwitching} className="studio-grid">
         <div className="workspace-stack">
           <ProjectEditor onChange={setProject} project={project} />
+          <PriorResearchLibrary key={`${project.id}-prior-research`} onChange={setProject} project={project} />
           <EvidenceLedger onChange={setProject} project={project} />
         </div>
-        <DraftViewer sections={draft} />
+        <div className="draft-stack">
+          <ResearchLandscape project={project} />
+          <DraftViewer sections={draft} />
+        </div>
         <ReviewPanel review={review} />
       </div>
       <ExportActions enabled={review.canExportAsDraft} onCopy={copyMarkdown} onDownload={downloadDraft} status={exportStatus} />

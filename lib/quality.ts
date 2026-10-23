@@ -22,6 +22,7 @@ export function reviewProject(project: ThesisProject, draft: DraftSection[]): Qu
   const issues: QualityIssue[] = [];
   const objectiveIds = new Set(project.objectives.map((objective) => objective.id));
   const sourceIds = new Set<string>();
+  const priorResearchIds = new Set<string>();
   const sourceById = new Map(project.sources.map((source) => [source.id, source]));
 
   for (const source of project.sources) {
@@ -49,6 +50,59 @@ export function reviewProject(project: ThesisProject, draft: DraftSection[]): Qu
         ),
       );
     }
+  }
+
+  for (const record of project.priorResearch) {
+    if (priorResearchIds.has(record.id)) {
+      issues.push(
+        issue(
+          `duplicate-prior-research-${record.id}`,
+          "critical",
+          "Duplicate prior-research identifier",
+          `${record.id} appears more than once in the prior-research library.`,
+          "Give every prior-research record a unique stable identifier.",
+        ),
+      );
+    }
+    priorResearchIds.add(record.id);
+
+    const hasResearchDetail = [record.context, record.researchQuestion, record.methodology, record.findings, record.limitations]
+      .some((value) => value.trim().length >= 12);
+    if (record.status === "verified" && (record.citation.trim().length < 8 || !hasResearchDetail)) {
+      issues.push(
+        issue(
+          `thin-verified-prior-research-${record.id}`,
+          "warning",
+          "Verified prior work lacks a usable trace",
+          `${record.id} is marked verified but does not include a stable citation and a usable research note.`,
+          "Record the citation or stable source location, then add at least one context, method, finding, or limitation note from the original work.",
+        ),
+      );
+    }
+
+    if (record.status !== "verified") {
+      issues.push(
+        issue(
+          `prior-research-status-${record.id}`,
+          "info",
+          "Prior work still needs verification",
+          `${record.id} is marked ${record.status} and can guide search planning but not formal citation.`,
+          "Verify the original thesis or publication, including bibliographic details and the notes recorded here.",
+        ),
+      );
+    }
+  }
+
+  if (project.priorResearch.length === 0) {
+    issues.push(
+      issue(
+        "no-prior-research",
+        "info",
+        "No prior-research library records",
+        "The topic map can still frame a new project, but it cannot produce a source-grounded comparison yet.",
+        "Add prior theses or research records with traceable notes before writing a comparative literature synthesis.",
+      ),
+    );
   }
 
   for (const method of project.methods) {
@@ -161,6 +215,8 @@ export function reviewProject(project: ThesisProject, draft: DraftSection[]): Qu
     canExportAsDraft: criticalCount === 0,
     sourceCount: project.sources.length,
     verifiedSourceCount: project.sources.filter((source) => source.status === "verified").length,
+    priorResearchCount: project.priorResearch.length,
+    verifiedPriorResearchCount: project.priorResearch.filter((record) => record.status === "verified").length,
     resultCount: project.results.length,
     verifiedResultCount: project.results.filter((result) => result.verification === "verified").length,
   };

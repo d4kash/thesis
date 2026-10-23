@@ -63,6 +63,7 @@ h3 { font-size: 0.94rem; margin-bottom: 8px; }
 
 .studio-grid { align-items: start; display: grid; gap: 18px; grid-template-columns: minmax(260px, 0.8fr) minmax(380px, 1.35fr) minmax(280px, 0.85fr); }
 .workspace-stack { display: grid; gap: 18px; }
+.draft-stack { display: grid; gap: 18px; }
 .panel { background: var(--surface); border: 1px solid var(--line); border-radius: 18px; box-shadow: var(--shadow); padding: 20px; }
 .panel-heading { border-bottom: 1px solid #e4e5df; margin-bottom: 18px; padding-bottom: 16px; }
 .status-pill { background: #e6f1ea; border-radius: 999px; color: var(--green-dark); font-size: 0.7rem; font-weight: 700; padding: 6px 9px; white-space: nowrap; }
@@ -70,6 +71,8 @@ h3 { font-size: 0.94rem; margin-bottom: 8px; }
 .project-editor label { color: var(--ink); display: block; font-size: 0.83rem; font-weight: 700; margin: 0 0 15px; }
 .project-editor input, .project-editor textarea { background: #fbfaf5; border: 1px solid #cbd1c9; border-radius: 8px; color: var(--ink); display: block; font-weight: 400; line-height: 1.45; margin-top: 6px; padding: 10px; resize: vertical; width: 100%; }
 .project-editor input:focus, .project-editor textarea:focus, .evidence-ledger input:focus, .evidence-ledger textarea:focus, .evidence-ledger select:focus { border-color: var(--green); outline: 3px solid rgba(28, 106, 74, 0.14); }
+.project-editor__starter { margin: -3px 0 6px; }
+.project-editor__starter-note { margin: 0 0 15px; }
 .field-note { color: var(--muted); font-size: 0.8rem; line-height: 1.5; margin-bottom: 0; }
 
 .evidence-ledger .field-note { margin-bottom: 18px; }
@@ -93,6 +96,31 @@ h3 { font-size: 0.94rem; margin-bottom: 8px; }
 .text-button { background: transparent; border: 0; color: var(--red); font-size: 0.74rem; font-weight: 700; padding: 3px; }
 .text-button:hover { text-decoration: underline; }
 .ledger-message { color: var(--green-dark); font-size: 0.78rem; line-height: 1.4; margin: 12px 0 0; min-height: 1.2em; }
+
+.prior-research-library .field-note { margin-bottom: 18px; }
+.prior-research-form { border-top: 1px solid #e4e5df; display: grid; gap: 12px; margin-top: 18px; padding-top: 18px; }
+.prior-research-form h3 { color: var(--green-dark); font-family: Georgia, "Times New Roman", serif; margin: 0; }
+.prior-research-form label { color: var(--ink); display: grid; font-size: 0.79rem; font-weight: 700; gap: 6px; }
+.prior-research-form input, .prior-research-form textarea, .prior-research-form select { background: #fbfaf5; border: 1px solid #cbd1c9; border-radius: 8px; color: var(--ink); line-height: 1.45; padding: 9px; resize: vertical; width: 100%; }
+.prior-research-form input:focus, .prior-research-form textarea:focus, .prior-research-form select:focus { border-color: var(--green); outline: 3px solid rgba(28, 106, 74, 0.14); }
+.prior-research-list, .landscape-list, .synthesis-prompts { display: grid; gap: 8px; list-style: none; margin: 14px 0 0; padding: 0; }
+.prior-research-list li { align-items: flex-start; background: #f5f8f4; border: 1px solid #dbe6de; border-radius: 10px; display: flex; gap: 10px; justify-content: space-between; padding: 10px; }
+.prior-research-list strong, .prior-research-list span, .prior-research-list small { display: block; line-height: 1.35; }
+.prior-research-list strong { color: var(--green-dark); font-size: 0.72rem; text-transform: uppercase; }
+.prior-research-list span { font-size: 0.82rem; font-weight: 700; margin-top: 3px; }
+.prior-research-list small { color: var(--muted); font-size: 0.75rem; margin-top: 4px; }
+
+.research-landscape { background: linear-gradient(145deg, #fffdf8, #eef8f1); }
+.topic-terms { display: flex; flex-wrap: wrap; gap: 6px; margin: 16px 0 2px; }
+.topic-terms span { background: #dbeee2; border-radius: 999px; color: var(--green-dark); font-size: 0.72rem; font-weight: 700; padding: 5px 8px; }
+.landscape-section { border-top: 1px solid #dfe9e2; margin-top: 17px; padding-top: 16px; }
+.landscape-section h3 { color: var(--green-dark); font-family: Georgia, "Times New Roman", serif; }
+.landscape-list li, .synthesis-prompts li { background: rgba(255, 255, 255, 0.65); border-left: 3px solid #9dcab0; font-size: 0.79rem; line-height: 1.45; padding: 8px 10px; }
+.landscape-list strong, .landscape-list span, .landscape-list small { display: block; }
+.landscape-list strong { color: var(--green-dark); font-size: 0.69rem; text-transform: uppercase; }
+.landscape-list span { font-weight: 700; margin-top: 2px; }
+.landscape-list small { color: var(--muted); margin-top: 3px; }
+.synthesis-prompts { list-style: decimal; margin-left: 18px; }
 
 .draft-sections { display: grid; gap: 14px; }
 .draft-section { border-left: 3px solid #afd5bf; padding: 0 0 0 14px; }

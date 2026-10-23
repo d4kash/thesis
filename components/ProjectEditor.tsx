@@ -1,4 +1,5 @@
 import type { ChangeEvent } from "react";
+import { createTopicStarter, hasTopic } from "@/lib/topic-starter";
 import type { ThesisProject } from "@/lib/thesis-types";
 
 interface ProjectEditorProps {
@@ -25,12 +26,23 @@ export function ProjectEditor({ project, onChange }: ProjectEditorProps) {
         <span className="status-pill">Local working draft</span>
       </div>
       <label>
-        Project title
+        Thesis topic / working title
         <input
           onChange={(event) => onChange(updateTextField(project, "title", event))}
           value={project.title}
         />
       </label>
+      <button
+        className="button button--compact project-editor__starter"
+        disabled={!hasTopic(project)}
+        onClick={() => onChange(createTopicStarter(project))}
+        type="button"
+      >
+        Create evidence-safe starter from topic
+      </button>
+      <p className="field-note project-editor__starter-note">
+        This fills only missing planning fields and preserves existing details. It never creates findings, citations, participant data, or a finished thesis.
+      </p>
       <label>
         Discipline or field
         <input
@@ -55,7 +67,7 @@ export function ProjectEditor({ project, onChange }: ProjectEditorProps) {
         />
       </label>
       <p className="field-note">
-        The starter projects are synthetic. Replace their planning notes with verified sources and approved data before using the material in academic work.
+        Start with a precise topic, then use the prior-research library below to compare earlier work by context, method, findings, and limitations. The starter projects are synthetic.
       </p>
     </section>
   );

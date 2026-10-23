@@ -1,10 +1,12 @@
 import type { DraftSection, ThesisProject } from "@/lib/thesis-types";
+import { buildResearchLandscape } from "@/lib/research-landscape";
 
 function list(items: string[]): string {
   return items.map((item, index) => `${index + 1}. ${item}`).join("\n");
 }
 
 export function generateDraft(project: ThesisProject): DraftSection[] {
+  const landscape = buildResearchLandscape(project);
   const objectiveLines = project.objectives.map((objective) => `${objective.id}: ${objective.text}`);
   const methodLines = project.methods.map(
     (method) => `${method.id} → ${method.objectiveIds.join(", ")}: ${method.text}`,
@@ -18,6 +20,19 @@ export function generateDraft(project: ThesisProject): DraftSection[] {
   const resultLines = project.results.map(
     (result) => `${result.id} (${result.verification}; sources: ${result.sourceIds.join(", ") || "none"}): ${result.label}. ${result.note}`,
   );
+  const priorResearchLines = landscape.matches
+    .filter((match) => match.matchedTerms.length > 0)
+    .slice(0, 5)
+    .map((match) => {
+      const terms = match.matchedTerms.join(", ");
+      return `${match.record.id} (${match.record.status}; ${match.relevance}% topic overlap): ${match.record.title}. Matched terms: ${terms}.`;
+    });
+  const landscapePlan = priorResearchLines.length > 0
+    ? list(priorResearchLines)
+    : "No prior research records match the current topic terms yet. Add prior works with their context, method, and limitation notes before writing a synthesis.";
+  const gapLines = landscape.candidateGaps.length > 0
+    ? list(landscape.candidateGaps.map((gap) => `${gap.recordId}: Candidate gap only — ${gap.text}`))
+    : "No candidate gaps have been recorded. Add the original work's stated limitations or unresolved questions; do not infer a gap from a title alone.";
 
   return [
     {
@@ -27,26 +42,32 @@ export function generateDraft(project: ThesisProject): DraftSection[] {
       claimIds: [],
     },
     {
+      id: "research-landscape",
+      heading: "2. Prior research landscape and synthesis plan",
+      body: `Topic terms used for this local map: ${landscape.topicTerms.join(", ") || "add a more specific topic or research question"}.\n\nMost aligned prior-research records\n${landscapePlan}\n\nCandidate gap signals\n${gapLines}\n\nThis is a comparison plan, not a claim that the prior works agree, differ, or establish a gap. Re-check every record against its original text before formal citation.`,
+      claimIds: landscape.matches.filter((match) => match.matchedTerms.length > 0).map((match) => match.record.id),
+    },
+    {
       id: "literature-plan",
-      heading: "2. Literature and evidence plan",
+      heading: "3. Literature and evidence plan",
       body: `This section is a source-grounded writing plan, not a literature review with invented citations.\n\nCurrent evidence ledger\n${evidencePlan}\n\nFor each final paragraph, retain the source identifier, a verified citation record, the claim it supports, and the reason the source is relevant.`,
       claimIds: project.sources.map((source) => source.id),
     },
     {
       id: "research-design",
-      heading: "3. Research design and methodology",
+      heading: "4. Research design and methodology",
       body: `Objectives\n${list(objectiveLines)}\n\nMethods mapped to objectives\n${list(methodLines)}\n\nBefore fieldwork or analysis, record the approved protocol, sampling or selection logic, ethics requirements, and the decisions that would change the method.`,
       claimIds: project.methods.map((method) => method.id),
     },
     {
       id: "evidence-plan",
-      heading: "4. Claim and evidence ledger",
+      heading: "5. Claim and evidence ledger",
       body: `Every substantive claim in a final thesis must point to a verified source or a traceable result record.\n\nUse the ledger to distinguish: (a) claims planned for the literature review, (b) methods proposed for the study, and (c) results that have actually been verified.`,
       claimIds: project.sources.map((source) => source.id),
     },
     {
       id: "results-status",
-      heading: "5. Results and analysis status",
+      heading: "6. Results and analysis status",
       body:
         resultLines.length === 0
           ? "No results are stated. This project is a research plan and has no collected or verified findings."
@@ -55,13 +76,13 @@ export function generateDraft(project: ThesisProject): DraftSection[] {
     },
     {
       id: "discussion",
-      heading: "6. Discussion, limitations, and implications",
+      heading: "7. Discussion, limitations, and implications",
       body: "Use this section to interpret verified results in relation to the evidence ledger, explain limitations, and identify what remains uncertain. Until the result ledger is complete, frame this section as a discussion plan rather than a claim of impact or performance.",
       claimIds: [...project.sources.map((source) => source.id), ...project.results.map((result) => result.id)],
     },
     {
       id: "conclusion",
-      heading: "7. Conclusion and next evidence step",
+      heading: "8. Conclusion and next evidence step",
       body: "The next responsible step is to verify sources, register the method, and collect or analyze approved data. The project should not make outcome, impact, or performance claims until a result ledger supports them.",
       claimIds: [],
     },
