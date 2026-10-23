@@ -243,6 +243,18 @@ test("a verified result with a verified evidence link can remain a working draft
   assert.equal(review.verifiedResultCount, 1);
 });
 
+test("a verified result needs a usable label and supporting record note", () => {
+  const project = {
+    ...DEMO_PROJECTS[0],
+    sources: [{ ...DEMO_PROJECTS[0].sources[0], status: "verified" as const, note: "Verified dataset record with license, access date, and relevance notes." }],
+    results: [{ id: "RES-01", label: "", verification: "verified" as const, note: "", sourceIds: ["SRC-01"] }],
+  };
+  const review = reviewProject(project, generateDraft(project));
+
+  assert.equal(review.canExportAsDraft, false);
+  assert.equal(review.issues.some((item) => item.id === "thin-verified-result-RES-01"), true);
+});
+
 test("a verified result cannot retain an unknown evidence reference", () => {
   const project = {
     ...DEMO_PROJECTS[0],

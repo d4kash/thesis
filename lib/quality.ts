@@ -160,6 +160,18 @@ export function reviewProject(project: ThesisProject, draft: DraftSection[]): Qu
   }
 
   for (const result of project.results) {
+    if (result.verification === "verified" && (result.label.trim().length < 5 || result.note.trim().length < 12)) {
+      issues.push(
+        issue(
+          `thin-verified-result-${result.id}`,
+          "critical",
+          "Verified result lacks a usable record",
+          `${result.id} is marked verified but does not include a clear result label and supporting record note.`,
+          "Add a concise result label and a note that identifies the underlying analysis or record before marking it verified.",
+        ),
+      );
+    }
+
     const unknownSourceIds = result.sourceIds.filter((id) => !sourceById.has(id));
     if (unknownSourceIds.length > 0) {
       issues.push(
