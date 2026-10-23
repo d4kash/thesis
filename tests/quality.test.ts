@@ -59,6 +59,31 @@ test("the topic map ranks supplied prior research and keeps limitations as candi
   assert.match(landscape.prompts.join(" "), /candidate gap/i);
 });
 
+test("a placeholder brief does not surface generic prior-work gaps", () => {
+  const project = {
+    ...DEMO_PROJECTS[0],
+    title: "Untitled research plan",
+    discipline: "Choose a discipline",
+    researchQuestion: "What focused question will this project investigate?",
+    scope: "Define what the project will cover, what it will not cover, and what evidence it needs.",
+    priorResearch: [{
+      id: "PRV-09",
+      title: "Generic project question note",
+      citation: "Local review note",
+      context: "A generic project research question was discussed.",
+      researchQuestion: "What question should a project investigate?",
+      methodology: "Planning discussion only.",
+      findings: "",
+      limitations: "Generic limitation that is not topic-specific.",
+      status: "reviewed" as const,
+    }],
+  };
+  const landscape = buildResearchLandscape(project);
+
+  assert.deepEqual(landscape.topicTerms, []);
+  assert.deepEqual(landscape.candidateGaps, []);
+});
+
 test("a verified prior work without a trace is flagged for review", () => {
   const project = {
     ...DEMO_PROJECTS[1],

@@ -5,6 +5,12 @@ const STOP_WORDS = new Set([
   "can", "could", "does", "for", "from", "how", "in", "into", "is", "it", "of", "on", "or",
   "research", "study", "than", "that", "the", "their", "this", "to", "using", "what", "which", "with",
 ]);
+const UNTITLED_TOPIC = "Untitled research plan";
+const PLACEHOLDER_BRIEF_VALUES = new Set([
+  "Choose a discipline",
+  "What focused question will this project investigate?",
+  "Define what the project will cover, what it will not cover, and what evidence it needs.",
+]);
 
 export interface ResearchMatch {
   record: PriorResearchRecord;
@@ -39,7 +45,14 @@ function unique(items: string[]): string[] {
 
 function termsFromProject(project: ThesisProject): string[] {
   const counts = new Map<string, number>();
-  const text = `${project.title} ${project.discipline} ${project.researchQuestion} ${project.scope}`;
+  const title = project.title.trim();
+
+  if (title.length === 0 || title === UNTITLED_TOPIC) return [];
+
+  const text = [title, project.discipline, project.researchQuestion, project.scope]
+    .map((value) => value.trim())
+    .filter((value) => !PLACEHOLDER_BRIEF_VALUES.has(value))
+    .join(" ");
 
   for (const word of tokenize(text)) {
     counts.set(word, (counts.get(word) ?? 0) + 1);
