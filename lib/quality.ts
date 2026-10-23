@@ -7,6 +7,7 @@ import type {
 
 const unsupportedOutcomePattern = /\b(outperforms|proves|demonstrates|improves|causes)\b/i;
 const unresolvedMarkerPattern = /\[NEEDS (SOURCE|DATA)\]/i;
+const outcomeClaimSections = new Set(["results-status", "discussion", "conclusion"]);
 
 function issue(
   id: string,
@@ -189,7 +190,7 @@ export function reviewProject(project: ThesisProject, draft: DraftSection[]): Qu
       );
     }
 
-    if (["results-status", "conclusion"].includes(section.id) && unsupportedOutcomePattern.test(section.body)) {
+    if (outcomeClaimSections.has(section.id) && unsupportedOutcomePattern.test(section.body)) {
       const hasVerifiedResult = project.results.some((result) => result.verification === "verified");
       if (!hasVerifiedResult) {
         issues.push(

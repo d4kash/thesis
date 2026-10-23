@@ -136,6 +136,19 @@ test("a plan that explicitly says it has no findings is not mistaken for an unsu
   assert.equal(resultsIssue, undefined);
 });
 
+test("outcome language in a discussion needs verified results", () => {
+  const project = DEMO_PROJECTS[0];
+  const draft = generateDraft(project).map((section) =>
+    section.id === "discussion"
+      ? { ...section, body: "The proposed intervention improves accuracy." }
+      : section,
+  );
+  const review = reviewProject(project, draft);
+
+  assert.equal(review.canExportAsDraft, false);
+  assert.equal(review.issues.some((item) => item.id === "unsupported-outcome-discussion"), true);
+});
+
 test("unresolved data in a conclusion blocks export", () => {
   const project = DEMO_PROJECTS[1];
   const draft = generateDraft(project).map((section) =>
