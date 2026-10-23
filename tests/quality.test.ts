@@ -1,5 +1,8 @@
 import assert from "node:assert/strict";
 import test from "node:test";
+import { createElement } from "react";
+import { renderToStaticMarkup } from "react-dom/server";
+import { ExportActions } from "../components/ExportActions";
 import { DEMO_PROJECTS } from "../lib/demo-projects";
 import { generateDraft } from "../lib/draft";
 import { buildDraftMarkdown } from "../lib/export";
@@ -175,6 +178,24 @@ test("a blank or placeholder project cannot be exported as a generic draft", () 
     assert.equal(review.canExportAsDraft, false);
     assert.equal(review.issues.some((item) => item.id === "missing-topic"), true);
   }
+});
+
+test("both copy and download controls respect a structural export hold", () => {
+  const blockedMarkup = renderToStaticMarkup(
+    createElement(ExportActions, { enabled: false, onCopy: () => undefined, onDownload: () => undefined, status: "" }),
+  );
+  const allowedMarkup = renderToStaticMarkup(
+    createElement(ExportActions, { enabled: true, onCopy: () => undefined, onDownload: () => undefined, status: "" }),
+  );
+  const blockedCopy = blockedMarkup.match(/<button[^>]*>Copy draft text<\/button>/)?.[0] ?? "";
+  const blockedDownload = blockedMarkup.match(/<button[^>]*>Download working draft<\/button>/)?.[0] ?? "";
+  const allowedCopy = allowedMarkup.match(/<button[^>]*>Copy draft text<\/button>/)?.[0] ?? "";
+  const allowedDownload = allowedMarkup.match(/<button[^>]*>Download working draft<\/button>/)?.[0] ?? "";
+
+  assert.match(blockedCopy, /disabled=""/);
+  assert.match(blockedDownload, /disabled=""/);
+  assert.doesNotMatch(allowedCopy, /disabled=""/);
+  assert.doesNotMatch(allowedDownload, /disabled=""/);
 });
 
 test("a verified result must link to a verified evidence record", () => {

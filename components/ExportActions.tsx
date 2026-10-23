@@ -15,7 +15,7 @@ export function ExportActions({ enabled, onCopy, onDownload, status }: ExportAct
         </p>
       </div>
       <div className="export-actions__buttons">
-        <button className="button button--secondary" onClick={onCopy} type="button">
+        <button className="button button--secondary" disabled={!enabled} onClick={onCopy} type="button">
           Copy draft text
         </button>
         <button className="button" disabled={!enabled} onClick={onDownload} type="button">
