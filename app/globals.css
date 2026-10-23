@@ -104,6 +104,37 @@ h3 { font-size: 0.94rem; margin-bottom: 8px; }
 .phrase-option:focus-visible { outline: 3px solid rgba(28, 106, 74, 0.18); outline-offset: 2px; }
 .writing-integrity-note { background: #fff2d5; border-left: 3px solid var(--amber); color: #69420b; font-size: 0.78rem; line-height: 1.5; margin: 18px 0 0; padding: 9px 10px; }
 
+.dissertation-roadmap { background: linear-gradient(145deg, #fffdf8, #f1f7f3); scroll-margin-top: 18px; }
+.roadmap-targets { display: flex; flex-wrap: wrap; gap: 7px; margin: 17px 0; }
+.roadmap-target { background: white; border: 1px solid #a9cbb7; border-radius: 999px; color: var(--green-dark); font-size: 0.75rem; font-weight: 700; padding: 7px 10px; }
+.roadmap-target:hover, .roadmap-target--selected { background: var(--green); border-color: var(--green); color: white; }
+.roadmap-target:focus-visible { outline: 3px solid rgba(28, 106, 74, 0.18); outline-offset: 2px; }
+.roadmap-list { display: grid; gap: 8px; list-style: none; margin: 0 0 15px; padding: 0; }
+.roadmap-list li { align-items: flex-start; background: rgba(255, 255, 255, 0.72); border: 1px solid #dbe6de; border-radius: 10px; display: grid; gap: 10px; grid-template-columns: 45px minmax(0, 1fr); padding: 10px; }
+.roadmap-list__budget { color: var(--green-dark); font-family: Georgia, "Times New Roman", serif; font-size: 1.05rem; font-weight: 700; line-height: 1; text-align: center; }
+.roadmap-list__budget small { color: var(--muted); display: block; font-family: Arial, Helvetica, sans-serif; font-size: 0.6rem; font-weight: 700; letter-spacing: 0.05em; margin-top: 4px; text-transform: uppercase; }
+.roadmap-list strong, .roadmap-list span, .roadmap-list small { display: block; }
+.roadmap-list strong { color: var(--green-dark); font-size: 0.78rem; line-height: 1.35; }
+.roadmap-list span { color: var(--muted); font-size: 0.75rem; line-height: 1.42; margin-top: 3px; }
+.roadmap-list small { color: #426758; font-size: 0.71rem; line-height: 1.4; margin-top: 5px; }
+.roadmap-status { border-radius: 999px; font-size: 0.61rem; font-style: normal; font-weight: 700; grid-column: 2; justify-self: start; letter-spacing: 0.04em; padding: 4px 7px; text-transform: uppercase; }
+.roadmap-status--ready { background: #e0f1e7; color: var(--green-dark); }
+.roadmap-status--needs-brief, .roadmap-status--needs-review { background: #e5eef6; color: #315a78; }
+.roadmap-status--needs-sources, .roadmap-status--needs-data { background: var(--amber-soft); color: #77470c; }
+.originality-panel { border-top: 1px solid #dfe9e2; margin-top: 17px; padding-top: 16px; }
+.originality-panel h3 { color: var(--green-dark); font-family: Georgia, "Times New Roman", serif; }
+.originality-panel > p { color: #69420b; font-size: 0.78rem; line-height: 1.5; margin-bottom: 12px; }
+.originality-panel ul { display: grid; gap: 8px; list-style: none; margin: 0; padding: 0; }
+.originality-panel li { background: #fffdf8; border-left: 3px solid #9dcab0; padding: 8px 10px; }
+.originality-panel strong, .originality-panel span, .originality-panel small { display: block; }
+.originality-panel strong { color: var(--green-dark); font-size: 0.76rem; }
+.originality-panel span { color: var(--muted); font-size: 0.74rem; line-height: 1.4; margin-top: 3px; }
+.originality-panel small { color: #426758; font-size: 0.71rem; line-height: 1.4; margin-top: 4px; }
+.originality-status { border-radius: 999px; display: inline-block; font-size: 0.61rem; font-style: normal; font-weight: 700; letter-spacing: 0.04em; margin-top: 6px; padding: 4px 7px; text-transform: uppercase; }
+.originality-status--ready { background: #e0f1e7; color: var(--green-dark); }
+.originality-status--needs-attention { background: var(--amber-soft); color: #77470c; }
+.originality-status--manual-check { background: #e5eef6; color: #315a78; }
+
 .evidence-ledger .field-note { margin-bottom: 18px; }
 .ledger-form { border-top: 1px solid #e4e5df; display: grid; gap: 12px; margin-top: 18px; padding-top: 18px; }
 .ledger-form h3 { color: var(--green-dark); font-family: Georgia, "Times New Roman", serif; margin: 0; }

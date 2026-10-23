@@ -2,6 +2,7 @@
 
 import { startTransition, useMemo, useState } from "react";
 import { DraftViewer } from "@/components/DraftViewer";
+import { DissertationRoadmap } from "@/components/DissertationRoadmap";
 import { EvidenceLedger } from "@/components/EvidenceLedger";
 import { ExportActions } from "@/components/ExportActions";
 import { GettingStartedGuide } from "@/components/GettingStartedGuide";
@@ -103,6 +104,7 @@ export function ThesisStudio() {
       <div aria-busy={isSwitching} className="studio-grid">
         <div className="workspace-stack">
           <ProjectEditor onChange={setProject} project={project} />
+          <DissertationRoadmap project={project} />
           <WritingCoach project={project} />
           <PriorResearchLibrary key={`${project.id}-prior-research`} onChange={setProject} project={project} />
           <EvidenceLedger onChange={setProject} project={project} />

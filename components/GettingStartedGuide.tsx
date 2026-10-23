@@ -16,7 +16,7 @@ export function GettingStartedGuide({ project, review }: GettingStartedGuideProp
   const steps = [
     { href: "#project-picker", label: "Start a new topic", detail: "Choose “Start a new topic” instead of changing a synthetic example.", done: isNewWorkingProject },
     { href: "#research-brief", label: "Name your topic", detail: "Use a plain working title. You can improve it later.", done: hasTopic(project) },
-    { href: "#research-brief", label: "Create your starter outline", detail: "Turn your topic into an editable question, scope, objectives, and method plan.", done: hasStarter },
+    { href: "#dissertation-roadmap", label: "Plan your outline and chapter budget", detail: "Turn your topic into an editable question, scope, objectives, method plan, and realistic page budget.", done: hasStarter },
     { href: "#prior-research", label: "Add and compare earlier research", detail: "Paste a public source link, then record checked notes in your own words with the source beside them.", done: hasResearchNotes },
     { href: "#quality-review", label: "Check and export a planning draft", detail: "Resolve critical checks, then take the draft to your supervisor for review.", done: review.canExportAsDraft && hasResearchNotes },
   ];

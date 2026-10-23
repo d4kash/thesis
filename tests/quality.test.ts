@@ -3,12 +3,14 @@ import test from "node:test";
 import { createElement } from "react";
 import { renderToStaticMarkup } from "react-dom/server";
 import { ExportActions } from "../components/ExportActions";
+import { DissertationRoadmap } from "../components/DissertationRoadmap";
 import { GettingStartedGuide } from "../components/GettingStartedGuide";
 import { PriorResearchLibrary } from "../components/PriorResearchLibrary";
 import { DEMO_PROJECTS } from "../lib/demo-projects";
 import { generateDraft } from "../lib/draft";
 import { buildDraftMarkdown } from "../lib/export";
 import { buildResearchLandscape } from "../lib/research-landscape";
+import { buildDissertationRoadmap, buildDissertationRoadmapMarkdown } from "../lib/dissertation-roadmap";
 import { createTopicStarter, hasTopic } from "../lib/topic-starter";
 import { reviewProject } from "../lib/quality";
 import { extractPublicSourcePreview, parseSupportedPublicSourceUrl, PublicSourceUrlError } from "../lib/public-source-preview";
@@ -138,6 +140,29 @@ test("the start guide gives a plain next step for a new student", () => {
   assert.match(markup, /Five simple steps to use Thesis Studio/);
   assert.match(markup, /Do this next:/);
   assert.match(markup, /Name your topic/);
+});
+
+test("the long-form roadmap budgets pages without inventing thesis content or results", () => {
+  const planningProject = { ...DEMO_PROJECTS[0], results: [] };
+  const roadmap = buildDissertationRoadmap(planningProject);
+  const shorterRoadmap = buildDissertationRoadmap(planningProject, 250);
+  const resultItem = roadmap.items.find((item) => item.id === "results");
+
+  assert.equal(roadmap.items.reduce((total, item) => total + item.pageBudget, 0), 300);
+  assert.equal(shorterRoadmap.items.reduce((total, item) => total + item.pageBudget, 0), 250);
+  assert.equal(resultItem?.status, "needs-data");
+  assert.match(resultItem?.nextStep ?? "", /NEEDS DATA/);
+  assert.match(buildDissertationRoadmapMarkdown(roadmap), /not generated thesis content/i);
+  assert.match(buildDissertationRoadmapMarkdown(roadmap), /do not add filler, unverified claims, or copied text/i);
+});
+
+test("the long-form roadmap makes citation readiness explicit and rejects plagiarism-removal framing", () => {
+  const markup = renderToStaticMarkup(createElement(DissertationRoadmap, { project: DEMO_PROJECTS[0] }));
+
+  assert.match(markup, /Build a real 300-page dissertation plan/);
+  assert.match(markup, /Originality and citation readiness/);
+  assert.match(markup, /cannot remove plagiarism/i);
+  assert.match(markup, /institution.*required similarity review/i);
 });
 
 test("public source preview accepts only approved HTTPS scholarly record hosts", () => {
