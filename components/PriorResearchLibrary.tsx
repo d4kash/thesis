@@ -71,11 +71,18 @@ export function PriorResearchLibrary({ project, onChange }: PriorResearchLibrary
   }
 
   function updateStatus(id: string, nextStatus: EvidenceStatus) {
+    updateRecord(id, { status: nextStatus });
+    setMessage(`${id} marked ${nextStatus}. Verify its original document before using it as a formal citation.`);
+  }
+
+  function updateRecord(
+    id: string,
+    changes: Partial<Omit<ThesisProject["priorResearch"][number], "id">>,
+  ) {
     onChange({
       ...project,
-      priorResearch: project.priorResearch.map((record) => record.id === id ? { ...record, status: nextStatus } : record),
+      priorResearch: project.priorResearch.map((record) => record.id === id ? { ...record, ...changes } : record),
     });
-    setMessage(`${id} marked ${nextStatus}. Verify its original document before using it as a formal citation.`);
   }
 
   function removeRecord(id: string) {
@@ -149,6 +156,40 @@ export function PriorResearchLibrary({ project, onChange }: PriorResearchLibrary
               {record.context ? <small>Context: {record.context}</small> : null}
               {record.methodology ? <small>Method: {record.methodology}</small> : null}
               {record.limitations ? <small>Limitation: {record.limitations}</small> : null}
+              <details className="record-editor">
+                <summary>Edit this record</summary>
+                <p className="record-editor__note">Changes update the local topic map and structural review immediately.</p>
+                <div className="record-editor__fields">
+                  <label>
+                    Thesis, dissertation, or paper title
+                    <input aria-label={`Edit ${record.id} title`} onChange={(event) => updateRecord(record.id, { title: event.target.value })} value={record.title} />
+                  </label>
+                  <label>
+                    Citation, repository URL, or stable source description
+                    <textarea aria-label={`Edit ${record.id} citation`} onChange={(event) => updateRecord(record.id, { citation: event.target.value })} rows={2} value={record.citation} />
+                  </label>
+                  <label>
+                    Context, setting, population, or corpus
+                    <textarea aria-label={`Edit ${record.id} context`} onChange={(event) => updateRecord(record.id, { context: event.target.value })} rows={2} value={record.context} />
+                  </label>
+                  <label>
+                    Prior research question or contribution
+                    <textarea aria-label={`Edit ${record.id} research question`} onChange={(event) => updateRecord(record.id, { researchQuestion: event.target.value })} rows={2} value={record.researchQuestion} />
+                  </label>
+                  <label>
+                    Method or analytical approach
+                    <textarea aria-label={`Edit ${record.id} methodology`} onChange={(event) => updateRecord(record.id, { methodology: event.target.value })} rows={2} value={record.methodology} />
+                  </label>
+                  <label>
+                    Reported findings — paraphrase only after checking the source
+                    <textarea aria-label={`Edit ${record.id} findings`} onChange={(event) => updateRecord(record.id, { findings: event.target.value })} rows={2} value={record.findings} />
+                  </label>
+                  <label>
+                    Stated limitation or unresolved question
+                    <textarea aria-label={`Edit ${record.id} limitations`} onChange={(event) => updateRecord(record.id, { limitations: event.target.value })} rows={2} value={record.limitations} />
+                  </label>
+                </div>
+              </details>
               <label className="ledger-inline-control">
                 Status
                 <select aria-label={`${record.id} status`} onChange={(event) => updateStatus(record.id, event.target.value as EvidenceStatus)} value={record.status}>

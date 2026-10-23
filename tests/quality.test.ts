@@ -3,6 +3,7 @@ import test from "node:test";
 import { createElement } from "react";
 import { renderToStaticMarkup } from "react-dom/server";
 import { ExportActions } from "../components/ExportActions";
+import { PriorResearchLibrary } from "../components/PriorResearchLibrary";
 import { DEMO_PROJECTS } from "../lib/demo-projects";
 import { generateDraft } from "../lib/draft";
 import { buildDraftMarkdown } from "../lib/export";
@@ -105,6 +106,16 @@ test("a verified prior work without a trace is flagged for review", () => {
   const review = reviewProject(project, generateDraft(project));
 
   assert.equal(review.issues.some((item) => item.id === "thin-verified-prior-research-PRV-01"), true);
+});
+
+test("saved prior-research records can be corrected in place", () => {
+  const markup = renderToStaticMarkup(
+    createElement(PriorResearchLibrary, { project: DEMO_PROJECTS[0], onChange: () => undefined }),
+  );
+
+  assert.match(markup, /Edit PRV-01 title/);
+  assert.match(markup, /Edit PRV-01 citation/);
+  assert.match(markup, /Edit PRV-01 limitations/);
 });
 
 test("a topic starter creates a planning scaffold without creating results or citations", () => {
