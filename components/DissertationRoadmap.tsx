@@ -4,6 +4,7 @@ import { useState } from "react";
 import {
   buildDissertationRoadmap,
   buildDissertationRoadmapMarkdown,
+  type ChapterEvidenceStatus,
   DEFAULT_DISSERTATION_PAGE_TARGET,
   type RoadmapStatus,
 } from "@/lib/dissertation-roadmap";
@@ -21,6 +22,14 @@ const STATUS_LABELS: Record<RoadmapStatus, string> = {
   "needs-sources": "Needs sources",
   "needs-data": "Needs data",
   "needs-review": "Supervisor review",
+};
+
+const EVIDENCE_STATUS_LABELS: Record<ChapterEvidenceStatus, string> = {
+  tracked: "Evidence linked",
+  "needs-source": "Needs source",
+  "needs-data": "Needs data",
+  "needs-input": "Needs input",
+  "not-applicable": "Template or approval",
 };
 
 const ORIGINALITY_STATUS_LABELS = {
@@ -48,12 +57,12 @@ export function DissertationRoadmap({ project }: DissertationRoadmapProps) {
       <div className="panel-heading">
         <div>
           <p className="eyebrow">LONG-FORM THESIS PLAN</p>
-          <h2 id="dissertation-roadmap-heading">Build a real {pageTarget}-page dissertation plan</h2>
+          <h2 id="dissertation-roadmap-heading">Build a source-grounded {pageTarget}-page plan</h2>
         </div>
         <span className="status-pill">Planning only</span>
       </div>
       <p className="field-note">
-        A page count is a structure, not a target to pad. This plan breaks a long thesis into evidence-led chapters; it never creates research findings or a submission-ready dissertation.
+        A page count is a structure, not a target to pad. Each chapter shows the local records that support planning and the evidence still needed; it never creates research findings or a submission-ready dissertation.
       </p>
 
       <div className="roadmap-targets" role="group" aria-label="Choose dissertation page target">
@@ -78,6 +87,12 @@ export function DissertationRoadmap({ project }: DissertationRoadmapProps) {
               <strong>{item.heading}</strong>
               <span>{item.purpose}</span>
               <small>{item.nextStep}</small>
+              <div className="roadmap-list__evidence">
+                <strong>Evidence for this chapter</strong>
+                <span>{item.evidence.summary}</span>
+                {item.evidence.recordIds.length > 0 ? <small>Linked records: {item.evidence.recordIds.join(", ")}</small> : null}
+                <em className={`chapter-evidence-status chapter-evidence-status--${item.evidence.status}`}>{EVIDENCE_STATUS_LABELS[item.evidence.status]}</em>
+              </div>
             </div>
             <em className={`roadmap-status roadmap-status--${item.status}`}>{STATUS_LABELS[item.status]}</em>
           </li>

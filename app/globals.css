@@ -142,6 +142,14 @@ h3 { font-size: 0.94rem; margin-bottom: 8px; }
 .roadmap-status--ready { background: #e0f1e7; color: var(--green-dark); }
 .roadmap-status--needs-brief, .roadmap-status--needs-review { background: #e5eef6; color: #315a78; }
 .roadmap-status--needs-sources, .roadmap-status--needs-data { background: var(--amber-soft); color: #77470c; }
+.roadmap-list__evidence { border-top: 1px solid #dfe9e2; margin-top: 10px; padding-top: 9px; }
+.roadmap-list__evidence > strong { color: var(--green-dark); font-size: 0.71rem; letter-spacing: 0.03em; text-transform: uppercase; }
+.roadmap-list__evidence > span { color: var(--muted); font-size: 0.73rem; line-height: 1.42; }
+.roadmap-list__evidence > small { color: #426758; font-size: 0.7rem; }
+.chapter-evidence-status { border-radius: 999px; display: inline-block; font-size: 0.61rem; font-style: normal; font-weight: 700; letter-spacing: 0.04em; margin-top: 7px; padding: 4px 7px; text-transform: uppercase; }
+.chapter-evidence-status--tracked { background: #e0f1e7; color: var(--green-dark); }
+.chapter-evidence-status--needs-source, .chapter-evidence-status--needs-data { background: var(--amber-soft); color: #77470c; }
+.chapter-evidence-status--needs-input, .chapter-evidence-status--not-applicable { background: #e5eef6; color: #315a78; }
 .originality-panel { border-top: 1px solid #dfe9e2; margin-top: 17px; padding-top: 16px; }
 .originality-panel h3 { color: var(--green-dark); font-family: Georgia, "Times New Roman", serif; }
 .originality-panel > p { color: #69420b; font-size: 0.78rem; line-height: 1.5; margin-bottom: 12px; }

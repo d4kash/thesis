@@ -1,9 +1,16 @@
 import { hasTopic } from "@/lib/topic-starter";
-import type { ThesisProject } from "@/lib/thesis-types";
+import type { EvidenceSource, LiteratureEvidenceNote, ThesisProject } from "@/lib/thesis-types";
 
 export const DEFAULT_DISSERTATION_PAGE_TARGET = 300;
 
 export type RoadmapStatus = "ready" | "needs-brief" | "needs-sources" | "needs-data" | "needs-review";
+export type ChapterEvidenceStatus = "tracked" | "needs-source" | "needs-data" | "needs-input" | "not-applicable";
+
+export interface ChapterEvidencePlan {
+  status: ChapterEvidenceStatus;
+  summary: string;
+  recordIds: string[];
+}
 
 export interface DissertationRoadmapItem {
   id: string;
@@ -12,6 +19,7 @@ export interface DissertationRoadmapItem {
   purpose: string;
   status: RoadmapStatus;
   nextStep: string;
+  evidence: ChapterEvidencePlan;
 }
 
 export interface OriginalityCheckpoint {
@@ -123,21 +131,166 @@ function hasUsableResearchNote(project: ThesisProject): boolean {
   ].some((value) => value.trim().length >= 12));
 }
 
-function hasTraceablePriorResearch(project: ThesisProject): boolean {
-  return project.priorResearch.some((record) => record.citation.trim().length >= 8 && [
-    record.context,
-    record.researchQuestion,
-    record.methodology,
-    record.findings,
-    record.limitations,
-  ].some((value) => value.trim().length >= 12));
+function isUsableVerifiedSource(source: EvidenceSource | undefined): boolean {
+  return source?.status === "verified" && source.label.trim().length >= 5 && source.note.trim().length >= 12;
 }
 
-function statusForItem(id: string, project: ThesisProject): Pick<DissertationRoadmapItem, "status" | "nextStep"> {
+interface RoadmapEvidenceContext {
+  verifiedLiteratureNotes: LiteratureEvidenceNote[];
+  verifiedMethodNotes: LiteratureEvidenceNote[];
+  verifiedComparisonNotes: LiteratureEvidenceNote[];
+  verifiedResults: ThesisProject["results"];
+  verifiedSources: EvidenceSource[];
+}
+
+function buildEvidenceContext(project: ThesisProject): RoadmapEvidenceContext {
+  const sourceById = new Map(project.sources.map((source) => [source.id, source]));
+  const verifiedLiteratureNotes = (project.literatureNotes ?? []).filter((note) =>
+    note.status === "verified"
+      && note.claim.trim().length >= 12
+      && note.locator.trim().length >= 2
+      && isUsableVerifiedSource(sourceById.get(note.sourceId)),
+  );
+  const verifiedSources = project.sources.filter(isUsableVerifiedSource);
+  const verifiedResults = project.results.filter((result) =>
+    result.verification === "verified"
+      && result.sourceIds.some((sourceId) => isUsableVerifiedSource(sourceById.get(sourceId))),
+  );
+
+  return {
+    verifiedLiteratureNotes,
+    verifiedMethodNotes: verifiedLiteratureNotes.filter((note) => note.use === "method"),
+    verifiedComparisonNotes: verifiedLiteratureNotes.filter((note) => note.use === "comparison" || note.use === "limitation"),
+    verifiedResults,
+    verifiedSources,
+  };
+}
+
+function linkedRecordIds(...collections: Array<Array<{ id: string }>>): string[] {
+  return [...new Set(collections.flatMap((collection) => collection.map((record) => record.id)))];
+}
+
+function evidenceForItem(id: string, project: ThesisProject, context: RoadmapEvidenceContext): ChapterEvidencePlan {
   const topicReady = hasTopic(project) && project.researchQuestion.trim().length > 0 && project.scope.trim().length > 0;
-  const sourceReady = hasTraceablePriorResearch(project);
+
+  switch (id) {
+    case "preliminaries":
+      return {
+        status: "not-applicable",
+        summary: "Use the current university template and declaration requirements; this planning map does not add evidence claims here.",
+        recordIds: [],
+      };
+    case "introduction":
+      return topicReady
+        ? {
+            status: "tracked",
+            summary: "Ground this chapter in the student's project brief: topic, question, scope, objectives, and stated contribution—not in invented background claims.",
+            recordIds: linkedRecordIds(project.objectives, project.methods),
+          }
+        : {
+            status: "needs-input",
+            summary: "NEEDS INPUT — add a usable topic, research question, and scope before deciding what this chapter can responsibly claim.",
+            recordIds: [],
+          };
+    case "literature-review":
+      return context.verifiedLiteratureNotes.length > 0
+        ? {
+            status: "tracked",
+            summary: `${context.verifiedLiteratureNotes.length} verified source-linked literature note(s) retain a checked source and locator for synthesis planning.`,
+            recordIds: linkedRecordIds(context.verifiedLiteratureNotes),
+          }
+        : {
+            status: "needs-source",
+            summary: "NEEDS SOURCE — add verified source-linked literature notes before drafting a synthesis or claiming a research gap.",
+            recordIds: [],
+          };
+    case "methodology":
+      return context.verifiedMethodNotes.length > 0
+        ? {
+            status: "tracked",
+            summary: `${context.verifiedMethodNotes.length} verified method note(s) can support the rationale for the planned design; approvals and instruments still need separate review.`,
+            recordIds: linkedRecordIds(context.verifiedMethodNotes, project.methods),
+          }
+        : {
+            status: "needs-source",
+            summary: "NEEDS SOURCE — add a verified literature note marked “Method or approach” before using a source to justify the design.",
+            recordIds: linkedRecordIds(project.methods),
+          };
+    case "results":
+      return context.verifiedResults.length > 0
+        ? {
+            status: "tracked",
+            summary: `${context.verifiedResults.length} verified result record(s) are linked to usable source records. Add only the tables, figures, or analyses those records actually support.`,
+            recordIds: linkedRecordIds(context.verifiedResults),
+          }
+        : {
+            status: "needs-data",
+            summary: "NEEDS DATA — no traceable verified results are available, so this remains an analysis plan rather than a findings chapter.",
+            recordIds: [],
+          };
+    case "discussion":
+      if (context.verifiedResults.length === 0) {
+        return {
+          status: "needs-data",
+          summary: "NEEDS DATA — wait for traceable verified results before interpreting outcomes or implications.",
+          recordIds: [],
+        };
+      }
+      return context.verifiedComparisonNotes.length > 0
+        ? {
+            status: "tracked",
+            summary: `${context.verifiedResults.length} verified result record(s) and ${context.verifiedComparisonNotes.length} comparison or limitation note(s) are available for a bounded discussion plan.`,
+            recordIds: linkedRecordIds(context.verifiedResults, context.verifiedComparisonNotes),
+          }
+        : {
+            status: "needs-source",
+            summary: "NEEDS SOURCE — results are available, but add verified comparison or limitation notes before relating them to earlier research.",
+            recordIds: linkedRecordIds(context.verifiedResults),
+          };
+    case "conclusion":
+      return context.verifiedResults.length > 0
+        ? {
+            status: "tracked",
+            summary: `${context.verifiedResults.length} verified result record(s) can bound the conclusion; keep recommendations within the evidence and study limits.`,
+            recordIds: linkedRecordIds(context.verifiedResults),
+          }
+        : {
+            status: "needs-data",
+            summary: "NEEDS DATA — plan the conclusion structure, but do not state conclusions or recommendations as if results exist.",
+            recordIds: [],
+          };
+    case "references":
+      return context.verifiedSources.length > 0
+        ? {
+            status: "tracked",
+            summary: `${context.verifiedSources.length} usable verified source record(s) can be checked against the department's citation style before adding them to a bibliography.`,
+            recordIds: linkedRecordIds(context.verifiedSources),
+          }
+        : {
+            status: "needs-source",
+            summary: "NEEDS SOURCE — no usable verified source records are ready for formal bibliography checking.",
+            recordIds: [],
+          };
+    case "appendices":
+      return {
+        status: "not-applicable",
+        summary: "Add only materials actually approved or used in the study. Do not create appendices simply to reach the page target.",
+        recordIds: [],
+      };
+    default:
+      return {
+        status: "needs-input",
+        summary: "NEEDS INPUT — identify the records this section needs before writing it.",
+        recordIds: [],
+      };
+  }
+}
+
+function statusForItem(id: string, project: ThesisProject, context: RoadmapEvidenceContext): Pick<DissertationRoadmapItem, "status" | "nextStep"> {
+  const topicReady = hasTopic(project) && project.researchQuestion.trim().length > 0 && project.scope.trim().length > 0;
+  const sourceReady = context.verifiedLiteratureNotes.length > 0;
   const designReady = project.objectives.length > 0 && project.methods.length > 0;
-  const resultReady = project.results.some((result) => result.verification === "verified");
+  const resultReady = context.verifiedResults.length > 0;
 
   switch (id) {
     case "introduction":
@@ -147,27 +300,33 @@ function statusForItem(id: string, project: ThesisProject): Pick<DissertationRoa
     case "literature-review":
       return sourceReady
         ? { status: "ready", nextStep: "Group sources by theme, method, setting, and unresolved question before drafting synthesis." }
-        : { status: "needs-sources", nextStep: "Add traceable prior research and your checked notes; never fill this chapter from titles alone." };
+        : { status: "needs-sources", nextStep: "Add verified source-linked literature notes; never fill this chapter from titles alone." };
     case "methodology":
-      return designReady
+      if (!designReady) {
+        return { status: "needs-brief", nextStep: "Map clear objectives to an auditable method and obtain required approvals." };
+      }
+      return context.verifiedMethodNotes.length > 0
         ? { status: "ready", nextStep: "Document approvals, instruments, and the exact analysis process before collecting data." }
-        : { status: "needs-brief", nextStep: "Map clear objectives to an auditable method and obtain required approvals." };
+        : { status: "needs-sources", nextStep: "Add a verified method source note before using literature to justify the selected design." };
     case "results":
       return resultReady
         ? { status: "ready", nextStep: "Keep every table, figure, and result linked to a verified source or analysis record." }
         : { status: "needs-data", nextStep: "NEEDS DATA — do not draft findings until verified results are available." };
     case "discussion":
-      return resultReady
+      if (!resultReady) {
+        return { status: "needs-data", nextStep: "NEEDS DATA — prepare discussion questions, but do not write outcome claims." };
+      }
+      return context.verifiedComparisonNotes.length > 0
         ? { status: "ready", nextStep: "Interpret only verified results and cite the prior research being compared." }
-        : { status: "needs-data", nextStep: "NEEDS DATA — prepare discussion questions, but do not write outcome claims." };
+        : { status: "needs-sources", nextStep: "Add verified comparison or limitation notes before relating results to earlier research." };
     case "conclusion":
       return resultReady
         ? { status: "ready", nextStep: "State only conclusions that follow from the documented evidence and study limits." }
         : { status: "needs-data", nextStep: "NEEDS DATA — keep this as a conclusion plan until results are verified." };
     case "references":
-      return project.priorResearch.length > 0 || project.sources.length > 0
+      return context.verifiedSources.length > 0
         ? { status: "ready", nextStep: "Verify author, year, title, publisher or journal, DOI/URL, and the required citation style." }
-        : { status: "needs-sources", nextStep: "Add stable sources before creating a bibliography." };
+        : { status: "needs-sources", nextStep: "Add usable verified source records before creating a bibliography." };
     case "appendices":
       return { status: "needs-review", nextStep: "Add only documents actually approved or used in the study; never add filler to reach a page target." };
     default:
@@ -223,21 +382,26 @@ function buildOriginalityChecks(project: ThesisProject): OriginalityCheckpoint[]
 export function buildDissertationRoadmap(project: ThesisProject, requestedPageTarget = DEFAULT_DISSERTATION_PAGE_TARGET): DissertationRoadmap {
   const pageTarget = clampPageTarget(requestedPageTarget);
   const pages = allocatePages(pageTarget);
+  const evidenceContext = buildEvidenceContext(project);
 
   return {
     pageTarget,
     items: ROADMAP_BLUEPRINT.map((blueprint, index) => ({
       ...blueprint,
       pageBudget: pages[index] ?? 0,
-      ...statusForItem(blueprint.id, project),
+      ...statusForItem(blueprint.id, project, evidenceContext),
+      evidence: evidenceForItem(blueprint.id, project, evidenceContext),
     })),
     originalityChecks: buildOriginalityChecks(project),
   };
 }
 
 export function buildDissertationRoadmapMarkdown(roadmap: DissertationRoadmap): string {
-  const plan = roadmap.items.map((item) => `- ${item.heading}: ~${item.pageBudget} pages — ${item.nextStep}`).join("\n");
+  const plan = roadmap.items.map((item) => {
+    const linkedRecords = item.evidence.recordIds.length > 0 ? ` Linked records: ${item.evidence.recordIds.join(", ")}.` : "";
+    return `- ${item.heading}: ~${item.pageBudget} pages — ${item.nextStep}\n  Evidence plan: ${item.evidence.summary}${linkedRecords}`;
+  }).join("\n");
   const checks = roadmap.originalityChecks.map((check) => `- ${check.label}: ${check.summary} Next: ${check.nextStep}`).join("\n");
 
-  return `## ${roadmap.pageTarget}-page dissertation roadmap\n\nThis is a planning budget, not generated thesis content. Do not add filler, unverified claims, or copied text to reach a page count.\n\n${plan}\n\n### Originality and citation readiness\n\n${checks}`;
+  return `## ${roadmap.pageTarget}-page dissertation roadmap\n\nThis is a source-linked chapter plan, not generated thesis content. Do not add filler, unverified claims, or copied text to reach a page count.\n\n${plan}\n\n### Originality and citation readiness\n\n${checks}`;
 }

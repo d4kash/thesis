@@ -214,10 +214,61 @@ test("the long-form roadmap budgets pages without inventing thesis content or re
   assert.match(buildDissertationRoadmapMarkdown(roadmap), /do not add filler, unverified claims, or copied text/i);
 });
 
+test("the chapter plan links verified local records without inventing literature or results", () => {
+  const project = {
+    ...DEMO_PROJECTS[0],
+    sources: [{
+      id: "SRC-01",
+      label: "Synthetic verified planning source record",
+      kind: "literature-map" as const,
+      status: "verified" as const,
+      note: "Synthetic test record with a checked source location and relevance note for planning only.",
+    }],
+    literatureNotes: [
+      {
+        id: "LIT-01",
+        sourceId: "SRC-01",
+        claim: "The source supports documenting a transparent method rationale before any data collection begins.",
+        locator: "Section 3, p. 12",
+        use: "method" as const,
+        status: "verified" as const,
+      },
+      {
+        id: "LIT-02",
+        sourceId: "SRC-01",
+        claim: "The source identifies a limitation that can be checked when comparing later verified results.",
+        locator: "Discussion, p. 18",
+        use: "comparison" as const,
+        status: "verified" as const,
+      },
+    ],
+    results: [{
+      id: "RES-01",
+      label: "Synthetic verified analysis record",
+      verification: "verified" as const,
+      note: "Synthetic test record used only to verify result-to-source planning behavior.",
+      sourceIds: ["SRC-01"],
+    }],
+  };
+  const roadmap = buildDissertationRoadmap(project);
+  const literature = roadmap.items.find((item) => item.id === "literature-review");
+  const methodology = roadmap.items.find((item) => item.id === "methodology");
+  const discussion = roadmap.items.find((item) => item.id === "discussion");
+
+  assert.equal(literature?.evidence.status, "tracked");
+  assert.deepEqual(literature?.evidence.recordIds, ["LIT-01", "LIT-02"]);
+  assert.deepEqual(methodology?.evidence.recordIds.slice(0, 1), ["LIT-01"]);
+  assert.deepEqual(discussion?.evidence.recordIds, ["RES-01", "LIT-02"]);
+  assert.match(buildDissertationRoadmapMarkdown(roadmap), /source-linked chapter plan/i);
+  assert.match(buildDissertationRoadmapMarkdown(roadmap), /Linked records: LIT-01, LIT-02/);
+});
+
 test("the long-form roadmap makes citation readiness explicit and rejects plagiarism-removal framing", () => {
   const markup = renderToStaticMarkup(createElement(DissertationRoadmap, { project: DEMO_PROJECTS[0] }));
 
-  assert.match(markup, /Build a real 300-page dissertation plan/);
+  assert.match(markup, /Build a source-grounded 300-page plan/);
+  assert.match(markup, /Evidence for this chapter/);
+  assert.match(markup, /NEEDS SOURCE/);
   assert.match(markup, /Originality and citation readiness/);
   assert.match(markup, /cannot remove plagiarism/i);
   assert.match(markup, /institution.*required similarity review/i);
