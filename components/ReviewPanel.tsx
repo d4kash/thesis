@@ -25,6 +25,16 @@ export function ReviewPanel({ review }: ReviewPanelProps) {
           ? "The structural scan found no unsupported outcome claims or broken method mappings. Verify planned sources before formal citation."
           : "A result or conclusion includes an unsupported claim. Keep this as a working draft until its evidence record is complete."}
       </p>
+      <dl className="review-stats" aria-label="Evidence ledger status">
+        <div>
+          <dt>Sources</dt>
+          <dd>{review.verifiedSourceCount}/{review.sourceCount} verified</dd>
+        </div>
+        <div>
+          <dt>Results</dt>
+          <dd>{review.verifiedResultCount}/{review.resultCount} verified</dd>
+        </div>
+      </dl>
       <div className="issues">
         {severityOrder.map((severity) => {
           const issues = review.issues.filter((item) => item.severity === severity);

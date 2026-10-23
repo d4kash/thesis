@@ -10,9 +10,9 @@ export function DraftViewer({ sections }: DraftViewerProps) {
       <div className="panel-heading">
         <div>
           <p className="eyebrow">DRAFT STUDIO</p>
-          <h2 id="draft-heading">Traceable working draft</h2>
+          <h2 id="draft-heading">Seven-part thesis scaffold</h2>
         </div>
-        <span className="status-pill">Generated from current brief</span>
+        <span className="status-pill">Generated from brief + ledger</span>
       </div>
       <div className="draft-sections">
         {sections.map((section) => (

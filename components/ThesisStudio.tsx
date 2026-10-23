@@ -2,6 +2,7 @@
 
 import { startTransition, useMemo, useState } from "react";
 import { DraftViewer } from "@/components/DraftViewer";
+import { EvidenceLedger } from "@/components/EvidenceLedger";
 import { ExportActions } from "@/components/ExportActions";
 import { ProjectEditor } from "@/components/ProjectEditor";
 import { ProjectPicker } from "@/components/ProjectPicker";
@@ -94,13 +95,16 @@ export function ThesisStudio() {
       </p>
       <ProjectPicker onCreate={createProject} onSelect={selectProject} projects={projects} selectedId={project.id} />
       <div aria-busy={isSwitching} className="studio-grid">
-        <ProjectEditor onChange={setProject} project={project} />
+        <div className="workspace-stack">
+          <ProjectEditor onChange={setProject} project={project} />
+          <EvidenceLedger onChange={setProject} project={project} />
+        </div>
         <DraftViewer sections={draft} />
         <ReviewPanel review={review} />
       </div>
       <ExportActions enabled={review.canExportAsDraft} onCopy={copyMarkdown} onDownload={downloadDraft} status={exportStatus} />
       <footer className="site-footer">
-        <span>Version 0.1 • local demo workspace</span>
+        <span>Version 0.2 • evidence-ledger workspace</span>
         <span>Evidence → method → result → claim</span>
       </footer>
     </main>

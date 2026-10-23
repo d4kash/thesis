@@ -22,6 +22,7 @@ export function reviewProject(project: ThesisProject, draft: DraftSection[]): Qu
   const issues: QualityIssue[] = [];
   const objectiveIds = new Set(project.objectives.map((objective) => objective.id));
   const sourceIds = new Set<string>();
+  const sourceById = new Map(project.sources.map((source) => [source.id, source]));
 
   for (const source of project.sources) {
     if (sourceIds.has(source.id)) {
@@ -36,6 +37,18 @@ export function reviewProject(project: ThesisProject, draft: DraftSection[]): Qu
       );
     }
     sourceIds.add(source.id);
+
+    if (source.status === "verified" && (source.label.trim().length < 5 || source.note.trim().length < 12)) {
+      issues.push(
+        issue(
+          `thin-verified-source-${source.id}`,
+          "warning",
+          "Verified source lacks a usable record",
+          `${source.id} is marked verified but does not yet contain enough identifying or relevance information.`,
+          "Record a complete citation or stable source description, plus the evidence or claim it supports.",
+        ),
+      );
+    }
   }
 
   for (const method of project.methods) {
@@ -61,6 +74,48 @@ export function reviewProject(project: ThesisProject, draft: DraftSection[]): Qu
           "Evidence source still needs verification",
           `${source.id} is marked ${source.status}.`,
           "Record the full source, access date, license, and relevance check before citing it.",
+        ),
+      );
+    }
+  }
+
+  if (project.sources.length === 0) {
+    issues.push(
+      issue(
+        "no-sources",
+        "warning",
+        "No sources in the evidence ledger",
+        "The draft can remain a planning scaffold, but it is not ready for literature writing.",
+        "Add source records and verify them before using them in a literature review.",
+      ),
+    );
+  }
+
+  for (const result of project.results) {
+    if (result.verification === "unverified") {
+      issues.push(
+        issue(
+          `result-status-${result.id}`,
+          "info",
+          "Result still needs verification",
+          `${result.id} is present in the result ledger but is not verified.`,
+          "Keep this result out of outcome claims until its supporting record is verified.",
+        ),
+      );
+      continue;
+    }
+
+    const linkedSources = result.sourceIds.map((id) => sourceById.get(id));
+    const hasVerifiedEvidence = linkedSources.some((source) => source?.status === "verified");
+
+    if (result.sourceIds.length === 0 || !hasVerifiedEvidence) {
+      issues.push(
+        issue(
+          `result-traceability-${result.id}`,
+          "critical",
+          "Verified result has no verified evidence link",
+          `${result.id} is marked verified but does not link to a verified source record.`,
+          "Link the result to at least one verified source, dataset, or approved result record.",
         ),
       );
     }
@@ -104,5 +159,9 @@ export function reviewProject(project: ThesisProject, draft: DraftSection[]): Qu
     issues,
     score,
     canExportAsDraft: criticalCount === 0,
+    sourceCount: project.sources.length,
+    verifiedSourceCount: project.sources.filter((source) => source.status === "verified").length,
+    resultCount: project.results.length,
+    verifiedResultCount: project.results.filter((result) => result.verification === "verified").length,
   };
 }

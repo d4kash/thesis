@@ -8,7 +8,7 @@ interface ProjectEditorProps {
 
 function updateTextField(
   project: ThesisProject,
-  field: "title" | "researchQuestion" | "scope",
+  field: "title" | "discipline" | "researchQuestion" | "scope",
   event: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>,
 ): ThesisProject {
   return { ...project, [field]: event.target.value };
@@ -29,6 +29,13 @@ export function ProjectEditor({ project, onChange }: ProjectEditorProps) {
         <input
           onChange={(event) => onChange(updateTextField(project, "title", event))}
           value={project.title}
+        />
+      </label>
+      <label>
+        Discipline or field
+        <input
+          onChange={(event) => onChange(updateTextField(project, "discipline", event))}
+          value={project.discipline}
         />
       </label>
       <label>

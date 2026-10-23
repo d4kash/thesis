@@ -2,9 +2,11 @@ export type EvidenceStatus = "planned" | "reviewed" | "verified";
 export type IssueSeverity = "critical" | "warning" | "info";
 export type DraftSectionKey =
   | "overview"
+  | "literature-plan"
   | "research-design"
   | "evidence-plan"
   | "results-status"
+  | "discussion"
   | "conclusion";
 
 export interface EvidenceSource {
@@ -31,6 +33,7 @@ export interface ResultLedgerItem {
   label: string;
   verification: "unverified" | "verified";
   note: string;
+  sourceIds: string[];
 }
 
 export interface ThesisProject {
@@ -65,4 +68,8 @@ export interface QualityReport {
   issues: QualityIssue[];
   score: number;
   canExportAsDraft: boolean;
+  sourceCount: number;
+  verifiedSourceCount: number;
+  resultCount: number;
+  verifiedResultCount: number;
 }

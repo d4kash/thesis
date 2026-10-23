@@ -12,9 +12,35 @@ test("both synthetic demo projects create exportable planning drafts", () => {
 
     assert.equal(review.canExportAsDraft, true, project.title);
     assert.equal(review.issues.filter((item) => item.severity === "critical").length, 0, project.title);
+    assert.equal(draft.length, 7, project.title);
+    assert.equal(draft.some((section) => section.id === "literature-plan"), true);
     assert.equal(draft.find((section) => section.id === "results-status")?.body.includes("No results are stated"), true);
     assert.match(buildDraftMarkdown(project, draft, review), /research-planning draft/i);
   }
+});
+
+test("a verified result must link to a verified evidence record", () => {
+  const project = {
+    ...DEMO_PROJECTS[0],
+    sources: [{ ...DEMO_PROJECTS[0].sources[0], status: "verified" as const, note: "Verified dataset record with license, access date, and relevance notes." }],
+    results: [{ id: "RES-01", label: "Held-out evaluation summary", verification: "verified" as const, note: "A traceable summary was recorded.", sourceIds: [] }],
+  };
+  const review = reviewProject(project, generateDraft(project));
+
+  assert.equal(review.canExportAsDraft, false);
+  assert.equal(review.issues.some((item) => item.id === "result-traceability-RES-01"), true);
+});
+
+test("a verified result with a verified evidence link can remain a working draft", () => {
+  const project = {
+    ...DEMO_PROJECTS[0],
+    sources: [{ ...DEMO_PROJECTS[0].sources[0], status: "verified" as const, note: "Verified dataset record with license, access date, and relevance notes." }],
+    results: [{ id: "RES-01", label: "Held-out evaluation summary", verification: "verified" as const, note: "A traceable summary was recorded.", sourceIds: ["SRC-01"] }],
+  };
+  const review = reviewProject(project, generateDraft(project));
+
+  assert.equal(review.canExportAsDraft, true);
+  assert.equal(review.verifiedResultCount, 1);
 });
 
 test("a plan that explicitly says it has no findings is not mistaken for an unsupported result", () => {
