@@ -243,6 +243,21 @@ test("a verified result with a verified evidence link can remain a working draft
   assert.equal(review.verifiedResultCount, 1);
 });
 
+test("duplicate result identifiers block an otherwise traceable draft", () => {
+  const project = {
+    ...DEMO_PROJECTS[0],
+    sources: [{ ...DEMO_PROJECTS[0].sources[0], status: "verified" as const, note: "Verified dataset record with license, access date, and relevance notes." }],
+    results: [
+      { id: "RES-01", label: "First evaluation summary", verification: "verified" as const, note: "A traceable evaluation summary was recorded.", sourceIds: ["SRC-01"] },
+      { id: "RES-01", label: "Second evaluation summary", verification: "verified" as const, note: "A separate traceable evaluation summary was recorded.", sourceIds: ["SRC-01"] },
+    ],
+  };
+  const review = reviewProject(project, generateDraft(project));
+
+  assert.equal(review.canExportAsDraft, false);
+  assert.equal(review.issues.some((item) => item.id === "duplicate-result-RES-01"), true);
+});
+
 test("a verified result cannot rely on a thin verified source record", () => {
   const project = {
     ...DEMO_PROJECTS[0],

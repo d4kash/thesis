@@ -30,6 +30,7 @@ export function reviewProject(project: ThesisProject, draft: DraftSection[]): Qu
   const objectiveIds = new Set(project.objectives.map((objective) => objective.id));
   const sourceIds = new Set<string>();
   const priorResearchIds = new Set<string>();
+  const resultIds = new Set<string>();
   const sourceById = new Map(project.sources.map((source) => [source.id, source]));
 
   if (!hasTopic(project)) {
@@ -165,6 +166,19 @@ export function reviewProject(project: ThesisProject, draft: DraftSection[]): Qu
   }
 
   for (const result of project.results) {
+    if (resultIds.has(result.id)) {
+      issues.push(
+        issue(
+          `duplicate-result-${result.id}`,
+          "critical",
+          "Duplicate result identifier",
+          `${result.id} appears more than once in the result ledger.`,
+          "Give every result record a unique stable identifier.",
+        ),
+      );
+    }
+    resultIds.add(result.id);
+
     if (result.verification === "verified" && (result.label.trim().length < 5 || result.note.trim().length < 12)) {
       issues.push(
         issue(
