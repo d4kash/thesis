@@ -12,11 +12,11 @@ export function ProjectPicker({ projects, selectedId, onSelect, onCreate }: Proj
     <nav className="project-picker" aria-label="Research projects">
       <div className="project-picker__heading">
         <div>
-          <p className="eyebrow">PROJECTS</p>
-          <h2>Choose a starting point</h2>
+          <p className="eyebrow">YOUR PROJECTS</p>
+          <h2>Start with your topic</h2>
         </div>
         <button className="button button--secondary" type="button" onClick={onCreate}>
-          Start blank plan
+          Start a new topic
         </button>
       </div>
       <div className="project-cards">
@@ -28,8 +28,8 @@ export function ProjectPicker({ projects, selectedId, onSelect, onCreate }: Proj
             onClick={() => onSelect(project)}
             type="button"
           >
-            <span className="project-card__discipline">{project.discipline}</span>
-            <strong>{project.title}</strong>
+            <span className="project-card__discipline">{project.discipline || "Choose your field"}</span>
+            <strong>{project.title || "New topic"}</strong>
             <small>{project.demoLabel}</small>
           </button>
         ))}

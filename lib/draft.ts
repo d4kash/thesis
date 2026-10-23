@@ -1,5 +1,6 @@
 import type { DraftSection, ThesisProject } from "@/lib/thesis-types";
 import { buildResearchLandscape } from "@/lib/research-landscape";
+import { buildStudentWritingStarter } from "@/lib/writing-support";
 
 function list(items: string[]): string {
   return items.map((item, index) => `${index + 1}. ${item}`).join("\n");
@@ -7,6 +8,7 @@ function list(items: string[]): string {
 
 export function generateDraft(project: ThesisProject): DraftSection[] {
   const landscape = buildResearchLandscape(project);
+  const writingStarter = buildStudentWritingStarter(project);
   const objectiveLines = project.objectives.map((objective) => `${objective.id}: ${objective.text}`);
   const methodLines = project.methods.map(
     (method) => `${method.id} → ${method.objectiveIds.join(", ")}: ${method.text}`,
@@ -37,8 +39,8 @@ export function generateDraft(project: ThesisProject): DraftSection[] {
   return [
     {
       id: "overview",
-      heading: "1. Research overview",
-      body: `${project.demoLabel}\n\nResearch question: ${project.researchQuestion}\n\nScope: ${project.scope}\n\nThis demonstration draft defines a research path. It does not present completed findings or citations that have not been verified.`,
+      heading: "1. What this study is about",
+      body: `${project.demoLabel}\n\n${writingStarter?.paragraph ?? "Add a topic to create an editable opening paragraph for this working draft."}\n\nResearch question: ${project.researchQuestion}\n\nScope: ${project.scope}\n\nThis working draft defines a research path. It does not present completed findings or citations that have not been verified.`,
       claimIds: [],
     },
     {

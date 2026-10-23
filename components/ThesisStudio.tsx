@@ -10,6 +10,7 @@ import { PriorResearchLibrary } from "@/components/PriorResearchLibrary";
 import { ResearchLandscape } from "@/components/ResearchLandscape";
 import { ReviewPanel } from "@/components/ReviewPanel";
 import { StudioHeader } from "@/components/StudioHeader";
+import { WritingCoach } from "@/components/WritingCoach";
 import { DEFAULT_PROJECT_ID, DEMO_PROJECTS } from "@/lib/demo-projects";
 import { generateDraft } from "@/lib/draft";
 import { buildDraftMarkdown } from "@/lib/export";
@@ -19,11 +20,11 @@ import type { ThesisProject } from "@/lib/thesis-types";
 function createBlankProject(): ThesisProject {
   return {
     id: "local-plan",
-    demoLabel: "Local working project • add verified evidence before use",
-    title: "Untitled research plan",
-    discipline: "Choose a discipline",
-    researchQuestion: "What focused question will this project investigate?",
-    scope: "Define what the project will cover, what it will not cover, and what evidence it needs.",
+    demoLabel: "Your working project • add verified sources before using claims",
+    title: "",
+    discipline: "",
+    researchQuestion: "",
+    scope: "",
     objectives: [
       { id: "OBJ-01", text: "State one measurable research objective." },
     ],
@@ -94,12 +95,13 @@ export function ThesisStudio() {
     <main className="site-shell">
       <StudioHeader issueCount={review.issues.length} project={project} score={review.score} />
       <p className="demo-banner" role="note">
-        <strong>Demonstration workspace:</strong> the included projects are synthetic research plans. This tool blocks unsupported result language; it does not replace academic supervision, ethics approval, or source verification.
+        <strong>Your thesis workspace:</strong> start with a topic, edit the generated planning text, and add your own verified sources. The included examples are synthetic; this tool does not replace academic supervision, ethics approval, or source verification.
       </p>
       <ProjectPicker onCreate={createProject} onSelect={selectProject} projects={projects} selectedId={project.id} />
       <div aria-busy={isSwitching} className="studio-grid">
         <div className="workspace-stack">
           <ProjectEditor onChange={setProject} project={project} />
+          <WritingCoach project={project} />
           <PriorResearchLibrary key={`${project.id}-prior-research`} onChange={setProject} project={project} />
           <EvidenceLedger onChange={setProject} project={project} />
         </div>

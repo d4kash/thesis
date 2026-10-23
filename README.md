@@ -33,6 +33,7 @@ npm run build
 ## What the upgraded workspace does
 
 - Lets a researcher turn a topic and research brief into an eight-part thesis scaffold.
+- Presents the intake in student-friendly language, with an editable topic-based opening paragraph and a short own-voice phrase guide.
 - Provides an evidence-safe starter action that turns a new topic into a research question, scope, objectives, and auditable method plan while leaving results and citations empty.
 - Stores prior-thesis or paper notes locally: source trace, setting, question, method, reported finding, and stated limitation.
 - Builds a transparent topic map that ranks local prior-work records by term overlap and surfaces only **candidate** gaps from notes supplied by the researcher.
@@ -50,3 +51,5 @@ The Eve agent also includes a source-grounded drafting skill for conversations t
 ## Research guardrails
 
 A final thesis requires verified sources, approved research methods, and traceable result records. The structural review and topic map are quality aids, not academic approval or automatic literature review systems.
+
+The phrase guide is for expressing a writer's own verified ideas more clearly. It does not rewrite copied passages, bypass plagiarism checks, or remove the need to cite a source.

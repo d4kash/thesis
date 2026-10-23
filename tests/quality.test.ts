@@ -6,6 +6,7 @@ import { buildDraftMarkdown } from "../lib/export";
 import { buildResearchLandscape } from "../lib/research-landscape";
 import { createTopicStarter } from "../lib/topic-starter";
 import { reviewProject } from "../lib/quality";
+import { buildStudentWritingStarter, WRITING_PHRASE_GROUPS } from "../lib/writing-support";
 
 test("both synthetic demo projects create exportable planning drafts", () => {
   for (const project of DEMO_PROJECTS) {
@@ -127,6 +128,33 @@ test("a topic starter creates a planning scaffold without creating results or ci
   assert.equal(starter.sources.length, 0);
   assert.equal(starter.priorResearch.length, 0);
   assert.match(starter.methods[1]?.text ?? "", /source-linked comparison matrix/i);
+});
+
+test("a student writing starter creates an editable plan from the supplied topic only", () => {
+  const project = {
+    ...DEMO_PROJECTS[0],
+    title: "Sustainable disease diagnosis for flowering plants",
+    researchQuestion: "How can image evidence support transparent diagnosis planning?",
+    scope: "A planning draft for selected flowering plants, without completed experiments or clinical advice.",
+  };
+  const starter = buildStudentWritingStarter(project);
+
+  assert.ok(starter);
+  assert.match(starter.paragraph, /Sustainable disease diagnosis for flowering plants/);
+  assert.match(starter.paragraph, /How can image evidence support transparent diagnosis planning/);
+  assert.match(starter.paragraph, /describes a plan, not a result/i);
+  assert.doesNotMatch(starter.paragraph, /proves|improves|demonstrates/i);
+});
+
+test("the writing helper does not generate a paragraph without a real topic and offers cautious phrase choices", () => {
+  const blankProject = {
+    ...DEMO_PROJECTS[0],
+    title: "Untitled research plan",
+  };
+
+  assert.equal(buildStudentWritingStarter(blankProject), null);
+  assert.equal(WRITING_PHRASE_GROUPS.every((group) => group.options.length > 0), true);
+  assert.match(WRITING_PHRASE_GROUPS.find((group) => group.id === "evidence")?.options.join(" ") ?? "", /suggests|consistent|verification/i);
 });
 
 test("a verified result must link to a verified evidence record", () => {

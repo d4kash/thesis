@@ -75,6 +75,23 @@ h3 { font-size: 0.94rem; margin-bottom: 8px; }
 .project-editor__starter-note { margin: 0 0 15px; }
 .field-note { color: var(--muted); font-size: 0.8rem; line-height: 1.5; margin-bottom: 0; }
 
+.writing-coach { background: linear-gradient(145deg, #fffdf8, #eef8f1); }
+.writing-starter { background: #f5f8f4; border: 1px solid #dbe6de; border-radius: 12px; margin: 18px 0; padding: 13px; }
+.writing-starter strong { color: var(--green-dark); display: block; font-size: 0.82rem; line-height: 1.4; }
+.writing-starter p { font-size: 0.87rem; line-height: 1.55; margin: 8px 0 12px; }
+.writing-starter--empty { color: var(--muted); font-size: 0.84rem; font-style: italic; line-height: 1.5; }
+.phrase-guide { border-top: 1px solid #dfe9e2; padding-top: 16px; }
+.phrase-guide h3 { color: var(--green-dark); font-family: Georgia, "Times New Roman", serif; }
+.phrase-group { border-top: 1px solid #e4e5df; margin-top: 14px; padding-top: 13px; }
+.phrase-group strong, .phrase-group small { display: block; }
+.phrase-group strong { font-size: 0.79rem; }
+.phrase-group small { color: var(--muted); font-size: 0.73rem; line-height: 1.4; margin-top: 3px; }
+.phrase-options { display: flex; flex-wrap: wrap; gap: 7px; margin-top: 9px; }
+.phrase-option { background: white; border: 1px solid #a9cbb7; border-radius: 999px; color: var(--green-dark); font-size: 0.74rem; line-height: 1.25; padding: 6px 9px; text-align: left; }
+.phrase-option:hover { background: var(--mint); border-color: var(--green); }
+.phrase-option:focus-visible { outline: 3px solid rgba(28, 106, 74, 0.18); outline-offset: 2px; }
+.writing-integrity-note { background: #fff2d5; border-left: 3px solid var(--amber); color: #69420b; font-size: 0.78rem; line-height: 1.5; margin: 18px 0 0; padding: 9px 10px; }
+
 .evidence-ledger .field-note { margin-bottom: 18px; }
 .ledger-form { border-top: 1px solid #e4e5df; display: grid; gap: 12px; margin-top: 18px; padding-top: 18px; }
 .ledger-form h3 { color: var(--green-dark); font-family: Georgia, "Times New Roman", serif; margin: 0; }

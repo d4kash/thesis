@@ -10,15 +10,15 @@ export function StudioHeader({ project, score, issueCount }: StudioHeaderProps) 
   return (
     <header className="site-header">
       <div>
-        <p className="eyebrow">THESIS STUDIO / EVIDENCE-FIRST DRAFTING</p>
-        <h1>Build the research trail before the thesis.</h1>
+        <p className="eyebrow">THESIS STUDIO / STEP-BY-STEP WRITING</p>
+        <h1>Plan and write your thesis, one verified step at a time.</h1>
         <p className="lede">
-          Turn a research brief into a traceable draft, then inspect the claims before you export.
+          Start with your topic, turn it into an editable working draft, and keep sources beside the ideas they support.
         </p>
       </div>
       <aside className="review-summary" aria-label="Current review status">
         <span className="review-summary__label">Current project</span>
-        <strong>{project.title}</strong>
+        <strong>{project.title.trim() || "New topic"}</strong>
         <div className="review-metrics">
           <span>{score}/100 structural score</span>
           <span>{issueCount} review items</span>

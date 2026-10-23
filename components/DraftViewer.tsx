@@ -9,10 +9,10 @@ export function DraftViewer({ sections }: DraftViewerProps) {
     <section className="panel draft-viewer" aria-labelledby="draft-heading">
       <div className="panel-heading">
         <div>
-          <p className="eyebrow">DRAFT STUDIO</p>
-          <h2 id="draft-heading">Topic-led thesis scaffold</h2>
+          <p className="eyebrow">YOUR WORKING DRAFT</p>
+          <h2 id="draft-heading">A first draft built from your topic</h2>
         </div>
-        <span className="status-pill">Generated from brief + ledger</span>
+        <span className="status-pill">Edit before using</span>
       </div>
       <div className="draft-sections">
         {sections.map((section) => (
@@ -20,7 +20,7 @@ export function DraftViewer({ sections }: DraftViewerProps) {
             <h3>{section.heading}</h3>
             <p>{section.body}</p>
             <small>
-              Trace IDs: {section.claimIds.length === 0 ? "None required for this planning section" : section.claimIds.join(", ")}
+              Linked notes: {section.claimIds.length === 0 ? "No source or result link needed for this planning section" : section.claimIds.join(", ")}
             </small>
           </article>
         ))}

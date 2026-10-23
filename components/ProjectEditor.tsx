@@ -21,14 +21,15 @@ export function ProjectEditor({ project, onChange }: ProjectEditorProps) {
       <div className="panel-heading">
         <div>
           <p className="eyebrow">RESEARCH BRIEF</p>
-          <h2 id="brief-heading">Frame the project honestly</h2>
+          <h2 id="brief-heading">Tell us what you want to research</h2>
         </div>
-        <span className="status-pill">Local working draft</span>
+        <span className="status-pill">Your working plan</span>
       </div>
       <label>
-        Thesis topic / working title
+        Your topic or working title
         <input
           onChange={(event) => onChange(updateTextField(project, "title", event))}
+          placeholder="For example: Digital learning access in rural colleges"
           value={project.title}
         />
       </label>
@@ -38,36 +39,39 @@ export function ProjectEditor({ project, onChange }: ProjectEditorProps) {
         onClick={() => onChange(createTopicStarter(project))}
         type="button"
       >
-        Create evidence-safe starter from topic
+        Create my starter outline
       </button>
       <p className="field-note project-editor__starter-note">
-        This fills only missing planning fields and preserves existing details. It never creates findings, citations, participant data, or a finished thesis.
+        We use the words you provide to make an editable question, scope, objectives, and method outline. We never add sources, data, results, or citations that you have not supplied.
       </p>
       <label>
-        Discipline or field
+        Your subject or field
         <input
           onChange={(event) => onChange(updateTextField(project, "discipline", event))}
+          placeholder="For example: Education and information studies"
           value={project.discipline}
         />
       </label>
       <label>
-        Research question
+        What do you want to find out?
         <textarea
           onChange={(event) => onChange(updateTextField(project, "researchQuestion", event))}
+          placeholder="Write the question your study will answer."
           rows={3}
           value={project.researchQuestion}
         />
       </label>
       <label>
-        Scope and boundary
+        What will your study include and leave out?
         <textarea
           onChange={(event) => onChange(updateTextField(project, "scope", event))}
+          placeholder="Mention the setting, people or material, time period, and limits."
           rows={3}
           value={project.scope}
         />
       </label>
       <p className="field-note">
-        Start with a precise topic, then use the prior-research library below to compare earlier work by context, method, findings, and limitations. The starter projects are synthetic.
+        Start with a clear topic. Then add earlier studies and source notes below so you can compare their setting, method, findings, and limitations. The starter projects are synthetic examples only.
       </p>
     </section>
   );
