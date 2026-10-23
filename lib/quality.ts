@@ -1,5 +1,6 @@
 import type {
   DraftSection,
+  EvidenceSource,
   QualityIssue,
   QualityReport,
   ThesisProject,
@@ -9,6 +10,10 @@ import { hasTopic } from "@/lib/topic-starter";
 const unsupportedOutcomePattern = /\b(outperforms|proves|demonstrates|improves|causes)\b/i;
 const unresolvedMarkerPattern = /\[NEEDS (SOURCE|DATA)\]/i;
 const outcomeClaimSections = new Set(["results-status", "discussion", "conclusion"]);
+
+function isUsableVerifiedSource(source: EvidenceSource | undefined): boolean {
+  return source?.status === "verified" && source.label.trim().length >= 5 && source.note.trim().length >= 12;
+}
 
 function issue(
   id: string,
@@ -53,7 +58,7 @@ export function reviewProject(project: ThesisProject, draft: DraftSection[]): Qu
     }
     sourceIds.add(source.id);
 
-    if (source.status === "verified" && (source.label.trim().length < 5 || source.note.trim().length < 12)) {
+    if (source.status === "verified" && !isUsableVerifiedSource(source)) {
       issues.push(
         issue(
           `thin-verified-source-${source.id}`,
@@ -199,7 +204,7 @@ export function reviewProject(project: ThesisProject, draft: DraftSection[]): Qu
     }
 
     const linkedSources = result.sourceIds.map((id) => sourceById.get(id));
-    const hasVerifiedEvidence = linkedSources.some((source) => source?.status === "verified");
+    const hasVerifiedEvidence = linkedSources.some(isUsableVerifiedSource);
 
     if (result.sourceIds.length === 0 || !hasVerifiedEvidence) {
       issues.push(
@@ -207,8 +212,8 @@ export function reviewProject(project: ThesisProject, draft: DraftSection[]): Qu
           `result-traceability-${result.id}`,
           "critical",
           "Verified result has no verified evidence link",
-          `${result.id} is marked verified but does not link to a verified source record.`,
-          "Link the result to at least one verified source, dataset, or approved result record.",
+          `${result.id} is marked verified but does not link to a usable verified source record.`,
+          "Link the result to a verified source, dataset, or approved result record with identifying and relevance information.",
         ),
       );
     }

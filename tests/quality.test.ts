@@ -243,6 +243,18 @@ test("a verified result with a verified evidence link can remain a working draft
   assert.equal(review.verifiedResultCount, 1);
 });
 
+test("a verified result cannot rely on a thin verified source record", () => {
+  const project = {
+    ...DEMO_PROJECTS[0],
+    sources: [{ ...DEMO_PROJECTS[0].sources[0], status: "verified" as const, label: "x", note: "x" }],
+    results: [{ id: "RES-01", label: "Held-out evaluation summary", verification: "verified" as const, note: "A traceable summary was recorded.", sourceIds: ["SRC-01"] }],
+  };
+  const review = reviewProject(project, generateDraft(project));
+
+  assert.equal(review.canExportAsDraft, false);
+  assert.equal(review.issues.some((item) => item.id === "result-traceability-RES-01"), true);
+});
+
 test("a verified result needs a usable label and supporting record note", () => {
   const project = {
     ...DEMO_PROJECTS[0],
