@@ -4,6 +4,7 @@ import type {
   QualityReport,
   ThesisProject,
 } from "@/lib/thesis-types";
+import { hasTopic } from "@/lib/topic-starter";
 
 const unsupportedOutcomePattern = /\b(outperforms|proves|demonstrates|improves|causes)\b/i;
 const unresolvedMarkerPattern = /\[NEEDS (SOURCE|DATA)\]/i;
@@ -25,6 +26,18 @@ export function reviewProject(project: ThesisProject, draft: DraftSection[]): Qu
   const sourceIds = new Set<string>();
   const priorResearchIds = new Set<string>();
   const sourceById = new Map(project.sources.map((source) => [source.id, source]));
+
+  if (!hasTopic(project)) {
+    issues.push(
+      issue(
+        "missing-topic",
+        "critical",
+        "Add a thesis topic before export",
+        "This project does not yet have a usable topic or working title, so its draft would be generic rather than useful.",
+        "Enter a topic or working title, then create or revise the starter outline before exporting.",
+      ),
+    );
+  }
 
   for (const source of project.sources) {
     if (sourceIds.has(source.id)) {

@@ -157,6 +157,26 @@ test("the writing helper does not generate a paragraph without a real topic and 
   assert.match(WRITING_PHRASE_GROUPS.find((group) => group.id === "evidence")?.options.join(" ") ?? "", /suggests|consistent|verification/i);
 });
 
+test("a blank or placeholder project cannot be exported as a generic draft", () => {
+  const blankProject = {
+    ...DEMO_PROJECTS[0],
+    title: "",
+    discipline: "",
+    researchQuestion: "",
+    scope: "",
+    priorResearch: [],
+    sources: [],
+    results: [],
+  };
+  const placeholderProject = { ...blankProject, title: "Untitled research plan" };
+
+  for (const project of [blankProject, placeholderProject]) {
+    const review = reviewProject(project, generateDraft(project));
+    assert.equal(review.canExportAsDraft, false);
+    assert.equal(review.issues.some((item) => item.id === "missing-topic"), true);
+  }
+});
+
 test("a verified result must link to a verified evidence record", () => {
   const project = {
     ...DEMO_PROJECTS[0],
