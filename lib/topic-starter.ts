@@ -3,6 +3,7 @@ import type { ThesisProject } from "@/lib/thesis-types";
 const UNTITLED_TOPIC = "Untitled research plan";
 const DEFAULT_QUESTION = "What focused question will this project investigate?";
 const DEFAULT_SCOPE = "Define what the project will cover, what it will not cover, and what evidence it needs.";
+const meaningfulTopicCharacter = /[\p{L}\p{N}]/u;
 
 function isPlaceholder(value: string, placeholder: string): boolean {
   return value.trim().length === 0 || value.trim() === placeholder;
@@ -17,7 +18,8 @@ function hasOnlyStarterMethod(project: ThesisProject): boolean {
 }
 
 export function hasTopic(project: ThesisProject): boolean {
-  return project.title.trim().length > 0 && project.title.trim() !== UNTITLED_TOPIC;
+  const title = project.title.trim();
+  return title.length > 0 && title !== UNTITLED_TOPIC && meaningfulTopicCharacter.test(title);
 }
 
 export function createTopicStarter(project: ThesisProject): ThesisProject {

@@ -7,7 +7,7 @@ import { DEMO_PROJECTS } from "../lib/demo-projects";
 import { generateDraft } from "../lib/draft";
 import { buildDraftMarkdown } from "../lib/export";
 import { buildResearchLandscape } from "../lib/research-landscape";
-import { createTopicStarter } from "../lib/topic-starter";
+import { createTopicStarter, hasTopic } from "../lib/topic-starter";
 import { reviewProject } from "../lib/quality";
 import { buildStudentWritingStarter, WRITING_PHRASE_GROUPS } from "../lib/writing-support";
 
@@ -178,6 +178,27 @@ test("a blank or placeholder project cannot be exported as a generic draft", () 
     assert.equal(review.canExportAsDraft, false);
     assert.equal(review.issues.some((item) => item.id === "missing-topic"), true);
   }
+});
+
+test("a punctuation-only title cannot act as a thesis topic", () => {
+  const punctuationOnlyProject = {
+    ...DEMO_PROJECTS[0],
+    title: "---",
+    discipline: "",
+    researchQuestion: "",
+    scope: "",
+    priorResearch: [],
+    sources: [],
+    results: [],
+  };
+  const nonEnglishTopicProject = { ...punctuationOnlyProject, title: "फूलों की फसल का अध्ययन" };
+  const review = reviewProject(punctuationOnlyProject, generateDraft(punctuationOnlyProject));
+
+  assert.equal(hasTopic(punctuationOnlyProject), false);
+  assert.equal(hasTopic(nonEnglishTopicProject), true);
+  assert.equal(buildStudentWritingStarter(punctuationOnlyProject), null);
+  assert.equal(review.canExportAsDraft, false);
+  assert.equal(review.issues.some((item) => item.id === "missing-topic"), true);
 });
 
 test("both copy and download controls respect a structural export hold", () => {
