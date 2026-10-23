@@ -4,6 +4,7 @@ import { startTransition, useMemo, useState } from "react";
 import { DraftViewer } from "@/components/DraftViewer";
 import { EvidenceLedger } from "@/components/EvidenceLedger";
 import { ExportActions } from "@/components/ExportActions";
+import { GettingStartedGuide } from "@/components/GettingStartedGuide";
 import { ProjectEditor } from "@/components/ProjectEditor";
 import { ProjectPicker } from "@/components/ProjectPicker";
 import { PriorResearchLibrary } from "@/components/PriorResearchLibrary";
@@ -97,6 +98,7 @@ export function ThesisStudio() {
       <p className="demo-banner" role="note">
         <strong>Your thesis workspace:</strong> start with a topic, edit the generated planning text, and add your own verified sources. The included examples are synthetic; this tool does not replace academic supervision, ethics approval, or source verification.
       </p>
+      <GettingStartedGuide project={project} review={review} />
       <ProjectPicker onCreate={createProject} onSelect={selectProject} projects={projects} selectedId={project.id} />
       <div aria-busy={isSwitching} className="studio-grid">
         <div className="workspace-stack">

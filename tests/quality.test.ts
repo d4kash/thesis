@@ -3,6 +3,7 @@ import test from "node:test";
 import { createElement } from "react";
 import { renderToStaticMarkup } from "react-dom/server";
 import { ExportActions } from "../components/ExportActions";
+import { GettingStartedGuide } from "../components/GettingStartedGuide";
 import { PriorResearchLibrary } from "../components/PriorResearchLibrary";
 import { DEMO_PROJECTS } from "../lib/demo-projects";
 import { generateDraft } from "../lib/draft";
@@ -10,6 +11,7 @@ import { buildDraftMarkdown } from "../lib/export";
 import { buildResearchLandscape } from "../lib/research-landscape";
 import { createTopicStarter, hasTopic } from "../lib/topic-starter";
 import { reviewProject } from "../lib/quality";
+import { extractPublicSourcePreview, parseSupportedPublicSourceUrl, PublicSourceUrlError } from "../lib/public-source-preview";
 import { buildStudentWritingStarter, WRITING_PHRASE_GROUPS } from "../lib/writing-support";
 
 test("both synthetic demo projects create exportable planning drafts", () => {
@@ -119,6 +121,47 @@ test("saved prior-research records can be corrected in place", () => {
   assert.match(markup, /Edit PRV-01 title/);
   assert.match(markup, /Edit PRV-01 citation/);
   assert.match(markup, /Edit PRV-01 limitations/);
+  assert.match(markup, /Preview a public source/);
+  assert.match(markup, /reads only the public page metadata/);
+});
+
+test("the start guide gives a plain next step for a new student", () => {
+  const project = {
+    ...DEMO_PROJECTS[0],
+    title: "",
+    researchQuestion: "",
+    priorResearch: [],
+  };
+  const review = reviewProject(project, generateDraft(project));
+  const markup = renderToStaticMarkup(createElement(GettingStartedGuide, { project, review }));
+
+  assert.match(markup, /Five simple steps to use Thesis Studio/);
+  assert.match(markup, /Do this next:/);
+  assert.match(markup, /Name your topic/);
+});
+
+test("public source preview accepts only approved HTTPS scholarly record hosts", () => {
+  assert.equal(parseSupportedPublicSourceUrl("https://shodhganga.inflibnet.ac.in/handle/10603/724582").hostname, "shodhganga.inflibnet.ac.in");
+  assert.equal(parseSupportedPublicSourceUrl("https://pubs.rsc.org/en/content/articlelanding/2019/nj/c9nj02154j").hostname, "pubs.rsc.org");
+  assert.throws(() => parseSupportedPublicSourceUrl("http://pubs.rsc.org/article"), PublicSourceUrlError);
+  assert.throws(() => parseSupportedPublicSourceUrl("https://example.org/article"), PublicSourceUrlError);
+});
+
+test("public source preview keeps metadata separate from student research notes", () => {
+  const preview = extractPublicSourcePreview(`
+    <html><head>
+      <meta name="citation_title" content="Transparent crop diagnosis planning" />
+      <meta name="citation_author" content="A. Researcher" />
+      <meta name="citation_doi" content="10.1234/example.1" />
+      <meta name="description" content="A public record summary for readers." />
+    </head><title>Fallback title</title></html>
+  `, "https://shodhganga.inflibnet.ac.in/handle/10603/724582");
+
+  assert.equal(preview.title, "Transparent crop diagnosis planning");
+  assert.deepEqual(preview.authors, ["A. Researcher"]);
+  assert.equal(preview.doi, "10.1234/example.1");
+  assert.match(preview.recordSuggestion, /handle\/10603\/724582/);
+  assert.doesNotMatch(preview.recordSuggestion, /finding|limitation/i);
 });
 
 test("a topic starter creates a planning scaffold without creating results or citations", () => {

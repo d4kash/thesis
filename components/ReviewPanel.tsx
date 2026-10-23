@@ -10,7 +10,7 @@ export function ReviewPanel({ review }: ReviewPanelProps) {
   const criticalCount = review.issues.filter((item) => item.severity === "critical").length;
 
   return (
-    <section className="panel review-panel" aria-labelledby="review-heading">
+    <section className="panel review-panel" id="quality-review" aria-labelledby="review-heading">
       <div className="panel-heading">
         <div>
           <p className="eyebrow">OUTPUT REVIEW</p>

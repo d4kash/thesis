@@ -9,7 +9,7 @@ interface ProjectPickerProps {
 
 export function ProjectPicker({ projects, selectedId, onSelect, onCreate }: ProjectPickerProps) {
   return (
-    <nav className="project-picker" aria-label="Research projects">
+    <nav className="project-picker" id="project-picker" aria-label="Research projects">
       <div className="project-picker__heading">
         <div>
           <p className="eyebrow">YOUR PROJECTS</p>

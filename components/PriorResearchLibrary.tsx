@@ -3,6 +3,17 @@
 import { useState } from "react";
 import type { EvidenceStatus, ThesisProject } from "@/lib/thesis-types";
 
+interface PublicSourcePreview {
+  url: string;
+  host: string;
+  title: string;
+  description: string;
+  authors: string[];
+  published: string;
+  doi: string;
+  recordSuggestion: string;
+}
+
 interface PriorResearchLibraryProps {
   project: ThesisProject;
   onChange: (project: ThesisProject) => void;
@@ -18,6 +29,10 @@ function nextId(ids: string[]): string {
 }
 
 export function PriorResearchLibrary({ project, onChange }: PriorResearchLibraryProps) {
+  const [sourceUrl, setSourceUrl] = useState("");
+  const [preview, setPreview] = useState<PublicSourcePreview | null>(null);
+  const [previewStatus, setPreviewStatus] = useState("");
+  const [isPreviewing, setIsPreviewing] = useState(false);
   const [title, setTitle] = useState("");
   const [citation, setCitation] = useState("");
   const [context, setContext] = useState("");
@@ -27,6 +42,46 @@ export function PriorResearchLibrary({ project, onChange }: PriorResearchLibrary
   const [limitations, setLimitations] = useState("");
   const [status, setStatus] = useState<EvidenceStatus>("reviewed");
   const [message, setMessage] = useState("");
+
+  async function previewPublicSource() {
+    const url = sourceUrl.trim();
+    if (!url) {
+      setPreviewStatus("Paste a public Shodhganga or RSC source link first.");
+      return;
+    }
+
+    setIsPreviewing(true);
+    setPreviewStatus("Checking the public record…");
+    setPreview(null);
+
+    try {
+      const response = await fetch("/api/source-preview", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ url }),
+      });
+      const payload = await response.json() as { preview?: PublicSourcePreview; error?: string };
+
+      if (!response.ok || !payload.preview) {
+        setPreviewStatus(payload.error ?? "The source could not be previewed.");
+        return;
+      }
+
+      setPreview(payload.preview);
+      setPreviewStatus("Public record previewed. Read the original before recording notes.");
+    } catch {
+      setPreviewStatus("The source preview is unavailable right now. You can still add the title and stable link manually.");
+    } finally {
+      setIsPreviewing(false);
+    }
+  }
+
+  function usePreviewInRecord() {
+    if (!preview) return;
+    setTitle((current) => current.trim() ? current : preview.title);
+    setCitation((current) => current.trim() ? current : preview.recordSuggestion);
+    setMessage("The public title and stable link were added to the form. Now write your checked notes before adding the record.");
+  }
 
   function addRecord() {
     const cleanTitle = title.trim();
@@ -91,7 +146,7 @@ export function PriorResearchLibrary({ project, onChange }: PriorResearchLibrary
   }
 
   return (
-    <section className="panel prior-research-library" aria-labelledby="prior-research-heading">
+    <section className="panel prior-research-library" id="prior-research" aria-labelledby="prior-research-heading">
       <div className="panel-heading">
         <div>
           <p className="eyebrow">PRIOR-RESEARCH LIBRARY</p>
@@ -103,8 +158,35 @@ export function PriorResearchLibrary({ project, onChange }: PriorResearchLibrary
         Add notes from the original thesis, dissertation, paper, or approved review. The studio compares the record with the current topic; it does not invent a citation, a finding, or a research gap.
       </p>
 
+      <div className="source-preview">
+        <h3>1. Preview a public source</h3>
+        <p>Paste a public Shodhganga or RSC record. The studio reads only the public page metadata; it does not copy a thesis or paper into a rewrite tool.</p>
+        <label>
+          Public source URL
+          <input
+            onChange={(event) => setSourceUrl(event.target.value)}
+            placeholder="https://shodhganga.inflibnet.ac.in/handle/..."
+            type="url"
+            value={sourceUrl}
+          />
+        </label>
+        <button className="button button--compact" disabled={isPreviewing} onClick={() => void previewPublicSource()} type="button">
+          {isPreviewing ? "Previewing…" : "Preview public source"}
+        </button>
+        {preview ? (
+          <article className="source-preview__card">
+            <strong>{preview.title}</strong>
+            <small>{preview.authors.length > 0 ? preview.authors.join(", ") : preview.host}{preview.published ? ` · ${preview.published}` : ""}</small>
+            {preview.description ? <p><strong>Publisher/repository description:</strong> {preview.description}</p> : <p>No description was available. Open the original record before taking notes.</p>}
+            <a href={preview.url} rel="noreferrer" target="_blank">Open original record</a>
+            <button className="text-button" onClick={usePreviewInRecord} type="button">Use title and link below</button>
+          </article>
+        ) : null}
+        <p aria-live="polite" className="source-preview__status">{previewStatus}</p>
+      </div>
+
       <div className="prior-research-form">
-        <h3>Add a prior work</h3>
+        <h3>2. Add your research notes</h3>
         <label>
           Thesis, dissertation, or paper title
           <input onChange={(event) => setTitle(event.target.value)} value={title} />

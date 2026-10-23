@@ -17,7 +17,7 @@ function updateTextField(
 
 export function ProjectEditor({ project, onChange }: ProjectEditorProps) {
   return (
-    <section className="panel project-editor" aria-labelledby="brief-heading">
+    <section className="panel project-editor" id="research-brief" aria-labelledby="brief-heading">
       <div className="panel-heading">
         <div>
           <p className="eyebrow">RESEARCH BRIEF</p>
