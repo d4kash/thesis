@@ -1,4 +1,5 @@
 import { hasTopic } from "@/lib/topic-starter";
+import { buildSynopsis } from "@/lib/synopsis";
 import type { QualityReport, ThesisProject } from "@/lib/thesis-types";
 
 interface GettingStartedGuideProps {
@@ -8,7 +9,7 @@ interface GettingStartedGuideProps {
 
 export function GettingStartedGuide({ project, review }: GettingStartedGuideProps) {
   const isNewWorkingProject = project.id === "local-plan";
-  const hasStarter = project.researchQuestion.trim().length > 0 && !project.researchQuestion.includes("What focused question");
+  const synopsis = buildSynopsis(project);
   const hasResearchNotes = project.priorResearch.some((record) =>
     [record.context, record.researchQuestion, record.methodology, record.findings, record.limitations]
       .some((value) => value.trim().length >= 12),
@@ -16,7 +17,7 @@ export function GettingStartedGuide({ project, review }: GettingStartedGuideProp
   const steps = [
     { href: "#project-picker", label: "Start a new topic", detail: "Choose “Start a new topic” instead of changing a synthetic example.", done: isNewWorkingProject },
     { href: "#research-brief", label: "Name your topic", detail: "Use a plain working title. You can improve it later.", done: hasTopic(project) },
-    { href: "#dissertation-roadmap", label: "Plan your outline and chapter budget", detail: "Turn your topic into an editable question, scope, objectives, method plan, and realistic page budget.", done: hasStarter },
+    { href: "#synopsis-builder", label: "Build your synopsis", detail: "Answer the short prompts, then review the editable plan for your question, scope, objectives, method, and ethics notes.", done: synopsis.isReadyForSupervisorReview },
     { href: "#prior-research", label: "Add and compare earlier research", detail: "Paste a public source link, then record checked notes in your own words with the source beside them.", done: hasResearchNotes },
     { href: "#quality-review", label: "Check and export a planning draft", detail: "Resolve critical checks, then take the draft to your supervisor for review.", done: review.canExportAsDraft && hasResearchNotes },
   ];

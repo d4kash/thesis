@@ -12,6 +12,7 @@ import { PriorResearchLibrary } from "@/components/PriorResearchLibrary";
 import { ResearchLandscape } from "@/components/ResearchLandscape";
 import { ReviewPanel } from "@/components/ReviewPanel";
 import { StudioHeader } from "@/components/StudioHeader";
+import { SynopsisBuilder } from "@/components/SynopsisBuilder";
 import { WritingCoach } from "@/components/WritingCoach";
 import { DEFAULT_PROJECT_ID, DEMO_PROJECTS } from "@/lib/demo-projects";
 import { generateDraft } from "@/lib/draft";
@@ -104,6 +105,7 @@ export function ThesisStudio() {
       <div aria-busy={isSwitching} className="studio-grid">
         <div className="workspace-stack">
           <ProjectEditor onChange={setProject} project={project} />
+          <SynopsisBuilder onChange={setProject} project={project} />
           <DissertationRoadmap project={project} />
           <WritingCoach project={project} />
           <PriorResearchLibrary key={`${project.id}-prior-research`} onChange={setProject} project={project} />

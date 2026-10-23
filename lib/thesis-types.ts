@@ -49,6 +49,12 @@ export interface PriorResearchRecord {
   status: EvidenceStatus;
 }
 
+export interface SynopsisDetails {
+  problemStatement: string;
+  anticipatedContribution: string;
+  ethicsAndPermissions: string;
+}
+
 export interface ThesisProject {
   id: string;
   demoLabel: string;
@@ -58,6 +64,7 @@ export interface ThesisProject {
   scope: string;
   objectives: ResearchObjective[];
   methods: ResearchMethod[];
+  synopsis?: SynopsisDetails;
   priorResearch: PriorResearchRecord[];
   sources: EvidenceSource[];
   results: ResultLedgerItem[];

@@ -6,6 +6,7 @@ import { ExportActions } from "../components/ExportActions";
 import { DissertationRoadmap } from "../components/DissertationRoadmap";
 import { GettingStartedGuide } from "../components/GettingStartedGuide";
 import { PriorResearchLibrary } from "../components/PriorResearchLibrary";
+import { SynopsisBuilder } from "../components/SynopsisBuilder";
 import { DEMO_PROJECTS } from "../lib/demo-projects";
 import { generateDraft } from "../lib/draft";
 import { buildDraftMarkdown } from "../lib/export";
@@ -14,6 +15,7 @@ import { buildDissertationRoadmap, buildDissertationRoadmapMarkdown } from "../l
 import { createTopicStarter, hasTopic } from "../lib/topic-starter";
 import { reviewProject } from "../lib/quality";
 import { extractPublicSourcePreview, parseSupportedPublicSourceUrl, PublicSourceUrlError } from "../lib/public-source-preview";
+import { buildSynopsis, buildSynopsisMarkdown } from "../lib/synopsis";
 import { buildStudentWritingStarter, WRITING_PHRASE_GROUPS } from "../lib/writing-support";
 
 test("both synthetic demo projects create exportable planning drafts", () => {
@@ -140,6 +142,61 @@ test("the start guide gives a plain next step for a new student", () => {
   assert.match(markup, /Five simple steps to use Thesis Studio/);
   assert.match(markup, /Do this next:/);
   assert.match(markup, /Name your topic/);
+  assert.match(markup, /Build your synopsis/);
+});
+
+test("a synopsis stays an editable proposal and marks missing entries instead of inventing them", () => {
+  const project = {
+    ...DEMO_PROJECTS[0],
+    researchQuestion: "What focused question will this project investigate?",
+    scope: "Define what the project will cover, what it will not cover, and what evidence it needs.",
+    objectives: [{ id: "OBJ-01", text: "State one measurable research objective." }],
+    methods: [{ id: "MTH-01", objectiveIds: ["OBJ-01"], text: "Describe a method that can be audited and approved." }],
+    synopsis: {
+      problemStatement: "",
+      anticipatedContribution: "",
+      ethicsAndPermissions: "",
+    },
+  };
+  const synopsis = buildSynopsis(project);
+  const markdown = buildSynopsisMarkdown(project);
+
+  assert.equal(synopsis.isReadyForSupervisorReview, false);
+  assert.match(synopsis.sections.find((section) => section.id === "problem")?.value ?? "", /\[NEEDS INPUT\]/);
+  assert.match(markdown, /editable research-planning synopsis/i);
+  assert.match(markdown, /does not report findings, participant data, ethics approval, or verified citations/i);
+});
+
+test("a complete synopsis uses only the researcher-provided project details", () => {
+  const project = {
+    ...DEMO_PROJECTS[0],
+    synopsis: {
+      problemStatement: "Researchers need a transparent plan for examining whether image explanations attend to relevant leaf regions in a defined classification setting.",
+      anticipatedContribution: "The proposed work may help clarify how an auditable explanation-evaluation protocol can be designed for the selected image context.",
+      ethicsAndPermissions: "The proposal will check dataset licenses, provenance, and institutional requirements before collecting or using any additional data.",
+    },
+  };
+  const synopsis = buildSynopsis(project);
+  const markdown = buildSynopsisMarkdown(project);
+
+  assert.equal(synopsis.isReadyForSupervisorReview, true);
+  assert.equal(synopsis.completeCount, synopsis.totalCount);
+  assert.match(markdown, /transparent plan for examining/i);
+  assert.match(markdown, /may help clarify/i);
+  assert.match(markdown, /check dataset licenses/i);
+  assert.match(markdown, /does not report an accuracy value, clinical advice, or completed experiment/i);
+  assert.doesNotMatch(markdown, /\bproves\b|\bdemonstrates\b/i);
+});
+
+test("the synopsis builder gives students plain prompts and preserves an evidence boundary", () => {
+  const markup = renderToStaticMarkup(
+    createElement(SynopsisBuilder, { project: DEMO_PROJECTS[0], onChange: () => undefined }),
+  );
+
+  assert.match(markup, /Build your synopsis, one answer at a time/);
+  assert.match(markup, /What problem will this research address\?/);
+  assert.match(markup, /What ethics, permissions, or data-protection steps are needed\?/);
+  assert.match(markup, /This working synopsis does not state findings/i);
 });
 
 test("the long-form roadmap budgets pages without inventing thesis content or results", () => {
