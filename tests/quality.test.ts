@@ -89,7 +89,7 @@ test("a placeholder brief does not surface generic prior-work gaps", () => {
   assert.deepEqual(landscape.candidateGaps, []);
 });
 
-test("a verified prior work without a trace is flagged for review", () => {
+test("a verified prior work without a trace blocks export", () => {
   const project = {
     ...DEMO_PROJECTS[1],
     priorResearch: [{
@@ -105,7 +105,10 @@ test("a verified prior work without a trace is flagged for review", () => {
   };
   const review = reviewProject(project, generateDraft(project));
 
-  assert.equal(review.issues.some((item) => item.id === "thin-verified-prior-research-PRV-01"), true);
+  const issue = review.issues.find((item) => item.id === "thin-verified-prior-research-PRV-01");
+
+  assert.equal(issue?.severity, "critical");
+  assert.equal(review.canExportAsDraft, false);
 });
 
 test("saved prior-research records can be corrected in place", () => {
