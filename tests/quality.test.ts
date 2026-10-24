@@ -17,6 +17,7 @@ import { buildResearchLandscape } from "../lib/research-landscape";
 import { buildDissertationRoadmap, buildDissertationRoadmapMarkdown } from "../lib/dissertation-roadmap";
 import { createTopicStarter, hasTopic } from "../lib/topic-starter";
 import { reviewProject } from "../lib/quality";
+import { canMarkResultVerified } from "../lib/result-readiness";
 import { extractPublicSourcePreview, parseSupportedPublicSourceUrl, PublicSourceUrlError } from "../lib/public-source-preview";
 import { buildSynopsis, buildSynopsisMarkdown } from "../lib/synopsis";
 import { buildStudentWritingStarter, WRITING_PHRASE_GROUPS } from "../lib/writing-support";
@@ -490,6 +491,28 @@ test("a verified result needs a method-specific data and ethics plan", () => {
   assert.equal(roadmap.items.find((item) => item.id === "results")?.status, "needs-data");
 });
 
+test("the result status gate requires a documented safeguard plan before verification", () => {
+  const sources = [{
+    ...DEMO_PROJECTS[0].sources[0],
+    status: "verified" as const,
+    note: "Verified dataset record with license, access date, and relevance notes.",
+  }];
+  const result = {
+    id: "RES-01",
+    label: "Held-out evaluation summary",
+    verification: "verified" as const,
+    note: "A traceable summary was recorded from the documented analysis record.",
+    sourceIds: ["SRC-01"],
+    methodIds: ["MTH-01"],
+  };
+  const methodsWithoutPlan = DEMO_PROJECTS[0].methods.map((method) => (
+    method.id === "MTH-01" ? { ...method, dataAndEthicsPlan: "" } : method
+  ));
+
+  assert.equal(canMarkResultVerified(result, sources, methodsWithoutPlan), false);
+  assert.equal(canMarkResultVerified(result, sources, DEMO_PROJECTS[0].methods), true);
+});
+
 test("a verified result with a verified evidence link can remain a working draft", () => {
   const project = {
     ...DEMO_PROJECTS[0],
@@ -696,7 +719,8 @@ test("the evidence ledger separates literature from direct result records", () =
   assert.match(markup, /Record type/);
   assert.match(markup, /Literature source/);
   assert.match(markup, /Verified data or record link/);
-  assert.match(markup, /Planned method link/);
+  assert.match(markup, /Planned method with safeguards link/);
+  assert.match(markup, /documented data and safeguards plan/i);
   assert.match(markup, /does not confirm ethics approval, consent, permission, or a completed study/i);
 });
 

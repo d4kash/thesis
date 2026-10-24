@@ -1,6 +1,8 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import { hasMethodDataAndEthicsPlan } from "@/lib/method-readiness";
+import { canMarkResultVerified } from "@/lib/result-readiness";
 import type { EvidenceSource, EvidenceStatus, ThesisProject } from "@/lib/thesis-types";
 
 interface EvidenceLedgerProps {
@@ -14,6 +16,12 @@ const sourceKindLabels: Record<EvidenceSource["kind"], string> = {
   "field-note": "Fieldwork or analysis record",
   "policy-record": "Policy or institutional record",
 };
+
+const verifiedResultRequirements = [
+  "To mark a result verified, provide a clear result label and supporting record note,",
+  "link a usable verified data, fieldwork, or policy record, and link a planned method",
+  "with a documented data and safeguards plan.",
+].join(" ");
 
 function nextId(prefix: "SRC" | "RES", ids: string[]) {
   const highest = ids.reduce((current, id) => {
@@ -79,8 +87,17 @@ export function EvidenceLedger({ project, onChange }: EvidenceLedgerProps) {
       return;
     }
 
-    if (resultStatus === "verified" && (!resultSourceId || !resultMethodId)) {
-      setMessage("A verified result needs both a verified data or record source and the planned method that produced it.");
+    const result = {
+      id: nextId("RES", project.results.map((entry) => entry.id)),
+      label,
+      verification: resultStatus,
+      note,
+      sourceIds: resultSourceId ? [resultSourceId] : [],
+      methodIds: resultMethodId ? [resultMethodId] : [],
+    };
+
+    if (resultStatus === "verified" && !canMarkResultVerified(result, project.sources, project.methods)) {
+      setMessage(verifiedResultRequirements);
       return;
     }
 
@@ -88,14 +105,7 @@ export function EvidenceLedger({ project, onChange }: EvidenceLedgerProps) {
       ...project,
       results: [
         ...project.results,
-        {
-          id: nextId("RES", project.results.map((result) => result.id)),
-          label,
-          verification: resultStatus,
-          note,
-          sourceIds: resultSourceId ? [resultSourceId] : [],
-          methodIds: resultMethodId ? [resultMethodId] : [],
-        },
+        result,
       ],
     });
     setResultLabel("");
@@ -133,11 +143,10 @@ export function EvidenceLedger({ project, onChange }: EvidenceLedgerProps) {
     const nextVerification = changes.verification ?? current.verification;
     const nextSourceIds = changes.sourceId === undefined ? current.sourceIds : changes.sourceId ? [changes.sourceId] : [];
     const nextMethodIds = changes.methodId === undefined ? current.methodIds : changes.methodId ? [changes.methodId] : [];
-    const hasDirectEvidence = nextSourceIds.some((sourceId) => verifiedDirectEvidenceSources.some((source) => source.id === sourceId));
-    const hasPlannedMethod = nextMethodIds.some((methodId) => project.methods.some((method) => method.id === methodId));
+    const nextResult = { ...current, verification: nextVerification, sourceIds: nextSourceIds, methodIds: nextMethodIds };
 
-    if (nextVerification === "verified" && (!hasDirectEvidence || !hasPlannedMethod)) {
-      setMessage("Keep this result unverified until it links to both a verified direct record and a planned method.");
+    if (nextVerification === "verified" && !canMarkResultVerified(nextResult, project.sources, project.methods)) {
+      setMessage(verifiedResultRequirements);
       return;
     }
 
@@ -145,12 +154,7 @@ export function EvidenceLedger({ project, onChange }: EvidenceLedgerProps) {
       ...project,
       results: project.results.map((result) => {
         if (result.id !== id) return result;
-        return {
-          ...result,
-          verification: nextVerification,
-          sourceIds: nextSourceIds,
-          methodIds: nextMethodIds,
-        };
+        return nextResult;
       }),
     });
     setMessage(`${id} updated. The structural review has been refreshed.`);
@@ -223,6 +227,9 @@ export function EvidenceLedger({ project, onChange }: EvidenceLedgerProps) {
 
       <div className="ledger-form ledger-form--result">
         <h3>Add result ledger entry</h3>
+        <p className="evidence-ledger__result-boundary">
+          {verifiedResultRequirements} This still does not confirm ethics approval, permission, consent, or completed research.
+        </p>
         <label>
           Result label
           <input onChange={(event) => setResultLabel(event.target.value)} value={resultLabel} />
@@ -246,10 +253,14 @@ export function EvidenceLedger({ project, onChange }: EvidenceLedgerProps) {
           </select>
         </label>
         <label>
-          Planned method link {resultStatus === "verified" ? "(required)" : "(optional)"}
+          Planned method with safeguards link {resultStatus === "verified" ? "(required)" : "(optional)"}
           <select onChange={(event) => setResultMethodId(event.target.value)} value={resultMethodId}>
             <option value="">No planned method selected</option>
-            {project.methods.map((method) => <option key={method.id} value={method.id}>{method.id} · {method.text}</option>)}
+            {project.methods.map((method) => (
+              <option key={method.id} value={method.id}>
+                {method.id} · {method.text} {hasMethodDataAndEthicsPlan(method) ? "(safeguards plan recorded)" : "(safeguards plan needed)"}
+              </option>
+            ))}
           </select>
         </label>
         <button className="button button--compact" onClick={addResult} type="button">Add result</button>
@@ -278,10 +289,14 @@ export function EvidenceLedger({ project, onChange }: EvidenceLedgerProps) {
                   </select>
                 </label>
                 <label className="ledger-inline-control">
-                  Planned method
+                  Planned method with safeguards
                   <select aria-label={`${result.id} method link`} onChange={(event) => updateResult(result.id, { methodId: event.target.value })} value={result.methodIds[0] ?? ""}>
                     <option value="">No planned method selected</option>
-                    {project.methods.map((method) => <option key={method.id} value={method.id}>{method.id}</option>)}
+                    {project.methods.map((method) => (
+                      <option key={method.id} value={method.id}>
+                        {method.id} {hasMethodDataAndEthicsPlan(method) ? "(plan recorded)" : "(plan needed)"}
+                      </option>
+                    ))}
                   </select>
                 </label>
               </div>

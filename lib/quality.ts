@@ -1,24 +1,21 @@
 import type {
   DraftSection,
-  EvidenceSource,
   QualityIssue,
   QualityReport,
   ThesisProject,
 } from "@/lib/thesis-types";
 import { hasMethodDataAndEthicsPlan } from "@/lib/method-readiness";
+import {
+  canMarkResultVerified,
+  hasUsableResultRecord,
+  isUsableVerifiedDirectEvidence,
+  isUsableVerifiedSource,
+} from "@/lib/result-readiness";
 import { hasTopic } from "@/lib/topic-starter";
 
 const unsupportedOutcomePattern = /\b(outperforms|proves|demonstrates|improves|causes)\b/i;
 const unresolvedMarkerPattern = /\[NEEDS (SOURCE|DATA)\]/i;
 const outcomeClaimSections = new Set(["results-status", "discussion", "conclusion"]);
-
-function isUsableVerifiedSource(source: EvidenceSource | undefined): boolean {
-  return source?.status === "verified" && source.label.trim().length >= 5 && source.note.trim().length >= 12;
-}
-
-function isUsableVerifiedDirectEvidence(source: EvidenceSource | undefined): boolean {
-  return isUsableVerifiedSource(source) && source?.kind !== "literature-map";
-}
 
 function issue(
   id: string,
@@ -42,9 +39,7 @@ export function reviewProject(project: ThesisProject, draft: DraftSection[]): Qu
   const methodById = new Map(project.methods.map((method) => [method.id, method]));
   const literatureNotes = project.literatureNotes ?? [];
   const isTraceableVerifiedResult = (result: ThesisProject["results"][number]) =>
-    result.verification === "verified"
-      && result.sourceIds.some((id) => isUsableVerifiedDirectEvidence(sourceById.get(id)))
-      && result.methodIds.some((id) => hasMethodDataAndEthicsPlan(methodById.get(id)));
+    result.verification === "verified" && canMarkResultVerified(result, project.sources, project.methods);
 
   if (!hasTopic(project)) {
     issues.push(
@@ -264,7 +259,7 @@ export function reviewProject(project: ThesisProject, draft: DraftSection[]): Qu
     }
     resultIds.add(result.id);
 
-    if (result.verification === "verified" && (result.label.trim().length < 5 || result.note.trim().length < 12)) {
+    if (result.verification === "verified" && !hasUsableResultRecord(result)) {
       issues.push(
         issue(
           `thin-verified-result-${result.id}`,
