@@ -109,6 +109,39 @@ test("a portable local backup accepts only validated local project records", () 
   assert.equal(parseLocalProjectBackup(JSON.stringify({ format: LOCAL_PROJECT_BACKUP_FORMAT, version: 1, project: { id: "local-plan" } })), null);
   assert.equal(buildLocalProjectBackup({ ...localProject, scope: "x".repeat(MAX_LOCAL_PROJECT_TEXT_CHARACTERS + 1) }), null);
 
+  const duplicateSourceIdBackup = JSON.stringify({
+    format: LOCAL_PROJECT_BACKUP_FORMAT,
+    project: { ...localProject, sources: [...localProject.sources, { ...localProject.sources[0] }] },
+    version: LOCAL_PROJECT_BACKUP_VERSION,
+  });
+  const unknownReferenceBackup = JSON.stringify({
+    format: LOCAL_PROJECT_BACKUP_FORMAT,
+    project: {
+      ...localProject,
+      literatureNotes: [{
+        id: "LIT-99",
+        sourceId: "SRC-MISSING",
+        claim: "This record deliberately points to a missing source.",
+        locator: "section 2",
+        use: "comparison",
+        status: "reviewed",
+      }],
+      methods: localProject.methods.map((method) => ({ ...method, objectiveIds: ["OBJ-MISSING"] })),
+      results: [{
+        id: "RES-99",
+        label: "Unlinked result record",
+        verification: "unverified",
+        note: "This record deliberately points to missing evidence and method IDs.",
+        sourceIds: ["SRC-MISSING"],
+        methodIds: ["MTH-MISSING"],
+      }],
+    },
+    version: LOCAL_PROJECT_BACKUP_VERSION,
+  });
+
+  assert.equal(parseLocalProjectBackup(duplicateSourceIdBackup), null);
+  assert.equal(parseLocalProjectBackup(unknownReferenceBackup), null);
+
   const oversizedProject = {
     ...localProject,
     objectives: Array.from({ length: 12 }, (_, index) => ({

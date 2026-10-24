@@ -42,6 +42,10 @@ function hasString(record: Record<string, unknown>, key: string): boolean {
   return typeof record[key] === "string" && record[key].length <= MAX_LOCAL_PROJECT_TEXT_CHARACTERS;
 }
 
+function hasNonEmptyString(record: Record<string, unknown>, key: string): boolean {
+  return hasString(record, key) && (record[key] as string).trim().length > 0;
+}
+
 function hasOptionalString(record: Record<string, unknown>, key: string): boolean {
   return record[key] === undefined
     || (typeof record[key] === "string" && record[key].length <= MAX_LOCAL_PROJECT_TEXT_CHARACTERS);
@@ -52,12 +56,12 @@ function isStringArray(value: unknown): value is string[] {
 }
 
 function isResearchObjective(value: unknown): value is ResearchObjective {
-  return isRecord(value) && hasString(value, "id") && hasString(value, "text");
+  return isRecord(value) && hasNonEmptyString(value, "id") && hasString(value, "text");
 }
 
 function isResearchMethod(value: unknown): value is ResearchMethod {
   return isRecord(value)
-    && hasString(value, "id")
+    && hasNonEmptyString(value, "id")
     && hasString(value, "text")
     && isStringArray(value.objectiveIds)
     && hasOptionalString(value, "dataAndEthicsPlan");
@@ -65,7 +69,7 @@ function isResearchMethod(value: unknown): value is ResearchMethod {
 
 function isEvidenceSource(value: unknown): value is EvidenceSource {
   return isRecord(value)
-    && hasString(value, "id")
+    && hasNonEmptyString(value, "id")
     && hasString(value, "label")
     && hasString(value, "note")
     && hasOptionalString(value, "locator")
@@ -76,21 +80,24 @@ function isEvidenceSource(value: unknown): value is EvidenceSource {
 
 function isPriorResearchRecord(value: unknown): value is PriorResearchRecord {
   return isRecord(value)
-    && ["id", "title", "citation", "context", "researchQuestion", "methodology", "findings", "limitations"].every((key) => hasString(value, key))
+    && hasNonEmptyString(value, "id")
+    && ["title", "citation", "context", "researchQuestion", "methodology", "findings", "limitations"].every((key) => hasString(value, key))
     && hasOptionalString(value, "checkedOn")
     && ["planned", "reviewed", "verified"].includes(value.status as string);
 }
 
 function isLiteratureEvidenceNote(value: unknown): value is LiteratureEvidenceNote {
   return isRecord(value)
-    && ["id", "sourceId", "claim", "locator"].every((key) => hasString(value, key))
+    && ["id", "sourceId"].every((key) => hasNonEmptyString(value, key))
+    && ["claim", "locator"].every((key) => hasString(value, key))
     && ["background", "method", "comparison", "limitation"].includes(value.use as string)
     && ["reviewed", "verified"].includes(value.status as string);
 }
 
 function isResultLedgerItem(value: unknown): value is ResultLedgerItem {
   return isRecord(value)
-    && ["id", "label", "note"].every((key) => hasString(value, key))
+    && hasNonEmptyString(value, "id")
+    && ["label", "note"].every((key) => hasString(value, key))
     && ["unverified", "verified"].includes(value.verification as string)
     && isStringArray(value.sourceIds)
     && isStringArray(value.methodIds);
@@ -101,10 +108,19 @@ function isSynopsisDetails(value: unknown): value is SynopsisDetails {
     && ["problemStatement", "anticipatedContribution", "ethicsAndPermissions"].every((key) => hasString(value, key));
 }
 
+function hasUniqueIds(records: Array<{ id: string }>): boolean {
+  return new Set(records.map((record) => record.id)).size === records.length;
+}
+
+function hasUniqueKnownReferences(referenceIds: string[], knownIds: Set<string>): boolean {
+  return new Set(referenceIds).size === referenceIds.length
+    && referenceIds.every((id) => knownIds.has(id));
+}
+
 export function isStoredLocalProject(value: unknown): value is ThesisProject {
   if (!isRecord(value) || value.id !== "local-plan") return false;
 
-  return ["demoLabel", "title", "discipline", "researchQuestion", "scope"].every((key) => hasString(value, key))
+  const hasValidShape = ["demoLabel", "title", "discipline", "researchQuestion", "scope"].every((key) => hasString(value, key))
     && Array.isArray(value.objectives) && value.objectives.every(isResearchObjective)
     && Array.isArray(value.methods) && value.methods.every(isResearchMethod)
     && Array.isArray(value.priorResearch) && value.priorResearch.every(isPriorResearchRecord)
@@ -112,6 +128,27 @@ export function isStoredLocalProject(value: unknown): value is ThesisProject {
     && (value.literatureNotes === undefined || (Array.isArray(value.literatureNotes) && value.literatureNotes.every(isLiteratureEvidenceNote)))
     && Array.isArray(value.results) && value.results.every(isResultLedgerItem)
     && (value.synopsis === undefined || isSynopsisDetails(value.synopsis));
+
+  if (!hasValidShape) return false;
+
+  const project = value as unknown as ThesisProject;
+  const literatureNotes = project.literatureNotes ?? [];
+  const objectiveIds = new Set(project.objectives.map((objective) => objective.id));
+  const methodIds = new Set(project.methods.map((method) => method.id));
+  const sourceIds = new Set(project.sources.map((source) => source.id));
+
+  return hasUniqueIds(project.objectives)
+    && hasUniqueIds(project.methods)
+    && hasUniqueIds(project.priorResearch)
+    && hasUniqueIds(project.sources)
+    && hasUniqueIds(literatureNotes)
+    && hasUniqueIds(project.results)
+    && project.methods.every((method) => hasUniqueKnownReferences(method.objectiveIds, objectiveIds))
+    && literatureNotes.every((note) => sourceIds.has(note.sourceId))
+    && project.results.every((result) => (
+      hasUniqueKnownReferences(result.sourceIds, sourceIds)
+      && hasUniqueKnownReferences(result.methodIds, methodIds)
+    ));
 }
 
 function normalizeStoredLocalProject(project: ThesisProject): ThesisProject {
