@@ -389,11 +389,11 @@ export function reviewProject(project: ThesisProject, draft: DraftSection[]): Qu
     score,
     canExportAsDraft: criticalCount === 0,
     sourceCount: project.sources.length,
-    verifiedSourceCount: project.sources.filter((source) => source.status === "verified").length,
+    verifiedSourceCount: project.sources.filter(isUsableVerifiedSource).length,
     priorResearchCount: project.priorResearch.length,
     verifiedPriorResearchCount: project.priorResearch.filter(isUsableVerifiedPriorResearch).length,
     literatureNoteCount: literatureNotes.length,
-    verifiedLiteratureNoteCount: literatureNotes.filter((note) => note.status === "verified").length,
+    verifiedLiteratureNoteCount: literatureNotes.filter((note) => canMarkLiteratureNoteVerified(note, project.sources)).length,
     resultCount: project.results.length,
     verifiedResultCount: project.results.filter(isTraceableVerifiedResult).length,
   };

@@ -228,6 +228,7 @@ test("a verified source needs an original-record locator before it can support c
   assert.equal(isUsableVerifiedSource(tracedSource), true);
   assert.equal(normalizeSourceVerification(source).status, "reviewed");
   assert.equal(normalizeSourceVerification(tracedSource).status, "verified");
+  assert.equal(review.verifiedSourceCount, 0);
   assert.equal(review.issues.some((item) => item.id === "thin-verified-source-SRC-01"), true);
   assert.equal(review.issues.some((item) => item.id === "result-traceability-RES-01"), true);
 });
@@ -261,6 +262,7 @@ test("a verified source needs a valid researcher check date before it can suppor
   assert.equal(isUsableVerifiedSource(source), false);
   assert.equal(isUsableVerifiedSource(checkedSource), true);
   assert.equal(normalizeSourceVerification(source).status, "reviewed");
+  assert.equal(review.verifiedSourceCount, 0);
   assert.equal(review.issues.some((item) => item.id === "thin-verified-source-SRC-01"), true);
   assert.equal(review.issues.some((item) => item.id === "result-traceability-RES-01"), true);
 });
@@ -296,6 +298,7 @@ test("a verified literature note needs a specific re-check location", () => {
   assert.equal(canMarkLiteratureNoteVerified(vagueNote, [source]), false);
   assert.equal(canMarkLiteratureNoteVerified(locatedNote, [source]), true);
   assert.equal(normalizeLiteratureVerification(vagueNote, [source]).status, "reviewed");
+  assert.equal(review.verifiedLiteratureNoteCount, 0);
   assert.equal(review.issues.some((item) => item.id === "literature-note-traceability-LIT-01"), true);
   assert.equal(roadmap.items.find((item) => item.id === "literature-review")?.status, "needs-sources");
 });

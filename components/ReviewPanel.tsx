@@ -28,19 +28,19 @@ export function ReviewPanel({ review }: ReviewPanelProps) {
       <dl className="review-stats" aria-label="Evidence ledger status">
         <div>
           <dt>Sources</dt>
-          <dd>{review.verifiedSourceCount}/{review.sourceCount} verified</dd>
+          <dd>{review.verifiedSourceCount}/{review.sourceCount} verified and traceable</dd>
         </div>
         <div>
           <dt>Prior works</dt>
-          <dd>{review.verifiedPriorResearchCount}/{review.priorResearchCount} verified</dd>
+          <dd>{review.verifiedPriorResearchCount}/{review.priorResearchCount} verified and traceable</dd>
         </div>
         <div>
           <dt>Literature notes</dt>
-          <dd>{review.verifiedLiteratureNoteCount}/{review.literatureNoteCount} verified</dd>
+          <dd>{review.verifiedLiteratureNoteCount}/{review.literatureNoteCount} verified and traceable</dd>
         </div>
         <div>
           <dt>Results</dt>
-          <dd>{review.verifiedResultCount}/{review.resultCount} verified</dd>
+          <dd>{review.verifiedResultCount}/{review.resultCount} verified and traceable</dd>
         </div>
       </dl>
       <div className="issues">
