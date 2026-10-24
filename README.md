@@ -38,7 +38,7 @@ npm run build
 - Includes a student-facing free research toolkit for Crossref, OpenAlex, DOAJ, Shodhganga, Zotero, and ZoteroBib. It opens the official services in a new tab and never sends notes, PDFs, or source text from Thesis Studio.
 - Stores prior-thesis or paper notes locally: source trace, setting, question, method, reported finding, and stated limitation.
 - Builds a transparent topic map that ranks local prior-work records by term overlap and surfaces only **candidate** gaps from notes supplied by the researcher.
-- Adds source records and result-ledger entries locally; verified sources need a reusable original-record locator, and verified results must link to a verified direct evidence record.
+- Adds source records and result-ledger entries locally; verified sources need a reusable original-record locator, researcher check date, and relevance note, while verified results must link to verified direct evidence.
 - Keeps the two bundled projects clearly marked as synthetic demonstrations with no findings or citations.
 - Exports a clearly watermarked Markdown working draft only after the structural review has no critical issues.
 - Runs the same tests, type check, and production build in GitHub Actions on pushes and pull requests.

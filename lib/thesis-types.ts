@@ -16,6 +16,7 @@ export interface EvidenceSource {
   id: string;
   label: string;
   locator?: string;
+  checkedOn?: string;
   kind: "dataset" | "literature-map" | "policy-record" | "field-note";
   status: EvidenceStatus;
   note: string;

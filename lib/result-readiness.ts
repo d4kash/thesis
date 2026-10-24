@@ -6,15 +6,25 @@ export const RESULT_NOTE_MINIMUM_LENGTH = 12;
 const SOURCE_LABEL_MINIMUM_LENGTH = 5;
 const SOURCE_NOTE_MINIMUM_LENGTH = 12;
 export const SOURCE_LOCATOR_MINIMUM_LENGTH = 8;
+const ISO_CHECK_DATE_PATTERN = /^\d{4}-\d{2}-\d{2}$/;
 
 export function hasUsableSourceLocator(source: EvidenceSource | undefined): boolean {
   return (source?.locator?.trim().length ?? 0) >= SOURCE_LOCATOR_MINIMUM_LENGTH;
+}
+
+export function hasUsableSourceCheckDate(source: EvidenceSource | undefined): boolean {
+  const value = source?.checkedOn?.trim() ?? "";
+  if (!ISO_CHECK_DATE_PATTERN.test(value)) return false;
+
+  const date = new Date(`${value}T00:00:00.000Z`);
+  return !Number.isNaN(date.valueOf()) && date.toISOString().slice(0, 10) === value;
 }
 
 export function isUsableVerifiedSource(source: EvidenceSource | undefined): boolean {
   return source?.status === "verified"
     && source.label.trim().length >= SOURCE_LABEL_MINIMUM_LENGTH
     && hasUsableSourceLocator(source)
+    && hasUsableSourceCheckDate(source)
     && source.note.trim().length >= SOURCE_NOTE_MINIMUM_LENGTH;
 }
 
