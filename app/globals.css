@@ -227,7 +227,7 @@ h3 { font-size: 0.94rem; margin-bottom: 8px; }
 .ledger-inline-controls { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 9px; }
 .ledger-inline-control { color: var(--muted); display: grid; font-size: 0.68rem; font-weight: 700; gap: 4px; letter-spacing: 0.05em; margin-top: 9px; text-transform: uppercase; }
 .ledger-inline-controls .ledger-inline-control { margin-top: 0; }
-.ledger-inline-control select { background: white; border: 1px solid #cbd1c9; border-radius: 6px; color: var(--ink); font-size: 0.75rem; letter-spacing: normal; padding: 5px; text-transform: none; }
+.ledger-inline-control select, .ledger-inline-control input { background: white; border: 1px solid #cbd1c9; border-radius: 6px; color: var(--ink); font-size: 0.75rem; letter-spacing: normal; padding: 5px; text-transform: none; }
 .record-editor { margin-top: 10px; }
 .record-editor summary { color: var(--green-dark); cursor: pointer; font-size: 0.76rem; font-weight: 700; }
 .record-editor__note { color: var(--muted); font-size: 0.74rem; line-height: 1.4; margin: 8px 0; }

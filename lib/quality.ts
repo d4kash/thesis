@@ -89,9 +89,9 @@ export function reviewProject(project: ThesisProject, draft: DraftSection[]): Qu
         issue(
           `thin-verified-source-${source.id}`,
           "warning",
-          "Verified source lacks a usable record",
-          `${source.id} is marked verified but does not yet contain enough identifying or relevance information.`,
-          "Record a complete citation or stable source description, plus the evidence or claim it supports.",
+          "Verified source lacks a traceable original record",
+          `${source.id} is marked verified but needs a meaningful title or citation, original-record locator, and relevance note.`,
+          "Add a DOI, stable URL, repository or archive record, or local record ID, then check it against the original source before using it.",
         ),
       );
     }

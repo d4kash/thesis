@@ -14,7 +14,7 @@ export function generateDraft(project: ThesisProject): DraftSection[] {
     (method) => `${method.id} → ${method.objectiveIds.join(", ")}: ${method.text}\nData, permissions, and ethics plan: ${method.dataAndEthicsPlan?.trim() || "[NEEDS INPUT] Record the planned safeguards for this method."}`,
   );
   const sourceLines = project.sources.map(
-    (source) => `${source.id} (${source.status}): ${source.label}. ${source.note}`,
+    (source) => `${source.id} (${source.status}): ${source.label}. Original record locator: ${source.locator?.trim() || "not recorded"}. ${source.note}`,
   );
   const evidencePlan = sourceLines.length > 0
     ? list(sourceLines)

@@ -5,11 +5,25 @@ export const RESULT_LABEL_MINIMUM_LENGTH = 5;
 export const RESULT_NOTE_MINIMUM_LENGTH = 12;
 const SOURCE_LABEL_MINIMUM_LENGTH = 5;
 const SOURCE_NOTE_MINIMUM_LENGTH = 12;
+export const SOURCE_LOCATOR_MINIMUM_LENGTH = 8;
+
+export function hasUsableSourceLocator(source: EvidenceSource | undefined): boolean {
+  return (source?.locator?.trim().length ?? 0) >= SOURCE_LOCATOR_MINIMUM_LENGTH;
+}
 
 export function isUsableVerifiedSource(source: EvidenceSource | undefined): boolean {
   return source?.status === "verified"
     && source.label.trim().length >= SOURCE_LABEL_MINIMUM_LENGTH
+    && hasUsableSourceLocator(source)
     && source.note.trim().length >= SOURCE_NOTE_MINIMUM_LENGTH;
+}
+
+export function normalizeSourceVerification(source: EvidenceSource): EvidenceSource {
+  if (source.status === "verified" && !isUsableVerifiedSource(source)) {
+    return { ...source, status: "reviewed" };
+  }
+
+  return source;
 }
 
 export function isUsableVerifiedDirectEvidence(source: EvidenceSource | undefined): boolean {

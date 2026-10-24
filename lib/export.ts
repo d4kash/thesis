@@ -25,7 +25,7 @@ export function buildSupervisorReviewMarkdown(
   const status = review.canExportAsDraft ? "STRUCTURAL CHECKS PASSED — SUPERVISOR REVIEW STILL REQUIRED" : "STRUCTURAL REVIEW REQUIRED";
   const sourceRecords = listedRecords(
     project.sources.map((source) =>
-      `- ${source.id} — ${source.status.toUpperCase()} ${source.kind}: ${source.label || "[NEEDS INPUT] Source title or citation"}\n  - Researcher note: ${source.note || "[NEEDS INPUT] Explain relevance and verification."}\n  - Attribution check: ${source.status === "verified" ? "Marked verified by the researcher; supervisor should still check the original source and required citation style." : "Not ready for formal citation until the researcher verifies the original source."}`,
+      `- ${source.id} — ${source.status.toUpperCase()} ${source.kind}: ${source.label || "[NEEDS INPUT] Source title or citation"}\n  - Original record locator: ${source.locator?.trim() || "[NEEDS INPUT] Add a DOI, stable URL, repository/archive record, or local record ID."}\n  - Researcher note: ${source.note || "[NEEDS INPUT] Explain relevance and verification."}\n  - Attribution check: ${source.status === "verified" ? "Marked verified by the researcher; supervisor should still check the original source and required citation style." : "Not ready for formal citation until the researcher verifies the original source."}`,
     ),
     "- No source records yet. Do not add a bibliography from titles or memory.",
   );

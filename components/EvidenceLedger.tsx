@@ -3,7 +3,12 @@
 import { useMemo, useState } from "react";
 import { normalizeLiteratureVerification } from "@/lib/literature-readiness";
 import { hasMethodDataAndEthicsPlan } from "@/lib/method-readiness";
-import { canMarkResultVerified } from "@/lib/result-readiness";
+import {
+  canMarkResultVerified,
+  isUsableVerifiedDirectEvidence,
+  isUsableVerifiedSource,
+  normalizeSourceVerification,
+} from "@/lib/result-readiness";
 import type { EvidenceSource, EvidenceStatus, ThesisProject } from "@/lib/thesis-types";
 
 interface EvidenceLedgerProps {
@@ -24,6 +29,12 @@ const verifiedResultRequirements = [
   "with a documented data and safeguards plan.",
 ].join(" ");
 
+const verifiedSourceRequirements = [
+  "To mark a source verified, add a meaningful title or citation,",
+  "an original-record locator (such as a DOI, stable URL, repository/archive record, or local record ID),",
+  "and a checked relevance note.",
+].join(" ");
+
 function nextId(prefix: "SRC" | "RES", ids: string[]) {
   const highest = ids.reduce((current, id) => {
     const match = id.match(new RegExp(`^${prefix}-(\\d+)$`));
@@ -35,6 +46,7 @@ function nextId(prefix: "SRC" | "RES", ids: string[]) {
 
 export function EvidenceLedger({ project, onChange }: EvidenceLedgerProps) {
   const [sourceLabel, setSourceLabel] = useState("");
+  const [sourceLocator, setSourceLocator] = useState("");
   const [sourceNote, setSourceNote] = useState("");
   const [sourceKind, setSourceKind] = useState<EvidenceSource["kind"]>("literature-map");
   const [sourceStatus, setSourceStatus] = useState<EvidenceStatus>("planned");
@@ -46,12 +58,13 @@ export function EvidenceLedger({ project, onChange }: EvidenceLedgerProps) {
   const [message, setMessage] = useState("");
 
   const verifiedDirectEvidenceSources = useMemo(
-    () => project.sources.filter((source) => source.status === "verified" && source.kind !== "literature-map"),
+    () => project.sources.filter(isUsableVerifiedDirectEvidence),
     [project.sources],
   );
 
   function addSource() {
     const label = sourceLabel.trim();
+    const locator = sourceLocator.trim();
     const note = sourceNote.trim();
 
     if (!label || !note) {
@@ -59,20 +72,29 @@ export function EvidenceLedger({ project, onChange }: EvidenceLedgerProps) {
       return;
     }
 
+    const source = {
+      id: nextId("SRC", project.sources.map((entry) => entry.id)),
+      label,
+      locator,
+      kind: sourceKind,
+      status: sourceStatus,
+      note,
+    };
+
+    if (sourceStatus === "verified" && !isUsableVerifiedSource(source)) {
+      setMessage(verifiedSourceRequirements);
+      return;
+    }
+
     onChange({
       ...project,
       sources: [
         ...project.sources,
-        {
-          id: nextId("SRC", project.sources.map((source) => source.id)),
-          label,
-          kind: sourceKind,
-          status: sourceStatus,
-          note,
-        },
+        source,
       ],
     });
     setSourceLabel("");
+    setSourceLocator("");
     setSourceNote("");
     setSourceKind("literature-map");
     setSourceStatus("planned");
@@ -131,6 +153,14 @@ export function EvidenceLedger({ project, onChange }: EvidenceLedgerProps) {
   }
 
   function updateSourceStatus(id: string, status: EvidenceStatus) {
+    const current = project.sources.find((source) => source.id === id);
+    if (!current) return;
+
+    if (status === "verified" && !isUsableVerifiedSource({ ...current, status })) {
+      setMessage(verifiedSourceRequirements);
+      return;
+    }
+
     const sources = project.sources.map((source) => source.id === id ? { ...source, status } : source);
     const literatureNotes = (project.literatureNotes ?? []).map((note) => normalizeLiteratureVerification(note, sources));
     const returnedToReviewed = literatureNotes.filter((note, index) => (
@@ -143,6 +173,32 @@ export function EvidenceLedger({ project, onChange }: EvidenceLedgerProps) {
       literatureNotes,
     });
     setMessage(`${id} marked ${status}.${returnedToReviewed > 0 ? ` ${returnedToReviewed} linked literature note${returnedToReviewed === 1 ? "" : "s"} returned to reviewed.` : ""}`);
+  }
+
+  function updateSourceLocator(id: string, locator: string) {
+    let sourceReturnedToReviewed = false;
+    const sources = project.sources.map((source) => {
+      if (source.id !== id) return source;
+      const nextSource = normalizeSourceVerification({ ...source, locator });
+      sourceReturnedToReviewed ||= source.status === "verified" && nextSource.status === "reviewed";
+      return nextSource;
+    });
+    const literatureNotes = (project.literatureNotes ?? []).map((note) => normalizeLiteratureVerification(note, sources));
+    const returnedToReviewed = literatureNotes.filter((note, index) => (
+      project.literatureNotes?.[index]?.status === "verified" && note.status === "reviewed"
+    )).length;
+
+    onChange({
+      ...project,
+      sources,
+      literatureNotes,
+    });
+
+    if (sourceReturnedToReviewed) {
+      setMessage(`${id} returned to reviewed because its verified source trace is incomplete. Recheck the original record before marking it verified again.`);
+    } else if (returnedToReviewed > 0) {
+      setMessage(`${id} no longer has a usable source trace, so ${returnedToReviewed} linked literature note${returnedToReviewed === 1 ? "" : "s"} returned to reviewed.`);
+    }
   }
 
   function updateResult(id: string, changes: { verification?: "unverified" | "verified"; sourceId?: string; methodId?: string }) {
@@ -192,6 +248,15 @@ export function EvidenceLedger({ project, onChange }: EvidenceLedgerProps) {
           <input onChange={(event) => setSourceLabel(event.target.value)} value={sourceLabel} />
         </label>
         <label>
+          Where can you find the original record again? {sourceStatus === "verified" ? "(required)" : "(needed before verification)"}
+          <input
+            onChange={(event) => setSourceLocator(event.target.value)}
+            placeholder="DOI, stable URL, repository/archive record, or local record ID"
+            value={sourceLocator}
+          />
+          <small>This lets you and your supervisor reopen the original record; it does not create a finished citation.</small>
+        </label>
+        <label>
           Record type
           <select onChange={(event) => setSourceKind(event.target.value as EvidenceSource["kind"])} value={sourceKind}>
             {Object.entries(sourceKindLabels).map(([value, label]) => <option key={value} value={value}>{label}</option>)}
@@ -218,7 +283,17 @@ export function EvidenceLedger({ project, onChange }: EvidenceLedgerProps) {
             <div>
               <strong>{source.id} · {source.status}</strong>
               <span>{source.label}</span>
-              <small>{sourceKindLabels[source.kind]} · {source.note}</small>
+              <small>{sourceKindLabels[source.kind]} · Original record: {source.locator?.trim() || "not recorded yet."}</small>
+              <small>{source.note}</small>
+              <label className="ledger-inline-control">
+                Original record locator
+                <input
+                  aria-label={`${source.id} original record locator`}
+                  onChange={(event) => updateSourceLocator(source.id, event.target.value)}
+                  placeholder="DOI, URL, repository/archive, or local ID"
+                  value={source.locator ?? ""}
+                />
+              </label>
               <label className="ledger-inline-control">
                 Status
                 <select aria-label={`${source.id} status`} onChange={(event) => updateSourceStatus(source.id, event.target.value as EvidenceStatus)} value={source.status}>

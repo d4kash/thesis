@@ -1,6 +1,7 @@
 import { hasTopic } from "@/lib/topic-starter";
 import type { EvidenceSource, LiteratureEvidenceNote, ThesisProject } from "@/lib/thesis-types";
 import { hasMethodDataAndEthicsPlan } from "@/lib/method-readiness";
+import { isUsableVerifiedDirectEvidence, isUsableVerifiedSource } from "@/lib/result-readiness";
 
 export const DEFAULT_DISSERTATION_PAGE_TARGET = 300;
 
@@ -130,14 +131,6 @@ function hasUsableResearchNote(project: ThesisProject): boolean {
     record.findings,
     record.limitations,
   ].some((value) => value.trim().length >= 12));
-}
-
-function isUsableVerifiedSource(source: EvidenceSource | undefined): boolean {
-  return source?.status === "verified" && source.label.trim().length >= 5 && source.note.trim().length >= 12;
-}
-
-function isUsableVerifiedDirectEvidence(source: EvidenceSource | undefined): boolean {
-  return isUsableVerifiedSource(source) && source?.kind !== "literature-map";
 }
 
 interface RoadmapEvidenceContext {

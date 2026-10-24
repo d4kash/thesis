@@ -15,6 +15,7 @@ export type DraftSectionKey =
 export interface EvidenceSource {
   id: string;
   label: string;
+  locator?: string;
   kind: "dataset" | "literature-map" | "policy-record" | "field-note";
   status: EvidenceStatus;
   note: string;
