@@ -133,8 +133,9 @@ export function LiteratureEvidenceMatrix({ project, onChange }: LiteratureEviden
           <textarea onChange={(event) => setClaim(event.target.value)} rows={3} value={claim} />
         </label>
         <label>
-          Where can you check it again? Page, section, table, figure, or stable passage label.
+          Where can you check it again? Add a specific page, section, table, figure, or dataset-field marker.
           <input onChange={(event) => setLocator(event.target.value)} value={locator} />
+          <small>Use a concrete marker such as “p. 12”, “Section 2.1”, “Table 3”, or “Dataset field: confidence”.</small>
         </label>
         <label>
           How might you use it?

@@ -31,7 +31,7 @@ export function buildSupervisorReviewMarkdown(
   );
   const literatureNotes = listedRecords(
     (project.literatureNotes ?? []).map((note) =>
-      `- ${note.id} — ${note.status.toUpperCase()} · source ${note.sourceId || "[NEEDS INPUT]"} · ${note.use}\n  - Locator: ${note.locator || "[NEEDS INPUT] Page, section, table, or stable passage label."}\n  - Researcher’s own-words note: ${note.claim || "[NEEDS INPUT] Record an own-words note after checking the original source."}`,
+      `- ${note.id} — ${note.status.toUpperCase()} · source ${note.sourceId || "[NEEDS INPUT]"} · ${note.use}\n  - Locator: ${note.locator || "[NEEDS INPUT] Add a specific page, section, table, figure, or dataset-field marker."}\n  - Researcher’s own-words note: ${note.claim || "[NEEDS INPUT] Record an own-words note after checking the original source."}`,
     ),
     "- No literature evidence notes yet. Add only notes linked to a checked original source.",
   );

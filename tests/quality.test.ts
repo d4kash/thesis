@@ -19,7 +19,7 @@ import { buildResearchSearchPhrase, buildResearchToolkit } from "../lib/research
 import { buildDissertationRoadmap, buildDissertationRoadmapMarkdown } from "../lib/dissertation-roadmap";
 import { createTopicStarter, hasTopic } from "../lib/topic-starter";
 import { reviewProject } from "../lib/quality";
-import { canMarkLiteratureNoteVerified, normalizeLiteratureVerification } from "../lib/literature-readiness";
+import { canMarkLiteratureNoteVerified, hasUsableLiteratureLocator, normalizeLiteratureVerification } from "../lib/literature-readiness";
 import { canMarkPriorResearchVerified, normalizePriorResearchVerification } from "../lib/prior-research-readiness";
 import { canMarkResultVerified, isUsableVerifiedSource, normalizeSourceVerification } from "../lib/result-readiness";
 import { extractPublicSourcePreview, parseSupportedPublicSourceUrl, PublicSourceUrlError } from "../lib/public-source-preview";
@@ -239,6 +239,41 @@ test("a verified source needs a valid researcher check date before it can suppor
   assert.equal(normalizeSourceVerification(source).status, "reviewed");
   assert.equal(review.issues.some((item) => item.id === "thin-verified-source-SRC-01"), true);
   assert.equal(review.issues.some((item) => item.id === "result-traceability-RES-01"), true);
+});
+
+test("a verified literature note needs a specific re-check location", () => {
+  const source = {
+    ...DEMO_PROJECTS[0].sources[1],
+    label: "Checked scholarly literature record",
+    locator: "https://records.example.test/literature/SRC-02",
+    checkedOn: VERIFIED_SOURCE_CHECK_DATE,
+    status: "verified" as const,
+    note: "Researcher checked the source metadata, relevance, and original location before literature planning.",
+  };
+  const vagueNote = {
+    id: "LIT-01",
+    sourceId: source.id,
+    claim: "The source provides a scoped comparison point for the planned literature review.",
+    locator: "xx",
+    use: "comparison" as const,
+    status: "verified" as const,
+  };
+  const locatedNote = { ...vagueNote, locator: "Table 2, p. 11" };
+  const project = {
+    ...DEMO_PROJECTS[0],
+    sources: [source],
+    literatureNotes: [vagueNote],
+  };
+  const review = reviewProject(project, generateDraft(project));
+  const roadmap = buildDissertationRoadmap(project);
+
+  assert.equal(hasUsableLiteratureLocator(vagueNote.locator), false);
+  assert.equal(hasUsableLiteratureLocator(locatedNote.locator), true);
+  assert.equal(canMarkLiteratureNoteVerified(vagueNote, [source]), false);
+  assert.equal(canMarkLiteratureNoteVerified(locatedNote, [source]), true);
+  assert.equal(normalizeLiteratureVerification(vagueNote, [source]).status, "reviewed");
+  assert.equal(review.issues.some((item) => item.id === "literature-note-traceability-LIT-01"), true);
+  assert.equal(roadmap.items.find((item) => item.id === "literature-review")?.status, "needs-sources");
 });
 
 test("saved prior-research records can be corrected in place", () => {
@@ -869,7 +904,8 @@ test("the literature evidence matrix requests an own-words note and a source loc
 
   assert.match(markup, /Link each literature note to a source/);
   assert.match(markup, /short paraphrase in your own words/i);
-  assert.match(markup, /Page, section, table, figure, or stable passage label/i);
+  assert.match(markup, /specific page, section, table, figure, or dataset-field marker/i);
+  assert.match(markup, /Use a concrete marker such as/i);
   assert.match(markup, /Do not paste long excerpts/i);
   assert.match(markup, /returns to reviewed/i);
 });
