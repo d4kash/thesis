@@ -1,8 +1,16 @@
 import type { DraftSection, QualityReport, ThesisProject } from "@/lib/thesis-types";
 import { buildDissertationRoadmap } from "@/lib/dissertation-roadmap";
+import { canMarkLiteratureNoteVerified } from "@/lib/literature-readiness";
+import { isUsableVerifiedPriorResearch } from "@/lib/prior-research-readiness";
+import { canMarkResultVerified, isUsableVerifiedSource } from "@/lib/result-readiness";
 
 function listedRecords(records: string[], emptyMessage: string): string {
   return records.length > 0 ? records.join("\n") : emptyMessage;
+}
+
+function verificationLabel(recordedStatus: string, traceable: boolean): string {
+  if (recordedStatus !== "verified") return recordedStatus.toUpperCase();
+  return traceable ? "VERIFIED AND TRACEABLE" : "VERIFICATION INCOMPLETE";
 }
 
 export function buildDraftMarkdown(
@@ -24,20 +32,27 @@ export function buildSupervisorReviewMarkdown(
   const roadmap = buildDissertationRoadmap(project);
   const status = review.canExportAsDraft ? "STRUCTURAL CHECKS PASSED — SUPERVISOR REVIEW STILL REQUIRED" : "STRUCTURAL REVIEW REQUIRED";
   const sourceRecords = listedRecords(
-    project.sources.map((source) =>
-      `- ${source.id} — ${source.status.toUpperCase()} ${source.kind}: ${source.label || "[NEEDS INPUT] Source title or citation"}\n  - Original record locator: ${source.locator?.trim() || "[NEEDS INPUT] Add a DOI, stable URL, repository/archive record, or local record ID."}\n  - Researcher check date: ${source.checkedOn?.trim() || "[NEEDS INPUT] Record the date the original record was checked."}\n  - Researcher note: ${source.note || "[NEEDS INPUT] Explain relevance and verification."}\n  - Attribution check: ${source.status === "verified" ? "Marked verified by the researcher; supervisor should still check the original source and required citation style." : "Not ready for formal citation until the researcher verifies the original source."}`,
-    ),
+    project.sources.map((source) => {
+      const traceable = isUsableVerifiedSource(source);
+      const attributionCheck = traceable
+        ? "Verified and traceable in the local ledger; supervisor should still check the original source and required citation style."
+        : source.status === "verified"
+          ? "Verification is incomplete. Do not use this as a formal citation until its original-record trace is complete."
+          : "Not ready for formal citation until the researcher verifies the original source.";
+
+      return `- ${source.id} — ${verificationLabel(source.status, traceable)} ${source.kind}: ${source.label || "[NEEDS INPUT] Source title or citation"}\n  - Original record locator: ${source.locator?.trim() || "[NEEDS INPUT] Add a DOI, stable URL, repository/archive record, or local record ID."}\n  - Researcher check date: ${source.checkedOn?.trim() || "[NEEDS INPUT] Record the date the original record was checked."}\n  - Researcher note: ${source.note || "[NEEDS INPUT] Explain relevance and verification."}\n  - Attribution check: ${attributionCheck}`;
+    }),
     "- No source records yet. Do not add a bibliography from titles or memory.",
   );
   const literatureNotes = listedRecords(
     (project.literatureNotes ?? []).map((note) =>
-      `- ${note.id} — ${note.status.toUpperCase()} · source ${note.sourceId || "[NEEDS INPUT]"} · ${note.use}\n  - Locator: ${note.locator || "[NEEDS INPUT] Add a specific page, section, table, figure, or dataset-field marker."}\n  - Researcher’s own-words note: ${note.claim || "[NEEDS INPUT] Record an own-words note after checking the original source."}`,
+      `- ${note.id} — ${verificationLabel(note.status, canMarkLiteratureNoteVerified(note, project.sources))} · source ${note.sourceId || "[NEEDS INPUT]"} · ${note.use}\n  - Locator: ${note.locator || "[NEEDS INPUT] Add a specific page, section, table, figure, or dataset-field marker."}\n  - Researcher’s own-words note: ${note.claim || "[NEEDS INPUT] Record an own-words note after checking the original source."}`,
     ),
     "- No literature evidence notes yet. Add only notes linked to a checked original source.",
   );
   const priorResearch = listedRecords(
     project.priorResearch.map((record) =>
-      `- ${record.id} — ${record.status.toUpperCase()}: ${record.title || "[NEEDS INPUT] Prior-work title"}\n  - Citation or stable source location: ${record.citation || "[NEEDS INPUT]"}\n  - Researcher check date: ${record.checkedOn?.trim() || "[NEEDS INPUT] Record the date the original work was checked."}\n  - Review boundary: Treat this as a comparison record until its original thesis or paper is verified.`,
+      `- ${record.id} — ${verificationLabel(record.status, isUsableVerifiedPriorResearch(record))}: ${record.title || "[NEEDS INPUT] Prior-work title"}\n  - Citation or stable source location: ${record.citation || "[NEEDS INPUT]"}\n  - Researcher check date: ${record.checkedOn?.trim() || "[NEEDS INPUT] Record the date the original work was checked."}\n  - Review boundary: Treat this as a comparison record until its original thesis or paper is verified.`,
     ),
     "- No prior-research records yet. Add original-record details before comparing earlier studies.",
   );
@@ -49,7 +64,7 @@ export function buildSupervisorReviewMarkdown(
   );
   const resultRecords = listedRecords(
     project.results.map((result) =>
-      `- ${result.id} — ${result.verification.toUpperCase()}: ${result.label || "[NEEDS INPUT] Result label"}\n  - Direct record links: ${result.sourceIds.join(", ") || "none"}\n  - Planned method links: ${result.methodIds.join(", ") || "none"}\n  - Researcher note: ${result.note || "[NEEDS INPUT] Explain the traceable record or analysis."}`,
+      `- ${result.id} — ${verificationLabel(result.verification, canMarkResultVerified(result, project.sources, project.methods))}: ${result.label || "[NEEDS INPUT] Result label"}\n  - Direct record links: ${result.sourceIds.join(", ") || "none"}\n  - Planned method links: ${result.methodIds.join(", ") || "none"}\n  - Researcher note: ${result.note || "[NEEDS INPUT] Explain the traceable record or analysis."}`,
     ),
     "- No results recorded. This is appropriate for a planning-stage project; do not add findings before they exist and can be traced.",
   );
