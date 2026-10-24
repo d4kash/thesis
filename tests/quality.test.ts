@@ -25,8 +25,25 @@ import { canMarkResultVerified, isUsableVerifiedSource, normalizeSourceVerificat
 import { extractPublicSourcePreview, parseSupportedPublicSourceUrl, PublicSourceUrlError } from "../lib/public-source-preview";
 import { buildSynopsis, buildSynopsisMarkdown } from "../lib/synopsis";
 import { buildStudentWritingStarter, WRITING_PHRASE_GROUPS } from "../lib/writing-support";
+import { clearLocalProject, LOCAL_PROJECT_STORAGE_KEY, loadLocalProject, saveLocalProject, type LocalProjectStorage } from "../lib/local-project-storage";
 
 const VERIFIED_SOURCE_CHECK_DATE = "2026-10-24";
+
+function createMemoryStorage(initialValues: Record<string, string> = {}): LocalProjectStorage {
+  const values = new Map(Object.entries(initialValues));
+
+  return {
+    getItem(key) {
+      return values.get(key) ?? null;
+    },
+    removeItem(key) {
+      values.delete(key);
+    },
+    setItem(key, value) {
+      values.set(key, value);
+    },
+  };
+}
 
 test("both synthetic demo projects create exportable planning drafts", () => {
   for (const project of DEMO_PROJECTS) {
@@ -41,6 +58,27 @@ test("both synthetic demo projects create exportable planning drafts", () => {
     assert.equal(draft.find((section) => section.id === "results-status")?.body.includes("No results are stated"), true);
     assert.match(buildDraftMarkdown(project, draft, review), /topic-led research-planning draft/i);
   }
+});
+
+test("a validated local working project persists without saving synthetic demonstrations", () => {
+  const storage = createMemoryStorage();
+  const localProject = {
+    ...DEMO_PROJECTS[0],
+    id: "local-plan",
+    demoLabel: "Your working project • add verified sources before using claims",
+    title: "A researcher-owned local working plan",
+  };
+
+  assert.equal(saveLocalProject(storage, localProject), true);
+  assert.deepEqual(loadLocalProject(storage), { ...localProject, literatureNotes: [] });
+  assert.equal(saveLocalProject(storage, DEMO_PROJECTS[0]), false);
+  assert.equal(clearLocalProject(storage), true);
+  assert.equal(loadLocalProject(storage), null);
+
+  const malformedStorage = createMemoryStorage({
+    [LOCAL_PROJECT_STORAGE_KEY]: JSON.stringify({ id: "local-plan", title: "Missing project fields" }),
+  });
+  assert.equal(loadLocalProject(malformedStorage), null);
 });
 
 test("the topic map ranks supplied prior research and keeps limitations as candidate gaps", () => {

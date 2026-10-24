@@ -1,6 +1,6 @@
 "use client";
 
-import { startTransition, useMemo, useState } from "react";
+import { startTransition, useEffect, useMemo, useState } from "react";
 import { DraftViewer } from "@/components/DraftViewer";
 import { DissertationRoadmap } from "@/components/DissertationRoadmap";
 import { EvidenceLedger } from "@/components/EvidenceLedger";
@@ -20,6 +20,12 @@ import { WritingCoach } from "@/components/WritingCoach";
 import { DEFAULT_PROJECT_ID, DEMO_PROJECTS } from "@/lib/demo-projects";
 import { generateDraft } from "@/lib/draft";
 import { buildDraftMarkdown, buildSupervisorReviewMarkdown } from "@/lib/export";
+import {
+  clearLocalProject,
+  loadLocalProject,
+  saveLocalProject,
+  type LocalProjectStorage,
+} from "@/lib/local-project-storage";
 import { reviewProject } from "@/lib/quality";
 import type { ThesisProject } from "@/lib/thesis-types";
 
@@ -54,34 +60,84 @@ function downloadMarkdown(markdown: string, filename: string) {
   window.setTimeout(() => URL.revokeObjectURL(url), 0);
 }
 
+function browserLocalStorage(): LocalProjectStorage | null {
+  try {
+    return window.localStorage;
+  } catch {
+    return null;
+  }
+}
+
 export function ThesisStudio() {
   const [project, setProject] = useState<ThesisProject>(() => {
     const firstProject = DEMO_PROJECTS.find((item) => item.id === DEFAULT_PROJECT_ID);
     return firstProject ?? DEMO_PROJECTS[0];
   });
+  const [localProject, setLocalProject] = useState<ThesisProject | null>(null);
+  const [hasLoadedLocalProject, setHasLoadedLocalProject] = useState(false);
+  const [localSaveStatus, setLocalSaveStatus] = useState<"saving" | "saved" | "unavailable">("saving");
   const [exportStatus, setExportStatus] = useState("");
   const [isSwitching, setIsSwitching] = useState(false);
+
+  useEffect(() => {
+    const storage = browserLocalStorage();
+    const savedProject = storage ? loadLocalProject(storage) : null;
+    if (savedProject) {
+      setLocalProject(savedProject);
+      setProject(savedProject);
+    }
+    setHasLoadedLocalProject(true);
+  }, []);
+
+  useEffect(() => {
+    if (!hasLoadedLocalProject || !localProject) return;
+    const storage = browserLocalStorage();
+    setLocalSaveStatus(storage && saveLocalProject(storage, localProject) ? "saved" : "unavailable");
+  }, [hasLoadedLocalProject, localProject]);
 
   const draft = useMemo(() => generateDraft(project), [project]);
   const review = useMemo(() => reviewProject(project, draft), [project, draft]);
   const markdown = useMemo(() => buildDraftMarkdown(project, draft, review), [project, draft, review]);
   const supervisorReview = useMemo(() => buildSupervisorReviewMarkdown(project, draft, review), [project, draft, review]);
   const projects = useMemo(
-    () => (project.id === "local-plan" ? [...DEMO_PROJECTS, project] : DEMO_PROJECTS),
-    [project],
+    () => (localProject ? [...DEMO_PROJECTS, localProject] : DEMO_PROJECTS),
+    [localProject],
   );
+
+  function updateProject(nextProject: ThesisProject) {
+    setProject(nextProject);
+    if (nextProject.id === "local-plan") {
+      setLocalSaveStatus("saving");
+      setLocalProject(nextProject);
+    }
+  }
 
   function selectProject(nextProject: ThesisProject) {
     setIsSwitching(true);
     startTransition(() => {
-      setProject(nextProject);
+      updateProject(nextProject);
       setExportStatus("");
     });
     window.setTimeout(() => setIsSwitching(false), 150);
   }
 
   function createProject() {
+    if (localProject && !window.confirm("Start a new local topic? This replaces the working project saved in this browser.")) return;
     selectProject(createBlankProject());
+  }
+
+  function clearSavedProject() {
+    if (!window.confirm("Clear the working project saved in this browser? This cannot be undone.")) return;
+
+    const storage = browserLocalStorage();
+    if (!storage || !clearLocalProject(storage)) {
+      setExportStatus("Browser storage could not be cleared. The working project remains open in this tab.");
+      return;
+    }
+
+    setLocalProject(null);
+    selectProject(DEMO_PROJECTS.find((item) => item.id === DEFAULT_PROJECT_ID) ?? DEMO_PROJECTS[0]);
+    setExportStatus("Saved local project cleared from this browser.");
   }
 
   async function copyMarkdown() {
@@ -113,17 +169,29 @@ export function ThesisStudio() {
       </p>
       <GettingStartedGuide project={project} review={review} />
       <ProjectPicker onCreate={createProject} onSelect={selectProject} projects={projects} selectedId={project.id} />
+      {localProject ? (
+        <aside className="local-project-notice" role="status">
+          <span>
+            {localSaveStatus === "unavailable"
+              ? <><strong>Not saved:</strong> browser storage is unavailable, so this working project lasts only for this visit. Download anything you need before leaving; nothing has been uploaded.</>
+              : localSaveStatus === "saving"
+                ? <><strong>Saving locally:</strong> your working topic, notes, and planning records are being saved in this browser only.</>
+                : <><strong>Saved locally:</strong> your working topic, notes, and planning records stay in this browser only. This autosave does not upload source text or research files.</>}
+          </span>
+          <button className="button button--secondary button--compact" onClick={clearSavedProject} type="button">Clear working project</button>
+        </aside>
+      ) : null}
       <div aria-busy={isSwitching} className="studio-grid">
         <div className="workspace-stack">
-          <ProjectEditor onChange={setProject} project={project} />
-          <SynopsisBuilder onChange={setProject} project={project} />
-          <MethodReadiness onChange={setProject} project={project} />
+          <ProjectEditor onChange={updateProject} project={project} />
+          <SynopsisBuilder onChange={updateProject} project={project} />
+          <MethodReadiness onChange={updateProject} project={project} />
           <DissertationRoadmap project={project} />
           <WritingCoach project={project} />
           <ResearchToolkit project={project} />
-          <PriorResearchLibrary key={`${project.id}-prior-research`} onChange={setProject} project={project} />
-          <EvidenceLedger onChange={setProject} project={project} />
-          <LiteratureEvidenceMatrix onChange={setProject} project={project} />
+          <PriorResearchLibrary key={`${project.id}-prior-research`} onChange={updateProject} project={project} />
+          <EvidenceLedger onChange={updateProject} project={project} />
+          <LiteratureEvidenceMatrix onChange={updateProject} project={project} />
         </div>
         <div className="draft-stack">
           <ResearchLandscape project={project} />
