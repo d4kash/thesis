@@ -11,7 +11,7 @@ export function generateDraft(project: ThesisProject): DraftSection[] {
   const writingStarter = buildStudentWritingStarter(project);
   const objectiveLines = project.objectives.map((objective) => `${objective.id}: ${objective.text}`);
   const methodLines = project.methods.map(
-    (method) => `${method.id} → ${method.objectiveIds.join(", ")}: ${method.text}`,
+    (method) => `${method.id} → ${method.objectiveIds.join(", ")}: ${method.text}\nData, permissions, and ethics plan: ${method.dataAndEthicsPlan?.trim() || "[NEEDS INPUT] Record the planned safeguards for this method."}`,
   );
   const sourceLines = project.sources.map(
     (source) => `${source.id} (${source.status}): ${source.label}. ${source.note}`,
@@ -58,7 +58,7 @@ export function generateDraft(project: ThesisProject): DraftSection[] {
     {
       id: "research-design",
       heading: "4. Research design and methodology",
-      body: `Objectives\n${list(objectiveLines)}\n\nMethods mapped to objectives\n${list(methodLines)}\n\nBefore fieldwork or analysis, record the approved protocol, sampling or selection logic, ethics requirements, and the decisions that would change the method.`,
+      body: `Objectives\n${list(objectiveLines)}\n\nMethods mapped to objectives\n${list(methodLines)}\n\nBefore fieldwork or analysis, record the approved protocol, sampling or selection logic, ethics requirements, and the decisions that would change the method. A recorded plan is not evidence of ethics approval, permission, or collected data.`,
       claimIds: project.methods.map((method) => method.id),
     },
     {
@@ -73,7 +73,7 @@ export function generateDraft(project: ThesisProject): DraftSection[] {
       body:
         resultLines.length === 0
           ? "No results are stated. This project is a research plan and has no collected or verified findings."
-          : `Result ledger\n${list(resultLines)}\n\nOnly verified results with linked direct records and planned methods may support outcome language in the discussion or conclusion.`,
+          : `Result ledger\n${list(resultLines)}\n\nOnly verified results with linked direct records and planned methods that document data and safeguards may support outcome language in the discussion or conclusion.`,
       claimIds: project.results.map((result) => result.id),
     },
     {

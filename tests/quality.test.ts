@@ -7,6 +7,7 @@ import { DissertationRoadmap } from "../components/DissertationRoadmap";
 import { EvidenceLedger } from "../components/EvidenceLedger";
 import { GettingStartedGuide } from "../components/GettingStartedGuide";
 import { LiteratureEvidenceMatrix } from "../components/LiteratureEvidenceMatrix";
+import { MethodReadiness } from "../components/MethodReadiness";
 import { PriorResearchLibrary } from "../components/PriorResearchLibrary";
 import { SynopsisBuilder } from "../components/SynopsisBuilder";
 import { DEMO_PROJECTS } from "../lib/demo-projects";
@@ -444,6 +445,24 @@ test("a verified result must link to a planned method", () => {
   assert.equal(roadmap.items.find((item) => item.id === "results")?.status, "needs-data");
 });
 
+test("a verified result needs a method-specific data and ethics plan", () => {
+  const project = {
+    ...DEMO_PROJECTS[0],
+    methods: DEMO_PROJECTS[0].methods.map((method) => (
+      method.id === "MTH-01" ? { ...method, dataAndEthicsPlan: "" } : method
+    )),
+    sources: [{ ...DEMO_PROJECTS[0].sources[0], status: "verified" as const, note: "Verified dataset record with license, access date, and relevance notes." }],
+    results: [{ id: "RES-01", label: "Held-out evaluation summary", verification: "verified" as const, note: "A traceable summary was recorded.", sourceIds: ["SRC-01"], methodIds: ["MTH-01"] }],
+  };
+  const review = reviewProject(project, generateDraft(project));
+  const roadmap = buildDissertationRoadmap(project);
+
+  assert.equal(review.canExportAsDraft, false);
+  assert.equal(review.verifiedResultCount, 0);
+  assert.equal(review.issues.some((item) => item.id === "result-method-readiness-RES-01"), true);
+  assert.equal(roadmap.items.find((item) => item.id === "results")?.status, "needs-data");
+});
+
 test("a verified result with a verified evidence link can remain a working draft", () => {
   const project = {
     ...DEMO_PROJECTS[0],
@@ -652,4 +671,14 @@ test("the evidence ledger separates literature from direct result records", () =
   assert.match(markup, /Verified data or record link/);
   assert.match(markup, /Planned method link/);
   assert.match(markup, /does not confirm ethics approval, consent, permission, or a completed study/i);
+});
+
+test("method readiness records a plan without claiming approval or collected data", () => {
+  const markup = renderToStaticMarkup(
+    createElement(MethodReadiness, { project: DEMO_PROJECTS[0], onChange: () => undefined }),
+  );
+
+  assert.match(markup, /Plan safeguards for each method/);
+  assert.match(markup, /Data, permissions, and ethics plan/);
+  assert.match(markup, /does not confirm ethics approval, consent, institutional permission, data access, or completed data collection/i);
 });

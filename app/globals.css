@@ -108,6 +108,21 @@ h3 { font-size: 0.94rem; margin-bottom: 8px; }
 .synopsis-preview__section--missing p { color: #71460d; }
 .synopsis-builder__boundary { background: var(--amber-soft); border-left: 3px solid var(--amber); color: #69420b; font-size: 0.76rem; line-height: 1.48; margin: 16px 0; padding: 8px 10px; }
 
+.method-readiness { background: linear-gradient(145deg, #fffdf8, #f2f8f4); scroll-margin-top: 18px; }
+.method-readiness__boundary { background: var(--amber-soft); border-left: 3px solid var(--amber); color: #69420b; font-size: 0.78rem; line-height: 1.5; margin: 14px 0 0; padding: 9px 10px; }
+.method-readiness__empty { color: var(--muted); font-size: 0.84rem; line-height: 1.5; margin: 18px 0 0; }
+.method-readiness__list { display: grid; gap: 12px; list-style: none; margin: 18px 0 0; padding: 0; }
+.method-readiness__list li { background: #f5f8f4; border: 1px solid #dbe6de; border-radius: 10px; display: grid; gap: 10px; padding: 12px; }
+.method-readiness__method { display: grid; gap: 4px; }
+.method-readiness__method strong { color: var(--green-dark); font-size: 0.78rem; }
+.method-readiness__method span { font-size: 0.83rem; line-height: 1.45; }
+.method-readiness__method small, .method-readiness__list label small { color: var(--muted); font-size: 0.73rem; line-height: 1.4; }
+.method-readiness__list label { color: var(--ink); display: grid; font-size: 0.79rem; font-weight: 700; gap: 6px; }
+.method-readiness__list textarea { background: #fffdf8; border: 1px solid #cbd1c9; border-radius: 8px; color: var(--ink); font-weight: 400; line-height: 1.45; padding: 9px; resize: vertical; width: 100%; }
+.method-readiness__list textarea:focus { border-color: var(--green); outline: 3px solid rgba(28, 106, 74, 0.14); }
+.method-readiness__status { background: #fff6df; border-radius: 999px; color: #71460d; font-size: 0.69rem; font-style: normal; font-weight: 700; justify-self: start; padding: 5px 8px; }
+.method-readiness__status--recorded { background: #e6f1ea; color: var(--green-dark); }
+
 .writing-coach { background: linear-gradient(145deg, #fffdf8, #eef8f1); }
 .writing-starter { background: #f5f8f4; border: 1px solid #dbe6de; border-radius: 12px; margin: 18px 0; padding: 13px; }
 .writing-starter strong { color: var(--green-dark); display: block; font-size: 0.82rem; line-height: 1.4; }

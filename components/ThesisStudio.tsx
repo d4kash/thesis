@@ -7,6 +7,7 @@ import { EvidenceLedger } from "@/components/EvidenceLedger";
 import { ExportActions } from "@/components/ExportActions";
 import { GettingStartedGuide } from "@/components/GettingStartedGuide";
 import { LiteratureEvidenceMatrix } from "@/components/LiteratureEvidenceMatrix";
+import { MethodReadiness } from "@/components/MethodReadiness";
 import { ProjectEditor } from "@/components/ProjectEditor";
 import { ProjectPicker } from "@/components/ProjectPicker";
 import { PriorResearchLibrary } from "@/components/PriorResearchLibrary";
@@ -108,6 +109,7 @@ export function ThesisStudio() {
         <div className="workspace-stack">
           <ProjectEditor onChange={setProject} project={project} />
           <SynopsisBuilder onChange={setProject} project={project} />
+          <MethodReadiness onChange={setProject} project={project} />
           <DissertationRoadmap project={project} />
           <WritingCoach project={project} />
           <PriorResearchLibrary key={`${project.id}-prior-research`} onChange={setProject} project={project} />

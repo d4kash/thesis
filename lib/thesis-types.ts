@@ -38,6 +38,7 @@ export interface ResearchMethod {
   id: string;
   objectiveIds: string[];
   text: string;
+  dataAndEthicsPlan?: string;
 }
 
 export interface ResultLedgerItem {

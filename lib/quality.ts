@@ -5,6 +5,7 @@ import type {
   QualityReport,
   ThesisProject,
 } from "@/lib/thesis-types";
+import { hasMethodDataAndEthicsPlan } from "@/lib/method-readiness";
 import { hasTopic } from "@/lib/topic-starter";
 
 const unsupportedOutcomePattern = /\b(outperforms|proves|demonstrates|improves|causes)\b/i;
@@ -43,7 +44,7 @@ export function reviewProject(project: ThesisProject, draft: DraftSection[]): Qu
   const isTraceableVerifiedResult = (result: ThesisProject["results"][number]) =>
     result.verification === "verified"
       && result.sourceIds.some((id) => isUsableVerifiedDirectEvidence(sourceById.get(id)))
-      && result.methodIds.some((id) => methodById.has(id));
+      && result.methodIds.some((id) => hasMethodDataAndEthicsPlan(methodById.get(id)));
 
   if (!hasTopic(project)) {
     issues.push(
@@ -337,6 +338,20 @@ export function reviewProject(project: ThesisProject, draft: DraftSection[]): Qu
           "Verified result lacks a planned method link",
           `${result.id} is marked verified but does not identify the planned method that produced or analyzed the record.`,
           "Link the result to an existing method record, or keep it unverified until that method is documented.",
+        ),
+      );
+    }
+
+    const hasKnownMethod = result.methodIds.some((id) => methodById.has(id));
+    const hasDocumentedMethodPlan = result.methodIds.some((id) => hasMethodDataAndEthicsPlan(methodById.get(id)));
+    if (hasKnownMethod && !hasDocumentedMethodPlan) {
+      issues.push(
+        issue(
+          `result-method-readiness-${result.id}`,
+          "critical",
+          "Verified result lacks a method safeguard plan",
+          `${result.id} links to a planned method, but that method has no documented data, permissions, privacy, or ethics plan.`,
+          "Record the method-specific data and safeguard plan, or keep the result unverified until the plan is documented.",
         ),
       );
     }

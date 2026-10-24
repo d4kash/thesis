@@ -29,16 +29,19 @@ export const DEMO_PROJECTS: ThesisProject[] = [
         id: "MTH-01",
         objectiveIds: ["OBJ-01"],
         text: "Register inclusion criteria, label provenance, image quality checks, and a held-out evaluation split before model training.",
+        dataAndEthicsPlan: "Use only a dataset with documented provenance and licence, record its access date, and confirm that no participant data are involved before analysis.",
       },
       {
         id: "MTH-02",
         objectiveIds: ["OBJ-02"],
         text: "Compare model explanation maps with pre-specified expert regions using an auditable overlap protocol.",
+        dataAndEthicsPlan: "Confirm whether expert-review permission is required and retain no identifiable reviewer details in the comparison ledger.",
       },
       {
         id: "MTH-03",
         objectiveIds: ["OBJ-03"],
         text: "Log class imbalance, ambiguous labels, image artifacts, and cases where explanations are not interpretable.",
+        dataAndEthicsPlan: "Store error logs without personal information and record any access or retention restrictions before analysing limitations.",
       },
     ],
     priorResearch: [
@@ -111,16 +114,19 @@ export const DEMO_PROJECTS: ThesisProject[] = [
         id: "MTH-01",
         objectiveIds: ["OBJ-01"],
         text: "Collect an institutional inventory and participant-approved accounts of access pathways after ethics review.",
+        dataAndEthicsPlan: "Confirm institutional permission and ethics requirements before recruitment, then obtain consent before collecting participant accounts.",
       },
       {
         id: "MTH-02",
         objectiveIds: ["OBJ-02"],
         text: "Apply a shared case-comparison matrix and retain source links for every coded observation.",
+        dataAndEthicsPlan: "Remove direct identifiers, store the coding matrix securely, and document authorised access before any comparative analysis.",
       },
       {
         id: "MTH-03",
         objectiveIds: ["OBJ-03"],
         text: "Use consent records, removal of direct identifiers, and a documented retention schedule.",
+        dataAndEthicsPlan: "Confirm retention, deletion, consent withdrawal, and data-access procedures with the supervisor or relevant ethics process.",
       },
     ],
     priorResearch: [

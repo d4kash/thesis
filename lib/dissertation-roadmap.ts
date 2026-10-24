@@ -1,5 +1,6 @@
 import { hasTopic } from "@/lib/topic-starter";
 import type { EvidenceSource, LiteratureEvidenceNote, ThesisProject } from "@/lib/thesis-types";
+import { hasMethodDataAndEthicsPlan } from "@/lib/method-readiness";
 
 export const DEFAULT_DISSERTATION_PAGE_TARGET = 300;
 
@@ -145,11 +146,12 @@ interface RoadmapEvidenceContext {
   verifiedComparisonNotes: LiteratureEvidenceNote[];
   verifiedResults: ThesisProject["results"];
   verifiedSources: EvidenceSource[];
+  methodPlanCount: number;
 }
 
 function buildEvidenceContext(project: ThesisProject): RoadmapEvidenceContext {
   const sourceById = new Map(project.sources.map((source) => [source.id, source]));
-  const methodIds = new Set(project.methods.map((method) => method.id));
+  const methodById = new Map(project.methods.map((method) => [method.id, method]));
   const verifiedLiteratureNotes = (project.literatureNotes ?? []).filter((note) =>
     note.status === "verified"
       && note.claim.trim().length >= 12
@@ -160,7 +162,7 @@ function buildEvidenceContext(project: ThesisProject): RoadmapEvidenceContext {
   const verifiedResults = project.results.filter((result) =>
     result.verification === "verified"
       && result.sourceIds.some((sourceId) => isUsableVerifiedDirectEvidence(sourceById.get(sourceId)))
-      && result.methodIds.some((methodId) => methodIds.has(methodId)),
+      && result.methodIds.some((methodId) => hasMethodDataAndEthicsPlan(methodById.get(methodId))),
   );
 
   return {
@@ -169,6 +171,7 @@ function buildEvidenceContext(project: ThesisProject): RoadmapEvidenceContext {
     verifiedComparisonNotes: verifiedLiteratureNotes.filter((note) => note.use === "comparison" || note.use === "limitation"),
     verifiedResults,
     verifiedSources,
+    methodPlanCount: project.methods.filter(hasMethodDataAndEthicsPlan).length,
   };
 }
 
@@ -211,22 +214,28 @@ function evidenceForItem(id: string, project: ThesisProject, context: RoadmapEvi
             recordIds: [],
           };
     case "methodology":
+      {
+        const methodPlanSummary = project.methods.length === 0
+          ? "No planned methods have been added yet."
+          : `${context.methodPlanCount}/${project.methods.length} planned method(s) include a data, permissions, and ethics plan.`;
+
       return context.verifiedMethodNotes.length > 0
         ? {
             status: "tracked",
-            summary: `${context.verifiedMethodNotes.length} verified method note(s) can support the rationale for the planned design; approvals and instruments still need separate review.`,
+            summary: `${context.verifiedMethodNotes.length} verified method note(s) can support the rationale for the planned design. ${methodPlanSummary} Approvals and instruments still need separate review.`,
             recordIds: linkedRecordIds(context.verifiedMethodNotes, project.methods),
           }
         : {
             status: "needs-source",
-            summary: "NEEDS SOURCE — add a verified literature note marked “Method or approach” before using a source to justify the design.",
+            summary: `NEEDS SOURCE — add a verified literature note marked “Method or approach” before using a source to justify the design. ${methodPlanSummary}`,
             recordIds: linkedRecordIds(project.methods),
           };
+      }
     case "results":
       return context.verifiedResults.length > 0
         ? {
             status: "tracked",
-            summary: `${context.verifiedResults.length} verified result record(s) are linked to usable source records. Add only the tables, figures, or analyses those records actually support.`,
+            summary: `${context.verifiedResults.length} verified result record(s) are linked to usable direct records and planned methods with documented safeguards. Add only the tables, figures, or analyses those records actually support.`,
             recordIds: linkedRecordIds(context.verifiedResults),
           }
         : {
@@ -350,11 +359,11 @@ function buildOriginalityChecks(project: ThesisProject): OriginalityCheckpoint[]
     record.limitations,
   ].some((value) => value.trim().length >= 12)).length;
   const sourceById = new Map(project.sources.map((source) => [source.id, source]));
-  const methodIds = new Set(project.methods.map((method) => method.id));
+  const methodById = new Map(project.methods.map((method) => [method.id, method]));
   const verifiedResults = project.results.filter((result) =>
     result.verification === "verified"
       && result.sourceIds.some((sourceId) => isUsableVerifiedDirectEvidence(sourceById.get(sourceId)))
-      && result.methodIds.some((methodId) => methodIds.has(methodId)),
+      && result.methodIds.some((methodId) => hasMethodDataAndEthicsPlan(methodById.get(methodId))),
   ).length;
 
   return [
