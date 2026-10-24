@@ -12,12 +12,16 @@ export function hasUsableSourceLocator(source: EvidenceSource | undefined): bool
   return (source?.locator?.trim().length ?? 0) >= SOURCE_LOCATOR_MINIMUM_LENGTH;
 }
 
-export function hasUsableSourceCheckDate(source: EvidenceSource | undefined): boolean {
-  const value = source?.checkedOn?.trim() ?? "";
-  if (!ISO_CHECK_DATE_PATTERN.test(value)) return false;
+export function hasUsableResearcherCheckDate(value: string | undefined): boolean {
+  const cleanValue = value?.trim() ?? "";
+  if (!ISO_CHECK_DATE_PATTERN.test(cleanValue)) return false;
 
-  const date = new Date(`${value}T00:00:00.000Z`);
-  return !Number.isNaN(date.valueOf()) && date.toISOString().slice(0, 10) === value;
+  const date = new Date(`${cleanValue}T00:00:00.000Z`);
+  return !Number.isNaN(date.valueOf()) && date.toISOString().slice(0, 10) === cleanValue;
+}
+
+export function hasUsableSourceCheckDate(source: EvidenceSource | undefined): boolean {
+  return hasUsableResearcherCheckDate(source?.checkedOn);
 }
 
 export function isUsableVerifiedSource(source: EvidenceSource | undefined): boolean {

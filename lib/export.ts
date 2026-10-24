@@ -37,7 +37,7 @@ export function buildSupervisorReviewMarkdown(
   );
   const priorResearch = listedRecords(
     project.priorResearch.map((record) =>
-      `- ${record.id} — ${record.status.toUpperCase()}: ${record.title || "[NEEDS INPUT] Prior-work title"}\n  - Citation or stable source location: ${record.citation || "[NEEDS INPUT]"}\n  - Review boundary: Treat this as a comparison record until its original thesis or paper is verified.`,
+      `- ${record.id} — ${record.status.toUpperCase()}: ${record.title || "[NEEDS INPUT] Prior-work title"}\n  - Citation or stable source location: ${record.citation || "[NEEDS INPUT]"}\n  - Researcher check date: ${record.checkedOn?.trim() || "[NEEDS INPUT] Record the date the original work was checked."}\n  - Review boundary: Treat this as a comparison record until its original thesis or paper is verified.`,
     ),
     "- No prior-research records yet. Add original-record details before comparing earlier studies.",
   );

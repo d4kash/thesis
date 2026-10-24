@@ -56,6 +56,7 @@ export interface PriorResearchRecord {
   id: string;
   title: string;
   citation: string;
+  checkedOn?: string;
   context: string;
   researchQuestion: string;
   methodology: string;

@@ -20,7 +20,7 @@ import { buildDissertationRoadmap, buildDissertationRoadmapMarkdown } from "../l
 import { createTopicStarter, hasTopic } from "../lib/topic-starter";
 import { reviewProject } from "../lib/quality";
 import { canMarkLiteratureNoteVerified, hasUsableLiteratureLocator, normalizeLiteratureVerification } from "../lib/literature-readiness";
-import { canMarkPriorResearchVerified, normalizePriorResearchVerification } from "../lib/prior-research-readiness";
+import { canMarkPriorResearchVerified, isUsableVerifiedPriorResearch, normalizePriorResearchVerification } from "../lib/prior-research-readiness";
 import { canMarkResultVerified, isUsableVerifiedSource, normalizeSourceVerification } from "../lib/result-readiness";
 import { extractPublicSourcePreview, parseSupportedPublicSourceUrl, PublicSourceUrlError } from "../lib/public-source-preview";
 import { buildSynopsis, buildSynopsisMarkdown } from "../lib/synopsis";
@@ -51,6 +51,7 @@ test("the topic map ranks supplied prior research and keeps limitations as candi
         id: "PRV-01",
         title: "Leaf image explanation study",
         citation: "Repository record: example/leaf-explanations",
+        checkedOn: VERIFIED_SOURCE_CHECK_DATE,
         context: "Flowering plant leaf-image classification with visual explanation checks.",
         researchQuestion: "How are explanation maps evaluated for leaf image classifiers?",
         methodology: "Compare explanation maps to defined leaf regions.",
@@ -142,6 +143,7 @@ test("an incomplete prior-work record cannot retain verified status", () => {
     ...DEMO_PROJECTS[0].priorResearch[0],
     status: "verified" as const,
     citation: "Repository record: example/verified-prior-work",
+    checkedOn: VERIFIED_SOURCE_CHECK_DATE,
     context: "Checked original research context and scope recorded from the public source.",
   };
 
@@ -149,6 +151,28 @@ test("an incomplete prior-work record cannot retain verified status", () => {
   assert.equal(normalizePriorResearchVerification(incompleteRecord).status, "reviewed");
   assert.equal(canMarkPriorResearchVerified(verifiedRecord), true);
   assert.equal(normalizePriorResearchVerification(verifiedRecord).status, "verified");
+});
+
+test("a verified prior work needs a valid researcher check date", () => {
+  const uncheckedRecord = {
+    ...DEMO_PROJECTS[0].priorResearch[0],
+    status: "verified" as const,
+    citation: "Repository record: example/checked-prior-work",
+    checkedOn: "2026-02-30",
+    context: "Checked original research context and scope recorded from the public source.",
+  };
+  const checkedRecord = { ...uncheckedRecord, checkedOn: VERIFIED_SOURCE_CHECK_DATE };
+  const project = { ...DEMO_PROJECTS[0], priorResearch: [uncheckedRecord] };
+  const review = reviewProject(project, generateDraft(project));
+  const landscape = buildResearchLandscape(project);
+
+  assert.equal(canMarkPriorResearchVerified(uncheckedRecord), false);
+  assert.equal(canMarkPriorResearchVerified(checkedRecord), true);
+  assert.equal(isUsableVerifiedPriorResearch(uncheckedRecord), false);
+  assert.equal(normalizePriorResearchVerification(uncheckedRecord).status, "reviewed");
+  assert.equal(review.verifiedPriorResearchCount, 0);
+  assert.equal(review.issues.some((item) => item.id === "thin-verified-prior-research-PRV-01"), true);
+  assert.equal(landscape.verifiedMatchCount, 0);
 });
 
 test("a verified literature note returns to reviewed when its source loses a usable trace", () => {
@@ -283,6 +307,8 @@ test("saved prior-research records can be corrected in place", () => {
 
   assert.match(markup, /Edit PRV-01 title/);
   assert.match(markup, /Edit PRV-01 citation/);
+  assert.match(markup, /When did you check the original work\?/);
+  assert.match(markup, /This is not the publication date or a proof of approval/i);
   assert.match(markup, /Edit PRV-01 limitations/);
   assert.match(markup, /Preview a public source/);
   assert.match(markup, /reads only the public page metadata/);
@@ -614,6 +640,13 @@ test("both copy and download controls respect a structural export hold", () => {
 test("the supervisor review packet keeps citation checks editable without generating citations", () => {
   const project = {
     ...DEMO_PROJECTS[0],
+    priorResearch: [{
+      ...DEMO_PROJECTS[0].priorResearch[0],
+      citation: "Repository record: example/verified-prior-work",
+      checkedOn: VERIFIED_SOURCE_CHECK_DATE,
+      context: "Checked original research context and scope recorded from the public source.",
+      status: "verified" as const,
+    }],
     sources: [{ ...DEMO_PROJECTS[0].sources[0], status: "verified" as const, locator: "https://records.example.test/datasets/SRC-01", checkedOn: VERIFIED_SOURCE_CHECK_DATE, note: "Researcher checked the dataset provenance, licence, and relevance for this planning record." }],
     literatureNotes: [{
       id: "LIT-01",
@@ -633,6 +666,7 @@ test("the supervisor review packet keeps citation checks editable without genera
   assert.match(packet, /SRC-01/);
   assert.match(packet, /Original record locator: https:\/\/records\.example\.test\/datasets\/SRC-01/);
   assert.match(packet, /Researcher check date: 2026-10-24/);
+  assert.match(packet, /Citation or stable source location: Repository record: example\/verified-prior-work\n  - Researcher check date: 2026-10-24/);
   assert.match(packet, /LIT-01/);
   assert.match(packet, /\[SUPERVISOR NOTE\]/);
   assert.match(packet, /not a thesis, a citation generator, an ethics approval, or an originality certificate/i);

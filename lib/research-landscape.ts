@@ -1,4 +1,5 @@
 import type { PriorResearchRecord, ThesisProject } from "@/lib/thesis-types";
+import { isUsableVerifiedPriorResearch } from "@/lib/prior-research-readiness";
 
 const STOP_WORDS = new Set([
   "about", "across", "after", "against", "among", "and", "are", "as", "at", "before", "by",
@@ -95,7 +96,7 @@ export function buildResearchLandscape(project: ThesisProject): ResearchLandscap
     .filter((match) => match.record.limitations.trim().length > 0)
     .slice(0, 5)
     .map((match) => ({ recordId: match.record.id, text: match.record.limitations.trim() }));
-  const verifiedMatchCount = matchedRecords.filter((match) => match.record.status === "verified").length;
+  const verifiedMatchCount = matchedRecords.filter((match) => isUsableVerifiedPriorResearch(match.record)).length;
   const prompts = unique([
     matchedRecords.length > 0
       ? "Compare the matched records' context, method, and stated limitation before treating their findings as directly comparable."

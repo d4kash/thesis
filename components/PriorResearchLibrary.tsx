@@ -23,7 +23,7 @@ interface PriorResearchLibraryProps {
   onChange: (project: ThesisProject) => void;
 }
 
-const verifiedPriorResearchRequirements = "A verified prior work needs a citation, repository link, or stable source description plus at least one usable checked research note.";
+const verifiedPriorResearchRequirements = "A verified prior work needs a citation, repository link, or stable source description, the date you checked the original work, and at least one usable checked research note.";
 
 function nextId(ids: string[]): string {
   const highest = ids.reduce((current, id) => {
@@ -41,6 +41,7 @@ export function PriorResearchLibrary({ project, onChange }: PriorResearchLibrary
   const [isPreviewing, setIsPreviewing] = useState(false);
   const [title, setTitle] = useState("");
   const [citation, setCitation] = useState("");
+  const [checkedOn, setCheckedOn] = useState("");
   const [context, setContext] = useState("");
   const [researchQuestion, setResearchQuestion] = useState("");
   const [methodology, setMethodology] = useState("");
@@ -102,6 +103,7 @@ export function PriorResearchLibrary({ project, onChange }: PriorResearchLibrary
       id: nextId(project.priorResearch.map((entry) => entry.id)),
       title: cleanTitle,
       citation: citation.trim(),
+      checkedOn,
       context: context.trim(),
       researchQuestion: researchQuestion.trim(),
       methodology: methodology.trim(),
@@ -124,6 +126,7 @@ export function PriorResearchLibrary({ project, onChange }: PriorResearchLibrary
     });
     setTitle("");
     setCitation("");
+    setCheckedOn("");
     setContext("");
     setResearchQuestion("");
     setMethodology("");
@@ -162,7 +165,7 @@ export function PriorResearchLibrary({ project, onChange }: PriorResearchLibrary
     });
 
     if (returnedToReviewed) {
-      setMessage(`${id} returned to reviewed because its verified citation or checked note is incomplete.`);
+      setMessage(`${id} returned to reviewed because its verified citation, check date, or checked note is incomplete.`);
     }
   }
 
@@ -183,7 +186,7 @@ export function PriorResearchLibrary({ project, onChange }: PriorResearchLibrary
       <p className="field-note">
         Add notes from the original thesis, dissertation, paper, or approved review. The studio compares the record with the current topic; it does not invent a citation, a finding, or a research gap.
       </p>
-      <p className="field-note">To mark a record verified, add a stable source description and a checked research note. If an edit makes either incomplete, the studio returns it to reviewed.</p>
+      <p className="field-note">To mark a record verified, add a stable source description, the date you checked the original work, and a checked research note. If an edit makes any of these incomplete, the studio returns it to reviewed.</p>
 
       <div className="source-preview">
         <h3>1. Preview a public source</h3>
@@ -221,6 +224,11 @@ export function PriorResearchLibrary({ project, onChange }: PriorResearchLibrary
         <label>
           Citation, repository URL, or stable source description
           <textarea onChange={(event) => setCitation(event.target.value)} rows={2} value={citation} />
+        </label>
+        <label>
+          When did you check the original work? {status === "verified" ? "(required)" : "(needed before verification)"}
+          <input onChange={(event) => setCheckedOn(event.target.value)} type="date" value={checkedOn} />
+          <small>Record the day you personally checked the original work. This is not the publication date or a proof of approval.</small>
         </label>
         <label>
           Context, setting, population, or corpus
@@ -262,6 +270,7 @@ export function PriorResearchLibrary({ project, onChange }: PriorResearchLibrary
               <strong>{record.id} · {record.status}</strong>
               <span>{record.title}</span>
               {record.citation ? <small>Citation/source: {record.citation}</small> : <small>No source location recorded yet.</small>}
+              <small>Researcher check date: {record.checkedOn?.trim() || "not recorded yet."}</small>
               {record.context ? <small>Context: {record.context}</small> : null}
               {record.methodology ? <small>Method: {record.methodology}</small> : null}
               {record.limitations ? <small>Limitation: {record.limitations}</small> : null}
@@ -276,6 +285,10 @@ export function PriorResearchLibrary({ project, onChange }: PriorResearchLibrary
                   <label>
                     Citation, repository URL, or stable source description
                     <textarea aria-label={`Edit ${record.id} citation`} onChange={(event) => updateRecord(record.id, { citation: event.target.value })} rows={2} value={record.citation} />
+                  </label>
+                  <label>
+                    Original-work check date
+                    <input aria-label={`Edit ${record.id} check date`} onChange={(event) => updateRecord(record.id, { checkedOn: event.target.value })} type="date" value={record.checkedOn ?? ""} />
                   </label>
                   <label>
                     Context, setting, population, or corpus

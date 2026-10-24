@@ -6,7 +6,7 @@ import type {
 } from "@/lib/thesis-types";
 import { canMarkLiteratureNoteVerified } from "@/lib/literature-readiness";
 import { hasMethodDataAndEthicsPlan } from "@/lib/method-readiness";
-import { canMarkPriorResearchVerified } from "@/lib/prior-research-readiness";
+import { canMarkPriorResearchVerified, isUsableVerifiedPriorResearch } from "@/lib/prior-research-readiness";
 import {
   canMarkResultVerified,
   hasUsableResultRecord,
@@ -117,8 +117,8 @@ export function reviewProject(project: ThesisProject, draft: DraftSection[]): Qu
           `thin-verified-prior-research-${record.id}`,
           "critical",
           "Verified prior work lacks a usable trace",
-          `${record.id} is marked verified but does not include a stable citation and a usable research note.`,
-          "Record the citation or stable source location, then add at least one context, method, finding, or limitation note from the original work.",
+          `${record.id} is marked verified but does not include a stable citation, researcher check date, and usable research note.`,
+          "Record the citation or stable source location and the date you checked it, then add at least one context, method, finding, or limitation note from the original work.",
         ),
       );
     }
@@ -391,7 +391,7 @@ export function reviewProject(project: ThesisProject, draft: DraftSection[]): Qu
     sourceCount: project.sources.length,
     verifiedSourceCount: project.sources.filter((source) => source.status === "verified").length,
     priorResearchCount: project.priorResearch.length,
-    verifiedPriorResearchCount: project.priorResearch.filter((record) => record.status === "verified").length,
+    verifiedPriorResearchCount: project.priorResearch.filter(isUsableVerifiedPriorResearch).length,
     literatureNoteCount: literatureNotes.length,
     verifiedLiteratureNoteCount: literatureNotes.filter((note) => note.status === "verified").length,
     resultCount: project.results.length,
