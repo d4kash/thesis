@@ -23,7 +23,7 @@ interface PriorResearchLibraryProps {
   onChange: (project: ThesisProject) => void;
 }
 
-const verifiedPriorResearchRequirements = "A verified prior work needs a citation, repository link, or stable source description, the date you checked the original work, and at least one usable checked research note.";
+const verifiedPriorResearchRequirements = "A verified prior work needs a title, a citation, repository link, or stable source description, the date you checked the original work, and at least one usable checked research note.";
 
 function nextId(ids: string[]): string {
   const highest = ids.reduce((current, id) => {
@@ -165,7 +165,7 @@ export function PriorResearchLibrary({ project, onChange }: PriorResearchLibrary
     });
 
     if (returnedToReviewed) {
-      setMessage(`${id} returned to reviewed because its verified citation, check date, or checked note is incomplete.`);
+      setMessage(`${id} returned to reviewed because its title, verified citation, check date, or checked note is incomplete.`);
     }
   }
 

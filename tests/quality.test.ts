@@ -254,11 +254,18 @@ test("an incomplete prior-work record cannot retain verified status", () => {
     checkedOn: VERIFIED_SOURCE_CHECK_DATE,
     context: "Checked original research context and scope recorded from the public source.",
   };
+  const titlelessRecord = { ...verifiedRecord, title: " " };
+  const titlelessProject = { ...DEMO_PROJECTS[0], priorResearch: [titlelessRecord] };
+  const titlelessReview = reviewProject(titlelessProject, generateDraft(titlelessProject));
 
   assert.equal(canMarkPriorResearchVerified(incompleteRecord), false);
   assert.equal(normalizePriorResearchVerification(incompleteRecord).status, "reviewed");
   assert.equal(canMarkPriorResearchVerified(verifiedRecord), true);
   assert.equal(normalizePriorResearchVerification(verifiedRecord).status, "verified");
+  assert.equal(canMarkPriorResearchVerified(titlelessRecord), false);
+  assert.equal(normalizePriorResearchVerification(titlelessRecord).status, "reviewed");
+  assert.equal(titlelessReview.verifiedPriorResearchCount, 0);
+  assert.equal(titlelessReview.issues.some((item) => item.id === "thin-verified-prior-research-PRV-01"), true);
 });
 
 test("a verified prior work needs a valid researcher check date", () => {
@@ -790,6 +797,7 @@ test("the supervisor packet does not present incomplete verification labels as e
     priorResearch: [{
       ...DEMO_PROJECTS[0].priorResearch[0],
       status: "verified" as const,
+      title: "",
       citation: "Repository record: example/incomplete-prior-work",
       context: "A checked prior-research context that still lacks a recorded check date.",
     }],
@@ -824,6 +832,7 @@ test("the supervisor packet does not present incomplete verification labels as e
   assert.match(packet, /Attribution check: Verification is incomplete\. Do not use this as a formal citation/i);
   assert.match(packet, /LIT-01 — VERIFICATION INCOMPLETE/);
   assert.match(packet, /PRV-01 — VERIFICATION INCOMPLETE/);
+  assert.match(packet, /\[NEEDS INPUT\] Prior-work title/);
   assert.match(packet, /RES-01 — VERIFICATION INCOMPLETE/);
 });
 

@@ -10,7 +10,8 @@ export function hasUsablePriorResearchDetail(record: PriorResearchRecord): boole
 }
 
 export function canMarkPriorResearchVerified(record: PriorResearchRecord): boolean {
-  return record.citation.trim().length >= PRIOR_RESEARCH_CITATION_MINIMUM_LENGTH
+  return record.title.trim().length > 0
+    && record.citation.trim().length >= PRIOR_RESEARCH_CITATION_MINIMUM_LENGTH
     && hasUsableResearcherCheckDate(record.checkedOn)
     && hasUsablePriorResearchDetail(record);
 }

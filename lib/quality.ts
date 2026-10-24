@@ -117,8 +117,8 @@ export function reviewProject(project: ThesisProject, draft: DraftSection[]): Qu
           `thin-verified-prior-research-${record.id}`,
           "critical",
           "Verified prior work lacks a usable trace",
-          `${record.id} is marked verified but does not include a stable citation, researcher check date, and usable research note.`,
-          "Record the citation or stable source location and the date you checked it, then add at least one context, method, finding, or limitation note from the original work.",
+          `${record.id} is marked verified but does not include a usable title, stable citation, researcher check date, and usable research note.`,
+          "Record the title, citation or stable source location, and the date you checked it, then add at least one context, method, finding, or limitation note from the original work.",
         ),
       );
     }
