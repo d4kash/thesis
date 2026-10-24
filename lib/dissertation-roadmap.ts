@@ -2,7 +2,7 @@ import { hasTopic } from "@/lib/topic-starter";
 import type { EvidenceSource, LiteratureEvidenceNote, ThesisProject } from "@/lib/thesis-types";
 import { canMarkLiteratureNoteVerified } from "@/lib/literature-readiness";
 import { hasMethodDataAndEthicsPlan } from "@/lib/method-readiness";
-import { isUsableVerifiedDirectEvidence, isUsableVerifiedSource } from "@/lib/result-readiness";
+import { isUsableVerifiedCitationSource, isUsableVerifiedDirectEvidence } from "@/lib/result-readiness";
 
 export const DEFAULT_DISSERTATION_PAGE_TARGET = 300;
 
@@ -139,7 +139,7 @@ interface RoadmapEvidenceContext {
   verifiedMethodNotes: LiteratureEvidenceNote[];
   verifiedComparisonNotes: LiteratureEvidenceNote[];
   verifiedResults: ThesisProject["results"];
-  verifiedSources: EvidenceSource[];
+  verifiedCitationSources: EvidenceSource[];
   methodPlanCount: number;
 }
 
@@ -149,7 +149,7 @@ function buildEvidenceContext(project: ThesisProject): RoadmapEvidenceContext {
   const verifiedLiteratureNotes = (project.literatureNotes ?? []).filter((note) =>
     note.status === "verified" && canMarkLiteratureNoteVerified(note, project.sources),
   );
-  const verifiedSources = project.sources.filter(isUsableVerifiedSource);
+  const verifiedCitationSources = project.sources.filter(isUsableVerifiedCitationSource);
   const verifiedResults = project.results.filter((result) =>
     result.verification === "verified"
       && result.sourceIds.some((sourceId) => isUsableVerifiedDirectEvidence(sourceById.get(sourceId)))
@@ -161,7 +161,7 @@ function buildEvidenceContext(project: ThesisProject): RoadmapEvidenceContext {
     verifiedMethodNotes: verifiedLiteratureNotes.filter((note) => note.use === "method"),
     verifiedComparisonNotes: verifiedLiteratureNotes.filter((note) => note.use === "comparison" || note.use === "limitation"),
     verifiedResults,
-    verifiedSources,
+    verifiedCitationSources,
     methodPlanCount: project.methods.filter(hasMethodDataAndEthicsPlan).length,
   };
 }
@@ -266,15 +266,15 @@ function evidenceForItem(id: string, project: ThesisProject, context: RoadmapEvi
             recordIds: [],
           };
     case "references":
-      return context.verifiedSources.length > 0
+      return context.verifiedCitationSources.length > 0
         ? {
             status: "tracked",
-            summary: `${context.verifiedSources.length} usable verified source record(s) can be checked against the department's citation style before adding them to a bibliography.`,
-            recordIds: linkedRecordIds(context.verifiedSources),
+            summary: `${context.verifiedCitationSources.length} usable verified literature, dataset, or policy source record(s) can be checked against the department's citation style before adding them to a bibliography. Internal fieldwork or analysis records stay in the evidence ledger.`,
+            recordIds: linkedRecordIds(context.verifiedCitationSources),
           }
         : {
             status: "needs-source",
-            summary: "NEEDS SOURCE — no usable verified source records are ready for formal bibliography checking.",
+            summary: "NEEDS SOURCE — add usable verified literature, dataset, or policy source records before formal bibliography checking. Internal fieldwork or analysis records stay in the evidence ledger.",
             recordIds: [],
           };
     case "appendices":
@@ -330,9 +330,9 @@ function statusForItem(id: string, project: ThesisProject, context: RoadmapEvide
         ? { status: "ready", nextStep: "State only conclusions that follow from the documented evidence and study limits." }
         : { status: "needs-data", nextStep: "NEEDS DATA — keep this as a conclusion plan until results are verified." };
     case "references":
-      return context.verifiedSources.length > 0
+      return context.verifiedCitationSources.length > 0
         ? { status: "ready", nextStep: "Verify author, year, title, publisher or journal, DOI/URL, and the required citation style." }
-        : { status: "needs-sources", nextStep: "Add usable verified source records before creating a bibliography." };
+        : { status: "needs-sources", nextStep: "Add usable verified literature, dataset, or policy source records before creating a bibliography. Keep fieldwork and analysis records in the evidence ledger." };
     case "appendices":
       return { status: "needs-review", nextStep: "Add only documents actually approved or used in the study; never add filler to reach a page target." };
     default:

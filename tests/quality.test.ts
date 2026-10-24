@@ -21,7 +21,7 @@ import { createTopicStarter, hasTopic } from "../lib/topic-starter";
 import { reviewProject } from "../lib/quality";
 import { canMarkLiteratureNoteVerified, hasUsableLiteratureLocator, normalizeLiteratureVerification } from "../lib/literature-readiness";
 import { canMarkPriorResearchVerified, isUsableVerifiedPriorResearch, normalizePriorResearchVerification } from "../lib/prior-research-readiness";
-import { canMarkResultVerified, isUsableVerifiedSource, normalizeResultVerification, normalizeSourceVerification } from "../lib/result-readiness";
+import { canMarkResultVerified, isUsableVerifiedCitationSource, isUsableVerifiedSource, normalizeResultVerification, normalizeSourceVerification } from "../lib/result-readiness";
 import { extractPublicSourcePreview, parseSupportedPublicSourceUrl, PublicSourceUrlError } from "../lib/public-source-preview";
 import { buildSynopsis, buildSynopsisMarkdown } from "../lib/synopsis";
 import { buildStudentWritingStarter, WRITING_PHRASE_GROUPS } from "../lib/writing-support";
@@ -373,6 +373,34 @@ test("a verified literature note cannot use a direct data or field record", () =
   assert.equal(review.verifiedLiteratureNoteCount, 0);
   assert.equal(review.issues.some((item) => item.id === "literature-note-traceability-LIT-01"), true);
   assert.equal(roadmap.items.find((item) => item.id === "literature-review")?.status, "needs-sources");
+});
+
+test("a verified internal field record cannot make a bibliography citation-ready", () => {
+  const fieldRecord = {
+    ...DEMO_PROJECTS[0].sources[0],
+    id: "SRC-FIELD",
+    label: "Verified internal field analysis record",
+    locator: "local-analysis-record-2026-10-24",
+    checkedOn: VERIFIED_SOURCE_CHECK_DATE,
+    kind: "field-note" as const,
+    status: "verified" as const,
+    note: "Researcher checked this internal field analysis record and documented its provenance.",
+  };
+  const project = { ...DEMO_PROJECTS[0], sources: [fieldRecord] };
+  const roadmap = buildDissertationRoadmap(project);
+  const references = roadmap.items.find((item) => item.id === "references");
+  const draft = generateDraft(project);
+  const packet = buildSupervisorReviewMarkdown(project, draft, reviewProject(project, draft));
+
+  assert.equal(isUsableVerifiedCitationSource(fieldRecord), false);
+  assert.equal(isUsableVerifiedCitationSource({ ...fieldRecord, kind: "literature-map" }), true);
+  assert.equal(isUsableVerifiedCitationSource({ ...fieldRecord, kind: "dataset" }), true);
+  assert.equal(isUsableVerifiedCitationSource({ ...fieldRecord, kind: "policy-record" }), true);
+  assert.equal(references?.status, "needs-sources");
+  assert.deepEqual(references?.evidence.recordIds, []);
+  assert.match(references?.evidence.summary ?? "", /Internal fieldwork or analysis records stay in the evidence ledger/i);
+  assert.match(packet, /SRC-FIELD — VERIFIED INTERNAL RECORD field-note/);
+  assert.match(packet, /do not add it as a formal bibliography entry/i);
 });
 
 test("a verified source needs an original-record locator before it can support claims", () => {

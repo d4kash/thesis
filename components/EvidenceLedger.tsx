@@ -20,7 +20,7 @@ interface EvidenceLedgerProps {
 const sourceKindLabels: Record<EvidenceSource["kind"], string> = {
   "literature-map": "Literature source — background, method, or comparison",
   dataset: "Dataset or data record",
-  "field-note": "Fieldwork or analysis record",
+  "field-note": "Fieldwork or analysis record — internal evidence, not bibliography",
   "policy-record": "Policy or institutional record",
 };
 
@@ -265,7 +265,7 @@ export function EvidenceLedger({ project, onChange }: EvidenceLedgerProps) {
         </div>
         <span className="status-pill">Local only</span>
       </div>
-      <p className="field-note">Classify each record before using it. Literature supports background or comparison; a verified result needs a verified data, fieldwork, or policy record and its planned method.</p>
+      <p className="field-note">Classify each record before using it. Literature supports background or comparison; a verified result needs a verified data, fieldwork, or policy record and its planned method. Fieldwork or analysis records stay in the evidence ledger and do not make a formal bibliography entry.</p>
       <p className="evidence-ledger__boundary">Checking a record here does not confirm ethics approval, consent, permission, or a completed study. Linking a result to a method does not approve that method. Record only what you can personally trace.</p>
 
       <div className="ledger-form">

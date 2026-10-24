@@ -44,6 +44,10 @@ export function isUsableVerifiedDirectEvidence(source: EvidenceSource | undefine
   return isUsableVerifiedSource(source) && source?.kind !== "literature-map";
 }
 
+export function isUsableVerifiedCitationSource(source: EvidenceSource | undefined): boolean {
+  return isUsableVerifiedSource(source) && source?.kind !== "field-note";
+}
+
 export function hasUsableResultRecord(result: ResultLedgerItem): boolean {
   return result.label.trim().length >= RESULT_LABEL_MINIMUM_LENGTH
     && result.note.trim().length >= RESULT_NOTE_MINIMUM_LENGTH;

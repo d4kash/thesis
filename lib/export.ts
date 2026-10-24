@@ -2,7 +2,7 @@ import type { DraftSection, QualityReport, ThesisProject } from "@/lib/thesis-ty
 import { buildDissertationRoadmap } from "@/lib/dissertation-roadmap";
 import { canMarkLiteratureNoteVerified } from "@/lib/literature-readiness";
 import { isUsableVerifiedPriorResearch } from "@/lib/prior-research-readiness";
-import { canMarkResultVerified, isUsableVerifiedSource } from "@/lib/result-readiness";
+import { canMarkResultVerified, isUsableVerifiedCitationSource, isUsableVerifiedSource } from "@/lib/result-readiness";
 
 function listedRecords(records: string[], emptyMessage: string): string {
   return records.length > 0 ? records.join("\n") : emptyMessage;
@@ -11,6 +11,16 @@ function listedRecords(records: string[], emptyMessage: string): string {
 function verificationLabel(recordedStatus: string, traceable: boolean): string {
   if (recordedStatus !== "verified") return recordedStatus.toUpperCase();
   return traceable ? "VERIFIED AND TRACEABLE" : "VERIFICATION INCOMPLETE";
+}
+
+function sourceVerificationLabel(source: ThesisProject["sources"][number]): string {
+  const traceable = isUsableVerifiedSource(source);
+
+  if (source.kind === "field-note" && source.status === "verified" && traceable) {
+    return "VERIFIED INTERNAL RECORD";
+  }
+
+  return verificationLabel(source.status, traceable);
 }
 
 export function buildDraftMarkdown(
@@ -34,13 +44,20 @@ export function buildSupervisorReviewMarkdown(
   const sourceRecords = listedRecords(
     project.sources.map((source) => {
       const traceable = isUsableVerifiedSource(source);
-      const attributionCheck = traceable
-        ? "Verified and traceable in the local ledger; supervisor should still check the original source and required citation style."
-        : source.status === "verified"
-          ? "Verification is incomplete. Do not use this as a formal citation until its original-record trace is complete."
-          : "Not ready for formal citation until the researcher verifies the original source.";
+      const citationReady = isUsableVerifiedCitationSource(source);
+      const attributionCheck = source.kind === "field-note"
+        ? traceable
+          ? "Traceable internal fieldwork or analysis record. Keep it in the evidence ledger; do not add it as a formal bibliography entry unless the supervisor or institution specifically requires it."
+          : source.status === "verified"
+            ? "Verification is incomplete. Keep this as an internal fieldwork or analysis record until its original-record trace is complete; it is not a formal citation."
+            : "Internal fieldwork or analysis record. Keep it in the evidence ledger; it is not a formal citation."
+        : citationReady
+          ? "Verified and traceable in the local ledger; supervisor should still check the original source and required citation style."
+          : source.status === "verified"
+            ? "Verification is incomplete. Do not use this as a formal citation until its original-record trace is complete."
+            : "Not ready for formal citation until the researcher verifies the original source.";
 
-      return `- ${source.id} — ${verificationLabel(source.status, traceable)} ${source.kind}: ${source.label || "[NEEDS INPUT] Source title or citation"}\n  - Original record locator: ${source.locator?.trim() || "[NEEDS INPUT] Add a DOI, stable URL, repository/archive record, or local record ID."}\n  - Researcher check date: ${source.checkedOn?.trim() || "[NEEDS INPUT] Record the date the original record was checked."}\n  - Researcher note: ${source.note || "[NEEDS INPUT] Explain relevance and verification."}\n  - Attribution check: ${attributionCheck}`;
+      return `- ${source.id} — ${sourceVerificationLabel(source)} ${source.kind}: ${source.label || "[NEEDS INPUT] Source title or citation"}\n  - Original record locator: ${source.locator?.trim() || "[NEEDS INPUT] Add a DOI, stable URL, repository/archive record, or local record ID."}\n  - Researcher check date: ${source.checkedOn?.trim() || "[NEEDS INPUT] Record the date the original record was checked."}\n  - Researcher note: ${source.note || "[NEEDS INPUT] Explain relevance and verification."}\n  - Attribution check: ${attributionCheck}`;
     }),
     "- No source records yet. Do not add a bibliography from titles or memory.",
   );
