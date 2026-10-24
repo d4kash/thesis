@@ -7,6 +7,7 @@ import {
   canMarkResultVerified,
   isUsableVerifiedDirectEvidence,
   isUsableVerifiedSource,
+  normalizeResultVerification,
   normalizeSourceVerification,
 } from "@/lib/result-readiness";
 import type { EvidenceSource, EvidenceStatus, ThesisProject } from "@/lib/thesis-types";
@@ -144,16 +145,23 @@ export function EvidenceLedger({ project, onChange }: EvidenceLedgerProps) {
   }
 
   function removeSource(id: string) {
+    const sources = project.sources.filter((source) => source.id !== id);
+    const results = project.results.map((result) => normalizeResultVerification(
+      { ...result, sourceIds: result.sourceIds.filter((sourceId) => sourceId !== id) },
+      sources,
+      project.methods,
+    ));
+    const returnedToUnverified = results.filter((result, index) => (
+      project.results[index]?.verification === "verified" && result.verification === "unverified"
+    )).length;
+
     onChange({
       ...project,
-      sources: project.sources.filter((source) => source.id !== id),
+      sources,
       literatureNotes: (project.literatureNotes ?? []).filter((note) => note.sourceId !== id),
-      results: project.results.map((result) => ({
-        ...result,
-        sourceIds: result.sourceIds.filter((sourceId) => sourceId !== id),
-      })),
+      results,
     });
-    setMessage(`${id} removed. Linked evidence notes were removed, and any linked result will require a new verified evidence link.`);
+    setMessage(`${id} removed. Linked evidence notes were removed.${returnedToUnverified > 0 ? ` ${returnedToUnverified} linked result${returnedToUnverified === 1 ? "" : "s"} returned to unverified.` : " Any linked result will require a new verified evidence link."}`);
   }
 
   function updateSourceStatus(id: string, status: EvidenceStatus) {
@@ -170,13 +178,18 @@ export function EvidenceLedger({ project, onChange }: EvidenceLedgerProps) {
     const returnedToReviewed = literatureNotes.filter((note, index) => (
       project.literatureNotes?.[index]?.status === "verified" && note.status === "reviewed"
     )).length;
+    const results = project.results.map((result) => normalizeResultVerification(result, sources, project.methods));
+    const returnedToUnverified = results.filter((result, index) => (
+      project.results[index]?.verification === "verified" && result.verification === "unverified"
+    )).length;
 
     onChange({
       ...project,
       sources,
       literatureNotes,
+      results,
     });
-    setMessage(`${id} marked ${status}.${returnedToReviewed > 0 ? ` ${returnedToReviewed} linked literature note${returnedToReviewed === 1 ? "" : "s"} returned to reviewed.` : ""}`);
+    setMessage(`${id} marked ${status}.${returnedToReviewed > 0 ? ` ${returnedToReviewed} linked literature note${returnedToReviewed === 1 ? "" : "s"} returned to reviewed.` : ""}${returnedToUnverified > 0 ? ` ${returnedToUnverified} linked result${returnedToUnverified === 1 ? "" : "s"} returned to unverified.` : ""}`);
   }
 
   function updateSourceTrace(
@@ -194,17 +207,24 @@ export function EvidenceLedger({ project, onChange }: EvidenceLedgerProps) {
     const returnedToReviewed = literatureNotes.filter((note, index) => (
       project.literatureNotes?.[index]?.status === "verified" && note.status === "reviewed"
     )).length;
+    const results = project.results.map((result) => normalizeResultVerification(result, sources, project.methods));
+    const returnedToUnverified = results.filter((result, index) => (
+      project.results[index]?.verification === "verified" && result.verification === "unverified"
+    )).length;
 
     onChange({
       ...project,
       sources,
       literatureNotes,
+      results,
     });
 
     if (sourceReturnedToReviewed) {
-      setMessage(`${id} returned to reviewed because its verified source trace is incomplete. Recheck the original record before marking it verified again.`);
+      setMessage(`${id} returned to reviewed because its verified source trace is incomplete.${returnedToUnverified > 0 ? ` ${returnedToUnverified} linked result${returnedToUnverified === 1 ? "" : "s"} returned to unverified.` : ""} Recheck the original record before marking it verified again.`);
     } else if (returnedToReviewed > 0) {
       setMessage(`${id} no longer has a usable source trace, so ${returnedToReviewed} linked literature note${returnedToReviewed === 1 ? "" : "s"} returned to reviewed.`);
+    } else if (returnedToUnverified > 0) {
+      setMessage(`${id} no longer supports ${returnedToUnverified} linked result${returnedToUnverified === 1 ? "" : "s"}, so it returned to unverified.`);
     }
   }
 

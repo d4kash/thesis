@@ -21,7 +21,7 @@ import { createTopicStarter, hasTopic } from "../lib/topic-starter";
 import { reviewProject } from "../lib/quality";
 import { canMarkLiteratureNoteVerified, hasUsableLiteratureLocator, normalizeLiteratureVerification } from "../lib/literature-readiness";
 import { canMarkPriorResearchVerified, isUsableVerifiedPriorResearch, normalizePriorResearchVerification } from "../lib/prior-research-readiness";
-import { canMarkResultVerified, isUsableVerifiedSource, normalizeSourceVerification } from "../lib/result-readiness";
+import { canMarkResultVerified, isUsableVerifiedSource, normalizeResultVerification, normalizeSourceVerification } from "../lib/result-readiness";
 import { extractPublicSourcePreview, parseSupportedPublicSourceUrl, PublicSourceUrlError } from "../lib/public-source-preview";
 import { buildSynopsis, buildSynopsisMarkdown } from "../lib/synopsis";
 import { buildStudentWritingStarter, WRITING_PHRASE_GROUPS } from "../lib/writing-support";
@@ -917,6 +917,31 @@ test("the result status gate requires a documented safeguard plan before verific
 
   assert.equal(canMarkResultVerified(result, sources, methodsWithoutPlan), false);
   assert.equal(canMarkResultVerified(result, sources, DEMO_PROJECTS[0].methods), true);
+});
+
+test("a verified result returns to unverified when its evidence or safeguard plan becomes incomplete", () => {
+  const source = {
+    ...DEMO_PROJECTS[0].sources[0],
+    status: "verified" as const,
+    locator: "https://records.example.test/datasets/SRC-01",
+    checkedOn: VERIFIED_SOURCE_CHECK_DATE,
+    note: "Verified dataset record with license, access date, and relevance notes.",
+  };
+  const result = {
+    id: "RES-01",
+    label: "Held-out evaluation summary",
+    verification: "verified" as const,
+    note: "A traceable summary was recorded from the documented analysis record.",
+    sourceIds: ["SRC-01"],
+    methodIds: ["MTH-01"],
+  };
+  const methodsWithoutPlan = DEMO_PROJECTS[0].methods.map((method) => (
+    method.id === "MTH-01" ? { ...method, dataAndEthicsPlan: "" } : method
+  ));
+
+  assert.equal(normalizeResultVerification(result, [source], DEMO_PROJECTS[0].methods).verification, "verified");
+  assert.equal(normalizeResultVerification(result, [{ ...source, status: "reviewed" }], DEMO_PROJECTS[0].methods).verification, "unverified");
+  assert.equal(normalizeResultVerification(result, [source], methodsWithoutPlan).verification, "unverified");
 });
 
 test("a verified result with a verified evidence link can remain a working draft", () => {

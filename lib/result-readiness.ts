@@ -61,3 +61,15 @@ export function canMarkResultVerified(
     && result.sourceIds.some((id) => isUsableVerifiedDirectEvidence(sourceById.get(id)))
     && result.methodIds.some((id) => hasMethodDataAndEthicsPlan(methodById.get(id)));
 }
+
+export function normalizeResultVerification(
+  result: ResultLedgerItem,
+  sources: EvidenceSource[],
+  methods: ResearchMethod[],
+): ResultLedgerItem {
+  if (result.verification === "verified" && !canMarkResultVerified(result, sources, methods)) {
+    return { ...result, verification: "unverified" };
+  }
+
+  return result;
+}

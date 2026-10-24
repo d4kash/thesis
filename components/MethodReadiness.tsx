@@ -1,6 +1,7 @@
 "use client";
 
 import { hasMethodDataAndEthicsPlan } from "@/lib/method-readiness";
+import { normalizeResultVerification } from "@/lib/result-readiness";
 import type { ThesisProject } from "@/lib/thesis-types";
 
 interface MethodReadinessProps {
@@ -12,11 +13,14 @@ export function MethodReadiness({ project, onChange }: MethodReadinessProps) {
   const documentedPlanCount = project.methods.filter(hasMethodDataAndEthicsPlan).length;
 
   function updateMethodPlan(id: string, dataAndEthicsPlan: string) {
+    const methods = project.methods.map((method) => (
+      method.id === id ? { ...method, dataAndEthicsPlan } : method
+    ));
+
     onChange({
       ...project,
-      methods: project.methods.map((method) => (
-        method.id === id ? { ...method, dataAndEthicsPlan } : method
-      )),
+      methods,
+      results: project.results.map((result) => normalizeResultVerification(result, project.sources, methods)),
     });
   }
 
@@ -33,7 +37,7 @@ export function MethodReadiness({ project, onChange }: MethodReadinessProps) {
         For each planned method, record how data will be obtained and what permissions, consent, privacy, or provenance steps need checking. This is an editable plan, not an approval record.
       </p>
       <p className="method-readiness__boundary">
-        A note here does not confirm ethics approval, consent, institutional permission, data access, or completed data collection. Record only the safeguards you can personally describe and verify later.
+        A note here does not confirm ethics approval, consent, institutional permission, data access, or completed data collection. Record only the safeguards you can personally describe and verify later. If an edit leaves a safeguard plan incomplete, linked results return to unverified until you recheck them.
       </p>
 
       {project.methods.length === 0 ? (

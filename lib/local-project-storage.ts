@@ -10,7 +10,7 @@ import type {
 } from "@/lib/thesis-types";
 import { normalizeLiteratureVerification } from "@/lib/literature-readiness";
 import { normalizePriorResearchVerification } from "@/lib/prior-research-readiness";
-import { canMarkResultVerified, normalizeSourceVerification } from "@/lib/result-readiness";
+import { normalizeResultVerification, normalizeSourceVerification } from "@/lib/result-readiness";
 
 export const LOCAL_PROJECT_STORAGE_KEY = "thesis-studio:local-plan:v1";
 export const LOCAL_PROJECT_BACKUP_FORMAT = "thesis-studio-local-project";
@@ -118,11 +118,7 @@ function normalizeStoredLocalProject(project: ThesisProject): ThesisProject {
   const sources = project.sources.map(normalizeSourceVerification);
   const literatureNotes = (project.literatureNotes ?? []).map((note) => normalizeLiteratureVerification(note, sources));
   const priorResearch = project.priorResearch.map(normalizePriorResearchVerification);
-  const results = project.results.map((result) => (
-    result.verification === "verified" && !canMarkResultVerified(result, sources, project.methods)
-      ? { ...result, verification: "unverified" as const }
-      : result
-  ));
+  const results = project.results.map((result) => normalizeResultVerification(result, sources, project.methods));
 
   return { ...project, literatureNotes, priorResearch, results, sources };
 }
