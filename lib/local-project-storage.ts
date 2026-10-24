@@ -34,6 +34,10 @@ function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === "object" && value !== null && !Array.isArray(value);
 }
 
+function textByteLength(value: string): number {
+  return new TextEncoder().encode(value).byteLength;
+}
+
 function hasString(record: Record<string, unknown>, key: string): boolean {
   return typeof record[key] === "string" && record[key].length <= MAX_LOCAL_PROJECT_TEXT_CHARACTERS;
 }
@@ -145,12 +149,13 @@ export function buildLocalProjectBackup(project: ThesisProject): string | null {
     project: normalizeStoredLocalProject(project),
     version: LOCAL_PROJECT_BACKUP_VERSION,
   };
+  const serializedBackup = JSON.stringify(backup, null, 2);
 
-  return JSON.stringify(backup, null, 2);
+  return textByteLength(serializedBackup) <= MAX_LOCAL_PROJECT_BACKUP_BYTES ? serializedBackup : null;
 }
 
 export function parseLocalProjectBackup(value: string): ThesisProject | null {
-  if (value.length > MAX_LOCAL_PROJECT_BACKUP_BYTES) return null;
+  if (textByteLength(value) > MAX_LOCAL_PROJECT_BACKUP_BYTES) return null;
 
   try {
     const backup: unknown = JSON.parse(value);

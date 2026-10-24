@@ -29,7 +29,9 @@ import {
   buildLocalProjectBackup,
   clearLocalProject,
   LOCAL_PROJECT_BACKUP_FORMAT,
+  LOCAL_PROJECT_BACKUP_VERSION,
   LOCAL_PROJECT_STORAGE_KEY,
+  MAX_LOCAL_PROJECT_BACKUP_BYTES,
   MAX_LOCAL_PROJECT_TEXT_CHARACTERS,
   loadLocalProject,
   parseLocalProjectBackup,
@@ -106,6 +108,24 @@ test("a portable local backup accepts only validated local project records", () 
   assert.equal(buildLocalProjectBackup(DEMO_PROJECTS[1]), null);
   assert.equal(parseLocalProjectBackup(JSON.stringify({ format: LOCAL_PROJECT_BACKUP_FORMAT, version: 1, project: { id: "local-plan" } })), null);
   assert.equal(buildLocalProjectBackup({ ...localProject, scope: "x".repeat(MAX_LOCAL_PROJECT_TEXT_CHARACTERS + 1) }), null);
+
+  const oversizedProject = {
+    ...localProject,
+    objectives: Array.from({ length: 12 }, (_, index) => ({
+      id: `OBJ-${String(index + 1).padStart(2, "0")}`,
+      text: "📚".repeat(6_000),
+    })),
+  };
+  const oversizedPayload = JSON.stringify({
+    format: LOCAL_PROJECT_BACKUP_FORMAT,
+    project: oversizedProject,
+    version: LOCAL_PROJECT_BACKUP_VERSION,
+  });
+
+  assert.ok(oversizedPayload.length < MAX_LOCAL_PROJECT_BACKUP_BYTES);
+  assert.ok(new TextEncoder().encode(oversizedPayload).byteLength > MAX_LOCAL_PROJECT_BACKUP_BYTES);
+  assert.equal(buildLocalProjectBackup(oversizedProject), null);
+  assert.equal(parseLocalProjectBackup(oversizedPayload), null);
 
   const staleVerificationBackup = buildLocalProjectBackup({
     ...localProject,

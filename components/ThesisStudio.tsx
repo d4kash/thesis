@@ -170,7 +170,7 @@ export function ThesisStudio() {
 
     const backup = buildLocalProjectBackup(localProject);
     if (!backup) {
-      setExportStatus("The local project could not be prepared for backup. Review its required project fields first.");
+      setExportStatus("The local project is not valid or is larger than the 250 KB backup limit. Keep records and notes concise; source files and copied thesis text are not part of a backup.");
       return;
     }
 
