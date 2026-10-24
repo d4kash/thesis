@@ -346,6 +346,35 @@ test("a verified literature note returns to reviewed when its source loses a usa
   assert.equal(normalizeLiteratureVerification(note, [{ ...source, status: "reviewed" }]).status, "reviewed");
 });
 
+test("a verified literature note cannot use a direct data or field record", () => {
+  const directSource = {
+    ...DEMO_PROJECTS[0].sources[0],
+    status: "verified" as const,
+    label: "Verified direct field record",
+    locator: "https://records.example.test/field/SRC-01",
+    checkedOn: VERIFIED_SOURCE_CHECK_DATE,
+    kind: "field-note" as const,
+    note: "Researcher checked this direct field record, its provenance, and its relevance to the planned study.",
+  };
+  const note = {
+    id: "LIT-01",
+    sourceId: directSource.id,
+    claim: "This direct record cannot be treated as literature evidence for a review chapter.",
+    locator: "Section 2.1",
+    use: "background" as const,
+    status: "verified" as const,
+  };
+  const project = { ...DEMO_PROJECTS[0], sources: [directSource], literatureNotes: [note] };
+  const review = reviewProject(project, generateDraft(project));
+  const roadmap = buildDissertationRoadmap(project);
+
+  assert.equal(canMarkLiteratureNoteVerified(note, [directSource]), false);
+  assert.equal(normalizeLiteratureVerification(note, [directSource]).status, "reviewed");
+  assert.equal(review.verifiedLiteratureNoteCount, 0);
+  assert.equal(review.issues.some((item) => item.id === "literature-note-traceability-LIT-01"), true);
+  assert.equal(roadmap.items.find((item) => item.id === "literature-review")?.status, "needs-sources");
+});
+
 test("a verified source needs an original-record locator before it can support claims", () => {
   const source = {
     ...DEMO_PROJECTS[0].sources[0],
@@ -1178,6 +1207,8 @@ test("the literature evidence matrix requests an own-words note and a source loc
   assert.match(markup, /specific page, section, table, figure, or dataset-field marker/i);
   assert.match(markup, /Use a concrete marker such as/i);
   assert.match(markup, /Do not paste long excerpts/i);
+  assert.match(markup, /Only records classified as Literature source can support a verified literature note/i);
+  assert.match(markup, /Choose a literature source from the evidence ledger/i);
   assert.match(markup, /returns to reviewed/i);
 });
 

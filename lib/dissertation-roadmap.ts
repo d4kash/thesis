@@ -1,6 +1,6 @@
 import { hasTopic } from "@/lib/topic-starter";
 import type { EvidenceSource, LiteratureEvidenceNote, ThesisProject } from "@/lib/thesis-types";
-import { hasUsableLiteratureNote } from "@/lib/literature-readiness";
+import { canMarkLiteratureNoteVerified } from "@/lib/literature-readiness";
 import { hasMethodDataAndEthicsPlan } from "@/lib/method-readiness";
 import { isUsableVerifiedDirectEvidence, isUsableVerifiedSource } from "@/lib/result-readiness";
 
@@ -147,9 +147,7 @@ function buildEvidenceContext(project: ThesisProject): RoadmapEvidenceContext {
   const sourceById = new Map(project.sources.map((source) => [source.id, source]));
   const methodById = new Map(project.methods.map((method) => [method.id, method]));
   const verifiedLiteratureNotes = (project.literatureNotes ?? []).filter((note) =>
-    note.status === "verified"
-      && hasUsableLiteratureNote(note)
-      && isUsableVerifiedSource(sourceById.get(note.sourceId)),
+    note.status === "verified" && canMarkLiteratureNoteVerified(note, project.sources),
   );
   const verifiedSources = project.sources.filter(isUsableVerifiedSource);
   const verifiedResults = project.results.filter((result) =>

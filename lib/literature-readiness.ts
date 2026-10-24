@@ -23,7 +23,9 @@ export function canMarkLiteratureNoteVerified(
 ): boolean {
   const source = sources.find((entry) => entry.id === note.sourceId);
 
-  return hasUsableLiteratureNote(note) && isUsableVerifiedSource(source);
+  return hasUsableLiteratureNote(note)
+    && source?.kind === "literature-map"
+    && isUsableVerifiedSource(source);
 }
 
 export function normalizeLiteratureVerification(

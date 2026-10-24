@@ -33,6 +33,10 @@ export function LiteratureEvidenceMatrix({ project, onChange }: LiteratureEviden
   const [status, setStatus] = useState<LiteratureEvidenceStatus>("reviewed");
   const [message, setMessage] = useState("");
   const notes = project.literatureNotes ?? [];
+  const literatureSources = useMemo(
+    () => project.sources.filter((source) => source.kind === "literature-map"),
+    [project.sources],
+  );
   const sourceById = useMemo(
     () => new Map(project.sources.map((source) => [source.id, source])),
     [project.sources],
@@ -43,8 +47,8 @@ export function LiteratureEvidenceMatrix({ project, onChange }: LiteratureEviden
     const cleanClaim = claim.trim();
     const cleanLocator = locator.trim();
 
-    if (!source) {
-      setMessage("Choose a source record from the evidence ledger first.");
+    if (!source || source.kind !== "literature-map") {
+      setMessage("Choose a source classified as Literature source in the evidence ledger first.");
       return;
     }
 
@@ -63,7 +67,7 @@ export function LiteratureEvidenceMatrix({ project, onChange }: LiteratureEviden
     };
 
     if (status === "verified" && !canMarkLiteratureNoteVerified(note, project.sources)) {
-      setMessage("A verified note needs a useful own-words explanation, a specific re-check location, and a complete verified source record.");
+      setMessage("A verified literature note needs a useful own-words explanation, a specific re-check location, and a complete verified literature source record.");
       return;
     }
 
@@ -87,7 +91,7 @@ export function LiteratureEvidenceMatrix({ project, onChange }: LiteratureEviden
     const nextNote = note ? { ...note, status: nextStatus } : undefined;
 
     if (nextStatus === "verified" && (!nextNote || !canMarkLiteratureNoteVerified(nextNote, project.sources))) {
-      setMessage("A verified note needs a useful own-words explanation, a specific re-check location, and a complete verified source record.");
+      setMessage("A verified literature note needs a useful own-words explanation, a specific re-check location, and a complete verified literature source record.");
       return;
     }
 
@@ -114,16 +118,18 @@ export function LiteratureEvidenceMatrix({ project, onChange }: LiteratureEviden
       </div>
       <p className="field-note">For every point you may use in a literature review, keep a short own-words note and the place to check it again.</p>
       <p className="literature-evidence-matrix__boundary">Do not paste long excerpts or try to change wording to avoid attribution. A paraphrase still needs a citation to the original source.</p>
+      <p className="literature-evidence-matrix__boundary">Only records classified as Literature source can support a verified literature note. Keep datasets, fieldwork, and policy records in the evidence and result workflow.</p>
       <p className="literature-evidence-matrix__boundary">If its source later becomes incomplete or no longer verified, a verified note returns to reviewed until you check it again.</p>
       {project.sources.length === 0 ? <p className="literature-evidence-matrix__empty-help">First add a source record in the evidence ledger above. Then return here to link the literature point to it.</p> : null}
+      {project.sources.length > 0 && literatureSources.length === 0 ? <p className="literature-evidence-matrix__empty-help">Add a source record classified as Literature source in the evidence ledger before adding a literature note.</p> : null}
 
       <div className="literature-evidence-matrix__form">
         <h3>Add a source-linked note</h3>
         <label>
           Source record
           <select onChange={(event) => setSourceId(event.target.value)} value={sourceId}>
-            <option value="">Choose a source from the evidence ledger</option>
-            {project.sources.map((source) => (
+            <option value="">Choose a literature source from the evidence ledger</option>
+            {literatureSources.map((source) => (
               <option key={source.id} value={source.id}>{source.id} · {source.label} ({source.status})</option>
             ))}
           </select>
