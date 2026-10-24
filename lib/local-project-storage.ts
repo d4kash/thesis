@@ -8,8 +8,15 @@ import type {
   SynopsisDetails,
   ThesisProject,
 } from "@/lib/thesis-types";
+import { normalizeLiteratureVerification } from "@/lib/literature-readiness";
+import { normalizePriorResearchVerification } from "@/lib/prior-research-readiness";
+import { canMarkResultVerified, normalizeSourceVerification } from "@/lib/result-readiness";
 
 export const LOCAL_PROJECT_STORAGE_KEY = "thesis-studio:local-plan:v1";
+export const LOCAL_PROJECT_BACKUP_FORMAT = "thesis-studio-local-project";
+export const LOCAL_PROJECT_BACKUP_VERSION = 1;
+export const MAX_LOCAL_PROJECT_BACKUP_BYTES = 250_000;
+export const MAX_LOCAL_PROJECT_TEXT_CHARACTERS = 12_000;
 
 export interface LocalProjectStorage {
   getItem(key: string): string | null;
@@ -17,16 +24,23 @@ export interface LocalProjectStorage {
   setItem(key: string, value: string): void;
 }
 
+interface LocalProjectBackup {
+  format: typeof LOCAL_PROJECT_BACKUP_FORMAT;
+  project: ThesisProject;
+  version: typeof LOCAL_PROJECT_BACKUP_VERSION;
+}
+
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === "object" && value !== null && !Array.isArray(value);
 }
 
 function hasString(record: Record<string, unknown>, key: string): boolean {
-  return typeof record[key] === "string";
+  return typeof record[key] === "string" && record[key].length <= MAX_LOCAL_PROJECT_TEXT_CHARACTERS;
 }
 
 function hasOptionalString(record: Record<string, unknown>, key: string): boolean {
-  return record[key] === undefined || typeof record[key] === "string";
+  return record[key] === undefined
+    || (typeof record[key] === "string" && record[key].length <= MAX_LOCAL_PROJECT_TEXT_CHARACTERS);
 }
 
 function isStringArray(value: unknown): value is string[] {
@@ -96,6 +110,19 @@ export function isStoredLocalProject(value: unknown): value is ThesisProject {
     && (value.synopsis === undefined || isSynopsisDetails(value.synopsis));
 }
 
+function normalizeStoredLocalProject(project: ThesisProject): ThesisProject {
+  const sources = project.sources.map(normalizeSourceVerification);
+  const literatureNotes = (project.literatureNotes ?? []).map((note) => normalizeLiteratureVerification(note, sources));
+  const priorResearch = project.priorResearch.map(normalizePriorResearchVerification);
+  const results = project.results.map((result) => (
+    result.verification === "verified" && !canMarkResultVerified(result, sources, project.methods)
+      ? { ...result, verification: "unverified" as const }
+      : result
+  ));
+
+  return { ...project, literatureNotes, priorResearch, results, sources };
+}
+
 export function loadLocalProject(storage: LocalProjectStorage): ThesisProject | null {
   try {
     const value = storage.getItem(LOCAL_PROJECT_STORAGE_KEY);
@@ -104,14 +131,44 @@ export function loadLocalProject(storage: LocalProjectStorage): ThesisProject | 
     const parsed: unknown = JSON.parse(value);
     if (!isStoredLocalProject(parsed)) return null;
 
-    return { ...parsed, literatureNotes: parsed.literatureNotes ?? [] };
+    return normalizeStoredLocalProject(parsed);
+  } catch {
+    return null;
+  }
+}
+
+export function buildLocalProjectBackup(project: ThesisProject): string | null {
+  if (!isStoredLocalProject(project)) return null;
+
+  const backup: LocalProjectBackup = {
+    format: LOCAL_PROJECT_BACKUP_FORMAT,
+    project: normalizeStoredLocalProject(project),
+    version: LOCAL_PROJECT_BACKUP_VERSION,
+  };
+
+  return JSON.stringify(backup, null, 2);
+}
+
+export function parseLocalProjectBackup(value: string): ThesisProject | null {
+  if (value.length > MAX_LOCAL_PROJECT_BACKUP_BYTES) return null;
+
+  try {
+    const backup: unknown = JSON.parse(value);
+    if (!isRecord(backup)
+      || backup.format !== LOCAL_PROJECT_BACKUP_FORMAT
+      || backup.version !== LOCAL_PROJECT_BACKUP_VERSION
+      || !isStoredLocalProject(backup.project)) {
+      return null;
+    }
+
+    return normalizeStoredLocalProject(backup.project);
   } catch {
     return null;
   }
 }
 
 export function saveLocalProject(storage: LocalProjectStorage, project: ThesisProject): boolean {
-  if (project.id !== "local-plan") return false;
+  if (!isStoredLocalProject(project)) return false;
 
   try {
     storage.setItem(LOCAL_PROJECT_STORAGE_KEY, JSON.stringify(project));

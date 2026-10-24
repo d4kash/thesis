@@ -25,7 +25,17 @@ import { canMarkResultVerified, isUsableVerifiedSource, normalizeSourceVerificat
 import { extractPublicSourcePreview, parseSupportedPublicSourceUrl, PublicSourceUrlError } from "../lib/public-source-preview";
 import { buildSynopsis, buildSynopsisMarkdown } from "../lib/synopsis";
 import { buildStudentWritingStarter, WRITING_PHRASE_GROUPS } from "../lib/writing-support";
-import { clearLocalProject, LOCAL_PROJECT_STORAGE_KEY, loadLocalProject, saveLocalProject, type LocalProjectStorage } from "../lib/local-project-storage";
+import {
+  buildLocalProjectBackup,
+  clearLocalProject,
+  LOCAL_PROJECT_BACKUP_FORMAT,
+  LOCAL_PROJECT_STORAGE_KEY,
+  MAX_LOCAL_PROJECT_TEXT_CHARACTERS,
+  loadLocalProject,
+  parseLocalProjectBackup,
+  saveLocalProject,
+  type LocalProjectStorage,
+} from "../lib/local-project-storage";
 
 const VERIFIED_SOURCE_CHECK_DATE = "2026-10-24";
 
@@ -79,6 +89,46 @@ test("a validated local working project persists without saving synthetic demons
     [LOCAL_PROJECT_STORAGE_KEY]: JSON.stringify({ id: "local-plan", title: "Missing project fields" }),
   });
   assert.equal(loadLocalProject(malformedStorage), null);
+});
+
+test("a portable local backup accepts only validated local project records", () => {
+  const localProject = {
+    ...DEMO_PROJECTS[1],
+    id: "local-plan",
+    demoLabel: "Your working project • add verified sources before using claims",
+    title: "Researcher-owned backup plan",
+  };
+  const backup = buildLocalProjectBackup(localProject);
+
+  assert.ok(backup);
+  assert.match(backup, new RegExp(`\\"format\\": \\"${LOCAL_PROJECT_BACKUP_FORMAT}\\"`));
+  assert.deepEqual(parseLocalProjectBackup(backup), { ...localProject, literatureNotes: [] });
+  assert.equal(buildLocalProjectBackup(DEMO_PROJECTS[1]), null);
+  assert.equal(parseLocalProjectBackup(JSON.stringify({ format: LOCAL_PROJECT_BACKUP_FORMAT, version: 1, project: { id: "local-plan" } })), null);
+  assert.equal(buildLocalProjectBackup({ ...localProject, scope: "x".repeat(MAX_LOCAL_PROJECT_TEXT_CHARACTERS + 1) }), null);
+
+  const staleVerificationBackup = buildLocalProjectBackup({
+    ...localProject,
+    sources: [{
+      ...localProject.sources[0],
+      status: "verified" as const,
+      locator: "",
+      checkedOn: VERIFIED_SOURCE_CHECK_DATE,
+      note: "This incomplete source trace must not retain a verified status after import.",
+    }],
+    literatureNotes: [{
+      id: "LIT-01",
+      sourceId: "SRC-01",
+      claim: "This note must return to reviewed when its imported source trace is incomplete.",
+      locator: "section 2.1",
+      use: "comparison" as const,
+      status: "verified" as const,
+    }],
+  });
+  const normalizedBackup = staleVerificationBackup ? parseLocalProjectBackup(staleVerificationBackup) : null;
+
+  assert.equal(normalizedBackup?.sources[0]?.status, "reviewed");
+  assert.equal(normalizedBackup?.literatureNotes?.[0]?.status, "reviewed");
 });
 
 test("the topic map ranks supplied prior research and keeps limitations as candidate gaps", () => {

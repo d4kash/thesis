@@ -1,6 +1,6 @@
 "use client";
 
-import { startTransition, useEffect, useMemo, useState } from "react";
+import { startTransition, useEffect, useMemo, useRef, useState, type ChangeEvent } from "react";
 import { DraftViewer } from "@/components/DraftViewer";
 import { DissertationRoadmap } from "@/components/DissertationRoadmap";
 import { EvidenceLedger } from "@/components/EvidenceLedger";
@@ -22,7 +22,10 @@ import { generateDraft } from "@/lib/draft";
 import { buildDraftMarkdown, buildSupervisorReviewMarkdown } from "@/lib/export";
 import {
   clearLocalProject,
+  buildLocalProjectBackup,
   loadLocalProject,
+  MAX_LOCAL_PROJECT_BACKUP_BYTES,
+  parseLocalProjectBackup,
   saveLocalProject,
   type LocalProjectStorage,
 } from "@/lib/local-project-storage";
@@ -50,8 +53,8 @@ function createBlankProject(): ThesisProject {
   };
 }
 
-function downloadMarkdown(markdown: string, filename: string) {
-  const blob = new Blob([markdown], { type: "text/markdown;charset=utf-8" });
+function downloadText(content: string, filename: string, type: string) {
+  const blob = new Blob([content], { type });
   const url = URL.createObjectURL(blob);
   const anchor = document.createElement("a");
   anchor.href = url;
@@ -78,6 +81,7 @@ export function ThesisStudio() {
   const [localSaveStatus, setLocalSaveStatus] = useState<"saving" | "saved" | "unavailable">("saving");
   const [exportStatus, setExportStatus] = useState("");
   const [isSwitching, setIsSwitching] = useState(false);
+  const backupInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     const storage = browserLocalStorage();
@@ -151,14 +155,62 @@ export function ThesisStudio() {
 
   function downloadDraft() {
     const safeName = project.title.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, "") || "thesis-draft";
-    downloadMarkdown(markdown, `${safeName}-working-draft.md`);
+    downloadText(markdown, `${safeName}-working-draft.md`, "text/markdown;charset=utf-8");
     setExportStatus("Working draft downloaded.");
   }
 
   function downloadSupervisorReview() {
     const safeName = project.title.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, "") || "thesis-review";
-    downloadMarkdown(supervisorReview, `${safeName}-supervisor-review.md`);
+    downloadText(supervisorReview, `${safeName}-supervisor-review.md`, "text/markdown;charset=utf-8");
     setExportStatus("Supervisor review packet downloaded.");
+  }
+
+  function downloadLocalProjectBackup() {
+    if (!localProject) return;
+
+    const backup = buildLocalProjectBackup(localProject);
+    if (!backup) {
+      setExportStatus("The local project could not be prepared for backup. Review its required project fields first.");
+      return;
+    }
+
+    const safeName = localProject.title.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, "") || "thesis-research-plan";
+    downloadText(backup, `${safeName}-research-plan-backup.json`, "application/json;charset=utf-8");
+    setExportStatus("Local research-plan backup downloaded. It contains your project entries and notes, not external source files.");
+  }
+
+  function chooseLocalProjectBackup() {
+    backupInputRef.current?.click();
+  }
+
+  async function restoreLocalProjectBackup(event: ChangeEvent<HTMLInputElement>) {
+    const file = event.target.files?.[0];
+    event.target.value = "";
+    if (!file) return;
+
+    if (file.size > MAX_LOCAL_PROJECT_BACKUP_BYTES) {
+      setExportStatus("That backup is larger than 250 KB. Use a Thesis Studio research-plan backup containing records and notes, not source files.");
+      return;
+    }
+
+    try {
+      const restoredProject = parseLocalProjectBackup(await file.text());
+      if (!restoredProject) {
+        setExportStatus("That file is not a valid Thesis Studio local research-plan backup. Nothing was imported.");
+        return;
+      }
+
+      if (localProject && !window.confirm("Restore this backup and replace the local working project saved in this browser?")) return;
+
+      setIsSwitching(true);
+      startTransition(() => {
+        updateProject(restoredProject);
+        setExportStatus("Research-plan backup restored locally. Recheck every source record before relying on it.");
+      });
+      window.setTimeout(() => setIsSwitching(false), 150);
+    } catch {
+      setExportStatus("The backup could not be read. Nothing was imported.");
+    }
   }
 
   return (
@@ -169,8 +221,8 @@ export function ThesisStudio() {
       </p>
       <GettingStartedGuide project={project} review={review} />
       <ProjectPicker onCreate={createProject} onSelect={selectProject} projects={projects} selectedId={project.id} />
-      {localProject ? (
-        <aside className="local-project-notice" role="status">
+      <aside className="local-project-notice" role="status">
+        {localProject ? (
           <span>
             {localSaveStatus === "unavailable"
               ? <><strong>Not saved:</strong> browser storage is unavailable, so this working project lasts only for this visit. Download anything you need before leaving; nothing has been uploaded.</>
@@ -178,9 +230,14 @@ export function ThesisStudio() {
                 ? <><strong>Saving locally:</strong> your working topic, notes, and planning records are being saved in this browser only.</>
                 : <><strong>Saved locally:</strong> your working topic, notes, and planning records stay in this browser only. This autosave does not upload source text or research files.</>}
           </span>
-          <button className="button button--secondary button--compact" onClick={clearSavedProject} type="button">Clear working project</button>
-        </aside>
-      ) : null}
+        ) : <span><strong>Local backup:</strong> restore a previous Thesis Studio research-plan JSON file in this browser. Only validated project records and short notes are accepted; source PDFs or copied thesis text are never imported.</span>}
+        <div className="local-project-notice__actions">
+          {localProject ? <button className="button button--secondary button--compact" onClick={downloadLocalProjectBackup} type="button">Download local backup</button> : null}
+          <button className="button button--secondary button--compact" onClick={chooseLocalProjectBackup} type="button">Restore local backup</button>
+          {localProject ? <button className="button button--secondary button--compact" onClick={clearSavedProject} type="button">Clear working project</button> : null}
+        </div>
+        <input accept="application/json,.json" aria-label="Restore a local Thesis Studio research-plan backup" hidden onChange={(event) => void restoreLocalProjectBackup(event)} ref={backupInputRef} type="file" />
+      </aside>
       <div aria-busy={isSwitching} className="studio-grid">
         <div className="workspace-stack">
           <ProjectEditor onChange={updateProject} project={project} />
