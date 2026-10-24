@@ -18,7 +18,7 @@ import { SynopsisBuilder } from "@/components/SynopsisBuilder";
 import { WritingCoach } from "@/components/WritingCoach";
 import { DEFAULT_PROJECT_ID, DEMO_PROJECTS } from "@/lib/demo-projects";
 import { generateDraft } from "@/lib/draft";
-import { buildDraftMarkdown } from "@/lib/export";
+import { buildDraftMarkdown, buildSupervisorReviewMarkdown } from "@/lib/export";
 import { reviewProject } from "@/lib/quality";
 import type { ThesisProject } from "@/lib/thesis-types";
 
@@ -64,6 +64,7 @@ export function ThesisStudio() {
   const draft = useMemo(() => generateDraft(project), [project]);
   const review = useMemo(() => reviewProject(project, draft), [project, draft]);
   const markdown = useMemo(() => buildDraftMarkdown(project, draft, review), [project, draft, review]);
+  const supervisorReview = useMemo(() => buildSupervisorReviewMarkdown(project, draft, review), [project, draft, review]);
   const projects = useMemo(
     () => (project.id === "local-plan" ? [...DEMO_PROJECTS, project] : DEMO_PROJECTS),
     [project],
@@ -97,6 +98,12 @@ export function ThesisStudio() {
     setExportStatus("Working draft downloaded.");
   }
 
+  function downloadSupervisorReview() {
+    const safeName = project.title.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, "") || "thesis-review";
+    downloadMarkdown(supervisorReview, `${safeName}-supervisor-review.md`);
+    setExportStatus("Supervisor review packet downloaded.");
+  }
+
   return (
     <main className="site-shell">
       <StudioHeader issueCount={review.issues.length} project={project} score={review.score} />
@@ -122,7 +129,7 @@ export function ThesisStudio() {
         </div>
         <ReviewPanel review={review} />
       </div>
-      <ExportActions enabled={review.canExportAsDraft} onCopy={copyMarkdown} onDownload={downloadDraft} status={exportStatus} />
+      <ExportActions enabled={review.canExportAsDraft} onCopy={copyMarkdown} onDownload={downloadDraft} onSupervisorDownload={downloadSupervisorReview} status={exportStatus} />
       <footer className="site-footer">
         <span>Version 0.2 • evidence-ledger workspace</span>
         <span>Evidence → method → result → claim</span>
