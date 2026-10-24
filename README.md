@@ -35,6 +35,7 @@ npm run build
 - Lets a researcher turn a topic and research brief into an eight-part thesis scaffold.
 - Presents the intake in student-friendly language, with an editable topic-based opening paragraph and a short own-voice phrase guide.
 - Provides an evidence-safe starter action that turns a new topic into a research question, scope, objectives, and auditable method plan while leaving results and citations empty.
+- Includes a student-facing free research toolkit for Crossref, OpenAlex, DOAJ, Shodhganga, Zotero, and ZoteroBib. It opens the official services in a new tab and never sends notes, PDFs, or source text from Thesis Studio.
 - Stores prior-thesis or paper notes locally: source trace, setting, question, method, reported finding, and stated limitation.
 - Builds a transparent topic map that ranks local prior-work records by term overlap and surfaces only **candidate** gaps from notes supplied by the researcher.
 - Adds source records and result-ledger entries locally, with verified-results required to link to a verified evidence record.

@@ -9,11 +9,13 @@ import { GettingStartedGuide } from "../components/GettingStartedGuide";
 import { LiteratureEvidenceMatrix } from "../components/LiteratureEvidenceMatrix";
 import { MethodReadiness } from "../components/MethodReadiness";
 import { PriorResearchLibrary } from "../components/PriorResearchLibrary";
+import { ResearchToolkit } from "../components/ResearchToolkit";
 import { SynopsisBuilder } from "../components/SynopsisBuilder";
 import { DEMO_PROJECTS } from "../lib/demo-projects";
 import { generateDraft } from "../lib/draft";
 import { buildDraftMarkdown, buildSupervisorReviewMarkdown } from "../lib/export";
 import { buildResearchLandscape } from "../lib/research-landscape";
+import { buildResearchSearchPhrase, buildResearchToolkit } from "../lib/research-toolkit";
 import { buildDissertationRoadmap, buildDissertationRoadmapMarkdown } from "../lib/dissertation-roadmap";
 import { createTopicStarter, hasTopic } from "../lib/topic-starter";
 import { reviewProject } from "../lib/quality";
@@ -191,10 +193,39 @@ test("the start guide gives a plain next step for a new student", () => {
   const review = reviewProject(project, generateDraft(project));
   const markup = renderToStaticMarkup(createElement(GettingStartedGuide, { project, review }));
 
-  assert.match(markup, /Five simple steps to use Thesis Studio/);
+  assert.match(markup, /Six simple steps to use Thesis Studio/);
   assert.match(markup, /Do this next:/);
   assert.match(markup, /Name your topic/);
   assert.match(markup, /Build your synopsis/);
+  assert.match(markup, /Find source records/);
+});
+
+test("the research toolkit creates a topic-only discovery path and preserves a source boundary", () => {
+  const project = {
+    ...DEMO_PROJECTS[0],
+    scope: "Private scope notes must never be sent to an external discovery site.",
+  };
+  const searchPhrase = buildResearchSearchPhrase(project);
+  const toolkit = buildResearchToolkit(project);
+  const crossref = toolkit.resources.find((resource) => resource.id === "crossref");
+  const markup = renderToStaticMarkup(createElement(ResearchToolkit, { project }));
+
+  assert.match(searchPhrase, /Explainable Leaf-Condition Classification/i);
+  assert.doesNotMatch(searchPhrase, /Private scope notes/i);
+  assert.match(decodeURIComponent(crossref?.href ?? ""), /Explainable Leaf-Condition Classification/i);
+  assert.doesNotMatch(decodeURIComponent(crossref?.href ?? ""), /Private scope notes/i);
+  assert.deepEqual(toolkit.resources.map((resource) => resource.id), ["crossref", "openalex", "doaj", "shodhganga", "zotero", "zoterobib"]);
+  assert.match(markup, /FREE RESEARCH TOOLKIT/);
+  assert.match(markup, /Crossref Metadata Search/);
+  assert.match(markup, /does not send your notes, PDFs, or source text/i);
+  assert.match(markup, /target="_blank"/);
+});
+
+test("the research toolkit waits for a usable topic before creating a search phrase", () => {
+  const project = { ...DEMO_PROJECTS[0], title: "", researchQuestion: "" };
+
+  assert.equal(buildResearchSearchPhrase(project), "");
+  assert.equal(buildResearchToolkit(project).resources.find((resource) => resource.id === "crossref")?.href, "https://search.crossref.org/");
 });
 
 test("a synopsis stays an editable proposal and marks missing entries instead of inventing them", () => {

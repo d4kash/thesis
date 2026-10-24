@@ -12,6 +12,7 @@ import { ProjectEditor } from "@/components/ProjectEditor";
 import { ProjectPicker } from "@/components/ProjectPicker";
 import { PriorResearchLibrary } from "@/components/PriorResearchLibrary";
 import { ResearchLandscape } from "@/components/ResearchLandscape";
+import { ResearchToolkit } from "@/components/ResearchToolkit";
 import { ReviewPanel } from "@/components/ReviewPanel";
 import { StudioHeader } from "@/components/StudioHeader";
 import { SynopsisBuilder } from "@/components/SynopsisBuilder";
@@ -119,6 +120,7 @@ export function ThesisStudio() {
           <MethodReadiness onChange={setProject} project={project} />
           <DissertationRoadmap project={project} />
           <WritingCoach project={project} />
+          <ResearchToolkit project={project} />
           <PriorResearchLibrary key={`${project.id}-prior-research`} onChange={setProject} project={project} />
           <EvidenceLedger onChange={setProject} project={project} />
           <LiteratureEvidenceMatrix onChange={setProject} project={project} />
