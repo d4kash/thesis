@@ -541,7 +541,55 @@ test("the start guide gives a plain next step for a new student", () => {
   assert.match(markup, /Do this next:/);
   assert.match(markup, /Name your topic/);
   assert.match(markup, /Build your synopsis/);
-  assert.match(markup, /Find source records/);
+  assert.match(markup, /Find and verify source records/);
+});
+
+test("the start guide does not count planned records as verified research progress", () => {
+  const project = {
+    ...DEMO_PROJECTS[0],
+    id: "local-plan",
+    demoLabel: "Your working project • add verified sources before using claims",
+    synopsis: {
+      problemStatement: "The planned study needs a clearly scoped and traceable research problem.",
+      anticipatedContribution: "The study may clarify how transparent evidence planning supports later research decisions.",
+      ethicsAndPermissions: "The researcher will confirm permissions and privacy requirements before collecting any data.",
+    },
+    literatureNotes: [],
+  };
+  const unverifiedMarkup = renderToStaticMarkup(createElement(GettingStartedGuide, {
+    project,
+    review: reviewProject(project, generateDraft(project)),
+  }));
+  const verifiedSource = {
+    ...project.sources[1],
+    label: "Checked scholarly literature record",
+    locator: "https://records.example.test/literature/SRC-02",
+    checkedOn: VERIFIED_SOURCE_CHECK_DATE,
+    status: "verified" as const,
+    note: "Researcher checked this scholarly record, its original location, and its relevance to the planned literature review.",
+  };
+  const verifiedProject = {
+    ...project,
+    sources: [verifiedSource],
+    literatureNotes: [{
+      id: "LIT-01",
+      sourceId: verifiedSource.id,
+      claim: "The checked source supports keeping evidence links and source locators visible during literature planning.",
+      locator: "Section 2.1, p. 14",
+      use: "method" as const,
+      status: "verified" as const,
+    }],
+  };
+  const verifiedMarkup = renderToStaticMarkup(createElement(GettingStartedGuide, {
+    project: verifiedProject,
+    review: reviewProject(verifiedProject, generateDraft(verifiedProject)),
+  }));
+
+  assert.match(unverifiedMarkup, /3\/6 complete/);
+  assert.equal((unverifiedMarkup.match(/getting-started__step--done/g) ?? []).length, 3);
+  assert.match(unverifiedMarkup, /Do this next:<\/strong> <a href="#research-toolkit">Find and verify source records<\/a>/);
+  assert.match(verifiedMarkup, /6\/6 complete/);
+  assert.match(verifiedMarkup, /verified source-linked note/i);
 });
 
 test("synthetic demos are not counted as a student's completed thesis workflow", () => {

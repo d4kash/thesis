@@ -1,4 +1,7 @@
 import { hasTopic } from "@/lib/topic-starter";
+import { canMarkLiteratureNoteVerified } from "@/lib/literature-readiness";
+import { isUsableVerifiedPriorResearch } from "@/lib/prior-research-readiness";
+import { isUsableVerifiedSource } from "@/lib/result-readiness";
 import { buildSynopsis } from "@/lib/synopsis";
 import type { QualityReport, ThesisProject } from "@/lib/thesis-types";
 
@@ -10,18 +13,19 @@ interface GettingStartedGuideProps {
 export function GettingStartedGuide({ project, review }: GettingStartedGuideProps) {
   const isNewWorkingProject = project.id === "local-plan";
   const synopsis = buildSynopsis(project);
-  const hasResearchNotes = isNewWorkingProject && project.priorResearch.some((record) =>
-    [record.context, record.researchQuestion, record.methodology, record.findings, record.limitations]
-      .some((value) => value.trim().length >= 12),
-  );
-  const hasSourceRecords = isNewWorkingProject && (project.priorResearch.length > 0 || project.sources.length > 0);
+  const hasVerifiedPriorResearch = isNewWorkingProject && project.priorResearch.some(isUsableVerifiedPriorResearch);
+  const hasVerifiedSource = isNewWorkingProject && project.sources.some(isUsableVerifiedSource);
+  const hasVerifiedLiteratureNote = isNewWorkingProject && (project.literatureNotes ?? [])
+    .some((note) => canMarkLiteratureNoteVerified(note, project.sources));
+  const hasCheckedResearchRecord = hasVerifiedPriorResearch || hasVerifiedSource;
+  const hasMappedEarlierResearch = hasVerifiedPriorResearch || hasVerifiedLiteratureNote;
   const steps = [
     { href: "#project-picker", label: "Start a new topic", detail: "Choose “Start a new topic” instead of changing a synthetic example.", done: isNewWorkingProject },
     { href: "#research-brief", label: "Name your topic", detail: "Use a plain working title. You can improve it later.", done: isNewWorkingProject && hasTopic(project) },
     { href: "#synopsis-builder", label: "Build your synopsis", detail: "Answer the short prompts, then review the editable plan for your question, scope, objectives, method, and ethics notes.", done: isNewWorkingProject && synopsis.isReadyForSupervisorReview },
-    { href: "#research-toolkit", label: "Find source records", detail: "Use the free toolkit to discover public records, then check the original source before bringing its details back here.", done: hasSourceRecords },
-    { href: "#prior-research", label: "Add and compare earlier research", detail: "Paste a public source link, then record checked notes in your own words and map each literature point to its source location.", done: hasResearchNotes },
-    { href: "#quality-review", label: "Check and export a planning draft", detail: "Resolve critical checks, then take the draft to your supervisor for review.", done: isNewWorkingProject && review.canExportAsDraft && hasResearchNotes },
+    { href: "#research-toolkit", label: "Find and verify source records", detail: "Use the free toolkit to discover public records, then check the original source before marking a record verified here.", done: hasCheckedResearchRecord },
+    { href: "#prior-research", label: "Map earlier research", detail: "Keep a checked prior-work record or a verified source-linked note in your own words, with a location you can re-check.", done: hasMappedEarlierResearch },
+    { href: "#quality-review", label: "Check and export a planning draft", detail: "Resolve critical checks, then take the draft to your supervisor for review. This step never certifies a completed thesis or similarity result.", done: isNewWorkingProject && review.canExportAsDraft && hasCheckedResearchRecord && hasMappedEarlierResearch },
   ];
   const nextStep = steps.find((step) => !step.done);
   const completedCount = steps.filter((step) => step.done).length;
