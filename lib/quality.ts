@@ -5,6 +5,7 @@ import type {
   ThesisProject,
 } from "@/lib/thesis-types";
 import { hasMethodDataAndEthicsPlan } from "@/lib/method-readiness";
+import { canMarkPriorResearchVerified } from "@/lib/prior-research-readiness";
 import {
   canMarkResultVerified,
   hasUsableResultRecord,
@@ -109,9 +110,7 @@ export function reviewProject(project: ThesisProject, draft: DraftSection[]): Qu
     }
     priorResearchIds.add(record.id);
 
-    const hasResearchDetail = [record.context, record.researchQuestion, record.methodology, record.findings, record.limitations]
-      .some((value) => value.trim().length >= 12);
-    if (record.status === "verified" && (record.citation.trim().length < 8 || !hasResearchDetail)) {
+    if (record.status === "verified" && !canMarkPriorResearchVerified(record)) {
       issues.push(
         issue(
           `thin-verified-prior-research-${record.id}`,

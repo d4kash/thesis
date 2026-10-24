@@ -17,6 +17,7 @@ import { buildResearchLandscape } from "../lib/research-landscape";
 import { buildDissertationRoadmap, buildDissertationRoadmapMarkdown } from "../lib/dissertation-roadmap";
 import { createTopicStarter, hasTopic } from "../lib/topic-starter";
 import { reviewProject } from "../lib/quality";
+import { canMarkPriorResearchVerified, normalizePriorResearchVerification } from "../lib/prior-research-readiness";
 import { canMarkResultVerified } from "../lib/result-readiness";
 import { extractPublicSourcePreview, parseSupportedPublicSourceUrl, PublicSourceUrlError } from "../lib/public-source-preview";
 import { buildSynopsis, buildSynopsisMarkdown } from "../lib/synopsis";
@@ -121,6 +122,30 @@ test("a verified prior work without a trace blocks export", () => {
   assert.equal(review.canExportAsDraft, false);
 });
 
+test("an incomplete prior-work record cannot retain verified status", () => {
+  const incompleteRecord = {
+    ...DEMO_PROJECTS[0].priorResearch[0],
+    status: "verified" as const,
+    citation: "",
+    context: "Short",
+    researchQuestion: "",
+    methodology: "",
+    findings: "",
+    limitations: "",
+  };
+  const verifiedRecord = {
+    ...DEMO_PROJECTS[0].priorResearch[0],
+    status: "verified" as const,
+    citation: "Repository record: example/verified-prior-work",
+    context: "Checked original research context and scope recorded from the public source.",
+  };
+
+  assert.equal(canMarkPriorResearchVerified(incompleteRecord), false);
+  assert.equal(normalizePriorResearchVerification(incompleteRecord).status, "reviewed");
+  assert.equal(canMarkPriorResearchVerified(verifiedRecord), true);
+  assert.equal(normalizePriorResearchVerification(verifiedRecord).status, "verified");
+});
+
 test("saved prior-research records can be corrected in place", () => {
   const markup = renderToStaticMarkup(
     createElement(PriorResearchLibrary, { project: DEMO_PROJECTS[0], onChange: () => undefined }),
@@ -131,6 +156,7 @@ test("saved prior-research records can be corrected in place", () => {
   assert.match(markup, /Edit PRV-01 limitations/);
   assert.match(markup, /Preview a public source/);
   assert.match(markup, /reads only the public page metadata/);
+  assert.match(markup, /returns it to reviewed/i);
 });
 
 test("the start guide gives a plain next step for a new student", () => {

@@ -1,6 +1,10 @@
 "use client";
 
 import { useState } from "react";
+import {
+  canMarkPriorResearchVerified,
+  normalizePriorResearchVerification,
+} from "@/lib/prior-research-readiness";
 import type { EvidenceStatus, ThesisProject } from "@/lib/thesis-types";
 
 interface PublicSourcePreview {
@@ -18,6 +22,8 @@ interface PriorResearchLibraryProps {
   project: ThesisProject;
   onChange: (project: ThesisProject) => void;
 }
+
+const verifiedPriorResearchRequirements = "A verified prior work needs a citation, repository link, or stable source description plus at least one usable checked research note.";
 
 function nextId(ids: string[]): string {
   const highest = ids.reduce((current, id) => {
@@ -92,8 +98,20 @@ export function PriorResearchLibrary({ project, onChange }: PriorResearchLibrary
       return;
     }
 
-    if (status === "verified" && citation.trim().length < 8) {
-      setMessage("A verified prior work needs a citation, repository link, or stable source description.");
+    const record = {
+      id: nextId(project.priorResearch.map((entry) => entry.id)),
+      title: cleanTitle,
+      citation: citation.trim(),
+      context: context.trim(),
+      researchQuestion: researchQuestion.trim(),
+      methodology: methodology.trim(),
+      findings: findings.trim(),
+      limitations: limitations.trim(),
+      status,
+    };
+
+    if (status === "verified" && !canMarkPriorResearchVerified(record)) {
+      setMessage(verifiedPriorResearchRequirements);
       return;
     }
 
@@ -101,17 +119,7 @@ export function PriorResearchLibrary({ project, onChange }: PriorResearchLibrary
       ...project,
       priorResearch: [
         ...project.priorResearch,
-        {
-          id: nextId(project.priorResearch.map((record) => record.id)),
-          title: cleanTitle,
-          citation: citation.trim(),
-          context: context.trim(),
-          researchQuestion: researchQuestion.trim(),
-          methodology: methodology.trim(),
-          findings: findings.trim(),
-          limitations: limitations.trim(),
-          status,
-        },
+        record,
       ],
     });
     setTitle("");
@@ -126,6 +134,14 @@ export function PriorResearchLibrary({ project, onChange }: PriorResearchLibrary
   }
 
   function updateStatus(id: string, nextStatus: EvidenceStatus) {
+    const current = project.priorResearch.find((record) => record.id === id);
+    if (!current) return;
+
+    if (nextStatus === "verified" && !canMarkPriorResearchVerified({ ...current, status: nextStatus })) {
+      setMessage(verifiedPriorResearchRequirements);
+      return;
+    }
+
     updateRecord(id, { status: nextStatus });
     setMessage(`${id} marked ${nextStatus}. Verify its original document before using it as a formal citation.`);
   }
@@ -134,10 +150,20 @@ export function PriorResearchLibrary({ project, onChange }: PriorResearchLibrary
     id: string,
     changes: Partial<Omit<ThesisProject["priorResearch"][number], "id">>,
   ) {
+    let returnedToReviewed = false;
     onChange({
       ...project,
-      priorResearch: project.priorResearch.map((record) => record.id === id ? { ...record, ...changes } : record),
+      priorResearch: project.priorResearch.map((record) => {
+        if (record.id !== id) return record;
+        const nextRecord = normalizePriorResearchVerification({ ...record, ...changes });
+        returnedToReviewed ||= record.status === "verified" && nextRecord.status === "reviewed";
+        return nextRecord;
+      }),
     });
+
+    if (returnedToReviewed) {
+      setMessage(`${id} returned to reviewed because its verified citation or checked note is incomplete.`);
+    }
   }
 
   function removeRecord(id: string) {
@@ -157,6 +183,7 @@ export function PriorResearchLibrary({ project, onChange }: PriorResearchLibrary
       <p className="field-note">
         Add notes from the original thesis, dissertation, paper, or approved review. The studio compares the record with the current topic; it does not invent a citation, a finding, or a research gap.
       </p>
+      <p className="field-note">To mark a record verified, add a stable source description and a checked research note. If an edit makes either incomplete, the studio returns it to reviewed.</p>
 
       <div className="source-preview">
         <h3>1. Preview a public source</h3>
