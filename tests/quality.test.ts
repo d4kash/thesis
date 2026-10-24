@@ -19,7 +19,7 @@ import { buildResearchSearchPhrase, buildResearchToolkit } from "../lib/research
 import { buildDissertationRoadmap, buildDissertationRoadmapMarkdown } from "../lib/dissertation-roadmap";
 import { createTopicStarter, hasTopic } from "../lib/topic-starter";
 import { reviewProject } from "../lib/quality";
-import { canMarkLiteratureNoteVerified, hasUsableLiteratureLocator, normalizeLiteratureVerification } from "../lib/literature-readiness";
+import { canMarkLiteratureNoteVerified, hasUsableLiteratureLocator, normalizeLiteratureVerification, reviseLiteratureEvidenceNote } from "../lib/literature-readiness";
 import { canMarkPriorResearchVerified, isUsableVerifiedPriorResearch, normalizePriorResearchVerification } from "../lib/prior-research-readiness";
 import { canMarkResultVerified, isUsableVerifiedCitationSource, isUsableVerifiedSource, normalizeResultVerification, normalizeSourceVerification } from "../lib/result-readiness";
 import { extractPublicSourcePreview, parseSupportedPublicSourceUrl, PublicSourceUrlError } from "../lib/public-source-preview";
@@ -344,6 +344,31 @@ test("a verified literature note returns to reviewed when its source loses a usa
   assert.equal(canMarkLiteratureNoteVerified(note, [source]), true);
   assert.equal(canMarkLiteratureNoteVerified(note, [{ ...source, status: "reviewed" }]), false);
   assert.equal(normalizeLiteratureVerification(note, [{ ...source, status: "reviewed" }]).status, "reviewed");
+});
+
+test("editing a verified literature note returns it to reviewed for a new source check", () => {
+  const source = {
+    ...DEMO_PROJECTS[0].sources[1],
+    status: "verified" as const,
+    label: "Checked scholarly literature record",
+    locator: "https://records.example.test/literature/SRC-02",
+    checkedOn: VERIFIED_SOURCE_CHECK_DATE,
+    note: "Checked source metadata, relevance, and original location before using this note for literature planning.",
+  };
+  const note = {
+    id: "LIT-01",
+    sourceId: source.id,
+    claim: "The source provides a scoped comparison point for the planned literature review.",
+    locator: "Section 2.1, p. 12",
+    use: "comparison" as const,
+    status: "verified" as const,
+  };
+
+  assert.equal(reviseLiteratureEvidenceNote(note, { claim: "The revised own-words note needs a fresh source check before use." }, [source]).status, "reviewed");
+  assert.equal(reviseLiteratureEvidenceNote(note, { locator: "Table 4, p. 19" }, [source]).status, "reviewed");
+  assert.equal(reviseLiteratureEvidenceNote(note, { use: "method" }, [source]).status, "reviewed");
+  assert.equal(reviseLiteratureEvidenceNote({ ...note, status: "reviewed" }, { claim: "An edited reviewed note remains reviewed until the researcher verifies it." }, [source]).status, "reviewed");
+  assert.equal(note.status, "verified");
 });
 
 test("a verified literature note cannot use a direct data or field record", () => {
@@ -1274,8 +1299,19 @@ test("a verified literature note cannot rely on an unverified source record", ()
 });
 
 test("the literature evidence matrix requests an own-words note and a source locator", () => {
+  const project = {
+    ...DEMO_PROJECTS[0],
+    literatureNotes: [{
+      id: "LIT-01",
+      sourceId: "SRC-02",
+      claim: "A reviewed own-words note can be corrected before the researcher verifies it.",
+      locator: "Section 2.1, p. 6",
+      use: "background" as const,
+      status: "reviewed" as const,
+    }],
+  };
   const markup = renderToStaticMarkup(
-    createElement(LiteratureEvidenceMatrix, { project: DEMO_PROJECTS[0], onChange: () => undefined }),
+    createElement(LiteratureEvidenceMatrix, { project, onChange: () => undefined }),
   );
 
   assert.match(markup, /Link each literature note to a source/);
@@ -1286,6 +1322,9 @@ test("the literature evidence matrix requests an own-words note and a source loc
   assert.match(markup, /Only records classified as Literature source can support a verified literature note/i);
   assert.match(markup, /Choose a literature source from the evidence ledger/i);
   assert.match(markup, /returns to reviewed/i);
+  assert.match(markup, /Editing a verified note also returns it to reviewed/i);
+  assert.match(markup, /Edit LIT-01 own-words note/);
+  assert.match(markup, /Edit LIT-01 locator/);
 });
 
 test("the evidence ledger separates literature from direct result records", () => {

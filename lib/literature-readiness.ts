@@ -38,3 +38,18 @@ export function normalizeLiteratureVerification(
 
   return note;
 }
+
+export function reviseLiteratureEvidenceNote(
+  note: LiteratureEvidenceNote,
+  changes: Partial<Pick<LiteratureEvidenceNote, "claim" | "locator" | "use">>,
+  sources: EvidenceSource[],
+): LiteratureEvidenceNote {
+  const revisedNote = { ...note, ...changes };
+  const hasRevision = Object.values(changes).some((value) => value !== undefined);
+
+  if (note.status === "verified" && hasRevision) {
+    return { ...revisedNote, status: "reviewed" };
+  }
+
+  return normalizeLiteratureVerification(revisedNote, sources);
+}

@@ -1,8 +1,8 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { canMarkLiteratureNoteVerified } from "@/lib/literature-readiness";
-import type { LiteratureEvidenceStatus, LiteratureUse, ThesisProject } from "@/lib/thesis-types";
+import { canMarkLiteratureNoteVerified, reviseLiteratureEvidenceNote } from "@/lib/literature-readiness";
+import type { LiteratureEvidenceNote, LiteratureEvidenceStatus, LiteratureUse, ThesisProject } from "@/lib/thesis-types";
 
 interface LiteratureEvidenceMatrixProps {
   project: ThesisProject;
@@ -102,6 +102,24 @@ export function LiteratureEvidenceMatrix({ project, onChange }: LiteratureEviden
     setMessage(`${id} marked ${nextStatus}.`);
   }
 
+  function updateNote(
+    id: string,
+    changes: Partial<Pick<LiteratureEvidenceNote, "claim" | "locator" | "use">>,
+  ) {
+    let returnedToReviewed = false;
+    const literatureNotes = notes.map((note) => {
+      if (note.id !== id) return note;
+      const revisedNote = reviseLiteratureEvidenceNote(note, changes, project.sources);
+      returnedToReviewed ||= note.status === "verified" && revisedNote.status === "reviewed";
+      return revisedNote;
+    });
+
+    onChange({ ...project, literatureNotes });
+    setMessage(returnedToReviewed
+      ? `${id} returned to reviewed after an edit. Re-check the original source and note before marking it verified again.`
+      : `${id} updated.`);
+  }
+
   function removeNote(id: string) {
     onChange({ ...project, literatureNotes: notes.filter((note) => note.id !== id) });
     setMessage(`${id} removed from the literature evidence matrix.`);
@@ -120,6 +138,7 @@ export function LiteratureEvidenceMatrix({ project, onChange }: LiteratureEviden
       <p className="literature-evidence-matrix__boundary">Do not paste long excerpts or try to change wording to avoid attribution. A paraphrase still needs a citation to the original source.</p>
       <p className="literature-evidence-matrix__boundary">Only records classified as Literature source can support a verified literature note. Keep datasets, fieldwork, and policy records in the evidence and result workflow.</p>
       <p className="literature-evidence-matrix__boundary">If its source later becomes incomplete or no longer verified, a verified note returns to reviewed until you check it again.</p>
+      <p className="literature-evidence-matrix__boundary">Editing a verified note also returns it to reviewed, so you can re-check the revised wording and locator against the original source.</p>
       {project.sources.length === 0 ? <p className="literature-evidence-matrix__empty-help">First add a source record in the evidence ledger above. Then return here to link the literature point to it.</p> : null}
       {project.sources.length > 0 && literatureSources.length === 0 ? <p className="literature-evidence-matrix__empty-help">Add a source record classified as Literature source in the evidence ledger before adding a literature note.</p> : null}
 
@@ -171,6 +190,26 @@ export function LiteratureEvidenceMatrix({ project, onChange }: LiteratureEviden
                 <span>{source ? `${source.id} · ${source.label}` : `${note.sourceId} · source record missing`}</span>
                 <small>Own-words note: {note.claim}</small>
                 <small>Re-check at: {note.locator}</small>
+                <details className="record-editor">
+                  <summary>Edit {note.id} own-words note</summary>
+                  <p className="record-editor__note">Editing a verified note returns it to reviewed until you re-check the revised note against the original source.</p>
+                  <div className="record-editor__fields">
+                    <label>
+                      Own-words note
+                      <textarea aria-label={`Edit ${note.id} own-words note`} onChange={(event) => updateNote(note.id, { claim: event.target.value })} rows={3} value={note.claim} />
+                    </label>
+                    <label>
+                      Re-check location
+                      <input aria-label={`Edit ${note.id} locator`} onChange={(event) => updateNote(note.id, { locator: event.target.value })} value={note.locator} />
+                    </label>
+                    <label>
+                      How might you use it?
+                      <select aria-label={`Edit ${note.id} use`} onChange={(event) => updateNote(note.id, { use: event.target.value as LiteratureUse })} value={note.use}>
+                        {Object.entries(useLabels).map(([value, label]) => <option key={value} value={value}>{label}</option>)}
+                      </select>
+                    </label>
+                  </div>
+                </details>
                 <label className="ledger-inline-control">
                   Status
                   <select aria-label={`${note.id} status`} onChange={(event) => updateStatus(note.id, event.target.value as LiteratureEvidenceStatus)} value={note.status}>
