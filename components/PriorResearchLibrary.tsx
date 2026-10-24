@@ -4,8 +4,9 @@ import { useState } from "react";
 import {
   canMarkPriorResearchVerified,
   normalizePriorResearchVerification,
+  revisePriorResearchRecord,
 } from "@/lib/prior-research-readiness";
-import type { EvidenceStatus, ThesisProject } from "@/lib/thesis-types";
+import type { EvidenceStatus, PriorResearchRecord, ThesisProject } from "@/lib/thesis-types";
 
 interface PublicSourcePreview {
   url: string;
@@ -145,27 +146,35 @@ export function PriorResearchLibrary({ project, onChange }: PriorResearchLibrary
       return;
     }
 
-    updateRecord(id, { status: nextStatus });
+    onChange({
+      ...project,
+      priorResearch: project.priorResearch.map((record) => (
+        record.id === id ? normalizePriorResearchVerification({ ...record, status: nextStatus }) : record
+      )),
+    });
     setMessage(`${id} marked ${nextStatus}. Verify its original document before using it as a formal citation.`);
   }
 
   function updateRecord(
     id: string,
-    changes: Partial<Omit<ThesisProject["priorResearch"][number], "id">>,
+    changes: Partial<Pick<
+      PriorResearchRecord,
+      "title" | "citation" | "checkedOn" | "context" | "researchQuestion" | "methodology" | "findings" | "limitations"
+    >>,
   ) {
     let returnedToReviewed = false;
     onChange({
       ...project,
       priorResearch: project.priorResearch.map((record) => {
         if (record.id !== id) return record;
-        const nextRecord = normalizePriorResearchVerification({ ...record, ...changes });
+        const nextRecord = revisePriorResearchRecord(record, changes);
         returnedToReviewed ||= record.status === "verified" && nextRecord.status === "reviewed";
         return nextRecord;
       }),
     });
 
     if (returnedToReviewed) {
-      setMessage(`${id} returned to reviewed because its title, verified citation, check date, or checked note is incomplete.`);
+      setMessage(`${id} returned to reviewed after an edit. Re-check the original work and the revised notes before marking it verified again.`);
     }
   }
 
@@ -186,7 +195,7 @@ export function PriorResearchLibrary({ project, onChange }: PriorResearchLibrary
       <p className="field-note">
         Add notes from the original thesis, dissertation, paper, or approved review. The studio compares the record with the current topic; it does not invent a citation, a finding, or a research gap.
       </p>
-      <p className="field-note">To mark a record verified, add a stable source description, the date you checked the original work, and a checked research note. If an edit makes any of these incomplete, the studio returns it to reviewed.</p>
+      <p className="field-note">To mark a record verified, add a stable source description, the date you checked the original work, and a checked research note. Editing a verified record returns it to reviewed, so you can re-check the revised details against the original work.</p>
 
       <div className="source-preview">
         <h3>1. Preview a public source</h3>

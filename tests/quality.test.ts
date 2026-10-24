@@ -20,7 +20,7 @@ import { buildDissertationRoadmap, buildDissertationRoadmapMarkdown } from "../l
 import { createTopicStarter, hasTopic } from "../lib/topic-starter";
 import { reviewProject } from "../lib/quality";
 import { canMarkLiteratureNoteVerified, hasUsableLiteratureLocator, normalizeLiteratureVerification, reviseLiteratureEvidenceNote } from "../lib/literature-readiness";
-import { canMarkPriorResearchVerified, isUsableVerifiedPriorResearch, normalizePriorResearchVerification } from "../lib/prior-research-readiness";
+import { canMarkPriorResearchVerified, isUsableVerifiedPriorResearch, normalizePriorResearchVerification, revisePriorResearchRecord } from "../lib/prior-research-readiness";
 import { canMarkResultVerified, isUsableVerifiedCitationSource, isUsableVerifiedSource, normalizeResultVerification, normalizeSourceVerification } from "../lib/result-readiness";
 import { extractPublicSourcePreview, parseSupportedPublicSourceUrl, PublicSourceUrlError } from "../lib/public-source-preview";
 import { buildSynopsis, buildSynopsisMarkdown } from "../lib/synopsis";
@@ -323,6 +323,33 @@ test("a verified prior work needs a valid researcher check date", () => {
   assert.equal(landscape.verifiedMatchCount, 0);
 });
 
+test("editing a verified prior-research record returns it to reviewed for a new source check", () => {
+  const record = {
+    id: "PRV-01",
+    title: "Checked prior research record",
+    citation: "https://records.example.test/prior-research/PRV-01",
+    checkedOn: VERIFIED_SOURCE_CHECK_DATE,
+    context: "A checked research context for a source-grounded comparison.",
+    researchQuestion: "",
+    methodology: "",
+    findings: "",
+    limitations: "",
+    status: "verified" as const,
+  };
+
+  assert.equal(canMarkPriorResearchVerified(record), true);
+  assert.equal(revisePriorResearchRecord(record, {
+    context: "A revised research context must be checked against the original source again.",
+  }).status, "reviewed");
+  assert.equal(revisePriorResearchRecord(record, {
+    citation: "https://records.example.test/prior-research/revised-record",
+  }).status, "reviewed");
+  assert.equal(revisePriorResearchRecord({ ...record, status: "reviewed" }, {
+    methodology: "An edited reviewed record stays reviewed until the researcher verifies it.",
+  }).status, "reviewed");
+  assert.equal(record.status, "verified");
+});
+
 test("a verified literature note returns to reviewed when its source loses a usable trace", () => {
   const source = {
     ...DEMO_PROJECTS[0].sources[1],
@@ -546,6 +573,7 @@ test("saved prior-research records can be corrected in place", () => {
   assert.match(markup, /Preview a public source/);
   assert.match(markup, /reads only the public page metadata/);
   assert.match(markup, /returns it to reviewed/i);
+  assert.match(markup, /Editing a verified record returns it to reviewed/i);
 });
 
 test("the start guide gives a plain next step for a new student", () => {

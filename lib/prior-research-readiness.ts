@@ -27,3 +27,20 @@ export function normalizePriorResearchVerification(record: PriorResearchRecord):
 
   return record;
 }
+
+export function revisePriorResearchRecord(
+  record: PriorResearchRecord,
+  changes: Partial<Pick<
+    PriorResearchRecord,
+    "title" | "citation" | "checkedOn" | "context" | "researchQuestion" | "methodology" | "findings" | "limitations"
+  >>,
+): PriorResearchRecord {
+  const revisedRecord = { ...record, ...changes };
+  const hasRevision = Object.values(changes).some((value) => value !== undefined);
+
+  if (record.status === "verified" && hasRevision) {
+    return { ...revisedRecord, status: "reviewed" };
+  }
+
+  return normalizePriorResearchVerification(revisedRecord);
+}
