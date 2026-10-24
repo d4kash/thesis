@@ -1,6 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import { canMarkLiteratureNoteVerified } from "@/lib/literature-readiness";
 import type { LiteratureEvidenceStatus, LiteratureUse, ThesisProject } from "@/lib/thesis-types";
 
 interface LiteratureEvidenceMatrixProps {
@@ -52,13 +53,17 @@ export function LiteratureEvidenceMatrix({ project, onChange }: LiteratureEviden
       return;
     }
 
-    if (status === "verified" && (cleanClaim.length < 12 || cleanLocator.length < 2)) {
-      setMessage("A verified note needs a useful own-words explanation and a specific page, section, table, figure, or passage label.");
-      return;
-    }
+    const note = {
+      id: nextId(notes.map((entry) => entry.id)),
+      sourceId,
+      claim: cleanClaim,
+      locator: cleanLocator,
+      use,
+      status,
+    };
 
-    if (status === "verified" && source.status !== "verified") {
-      setMessage("Mark the source record verified after checking the original before verifying this note.");
+    if (status === "verified" && !canMarkLiteratureNoteVerified(note, project.sources)) {
+      setMessage("A verified note needs a useful own-words explanation, a specific re-check location, and a complete verified source record.");
       return;
     }
 
@@ -66,14 +71,7 @@ export function LiteratureEvidenceMatrix({ project, onChange }: LiteratureEviden
       ...project,
       literatureNotes: [
         ...notes,
-        {
-          id: nextId(notes.map((note) => note.id)),
-          sourceId,
-          claim: cleanClaim,
-          locator: cleanLocator,
-          use,
-          status,
-        },
+        note,
       ],
     });
     setSourceId("");
@@ -86,18 +84,11 @@ export function LiteratureEvidenceMatrix({ project, onChange }: LiteratureEviden
 
   function updateStatus(id: string, nextStatus: LiteratureEvidenceStatus) {
     const note = notes.find((entry) => entry.id === id);
-    const source = note ? sourceById.get(note.sourceId) : undefined;
+    const nextNote = note ? { ...note, status: nextStatus } : undefined;
 
-    if (nextStatus === "verified") {
-      if (!note || note.claim.trim().length < 12 || note.locator.trim().length < 2) {
-        setMessage("Add a useful own-words note and a specific re-check location before verifying it.");
-        return;
-      }
-
-      if (source?.status !== "verified") {
-        setMessage("Verify the original source record before marking its evidence note verified.");
-        return;
-      }
+    if (nextStatus === "verified" && (!nextNote || !canMarkLiteratureNoteVerified(nextNote, project.sources))) {
+      setMessage("A verified note needs a useful own-words explanation, a specific re-check location, and a complete verified source record.");
+      return;
     }
 
     onChange({
@@ -123,6 +114,7 @@ export function LiteratureEvidenceMatrix({ project, onChange }: LiteratureEviden
       </div>
       <p className="field-note">For every point you may use in a literature review, keep a short own-words note and the place to check it again.</p>
       <p className="literature-evidence-matrix__boundary">Do not paste long excerpts or try to change wording to avoid attribution. A paraphrase still needs a citation to the original source.</p>
+      <p className="literature-evidence-matrix__boundary">If its source later becomes incomplete or no longer verified, a verified note returns to reviewed until you check it again.</p>
       {project.sources.length === 0 ? <p className="literature-evidence-matrix__empty-help">First add a source record in the evidence ledger above. Then return here to link the literature point to it.</p> : null}
 
       <div className="literature-evidence-matrix__form">

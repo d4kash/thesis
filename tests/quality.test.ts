@@ -17,6 +17,7 @@ import { buildResearchLandscape } from "../lib/research-landscape";
 import { buildDissertationRoadmap, buildDissertationRoadmapMarkdown } from "../lib/dissertation-roadmap";
 import { createTopicStarter, hasTopic } from "../lib/topic-starter";
 import { reviewProject } from "../lib/quality";
+import { canMarkLiteratureNoteVerified, normalizeLiteratureVerification } from "../lib/literature-readiness";
 import { canMarkPriorResearchVerified, normalizePriorResearchVerification } from "../lib/prior-research-readiness";
 import { canMarkResultVerified } from "../lib/result-readiness";
 import { extractPublicSourcePreview, parseSupportedPublicSourceUrl, PublicSourceUrlError } from "../lib/public-source-preview";
@@ -144,6 +145,27 @@ test("an incomplete prior-work record cannot retain verified status", () => {
   assert.equal(normalizePriorResearchVerification(incompleteRecord).status, "reviewed");
   assert.equal(canMarkPriorResearchVerified(verifiedRecord), true);
   assert.equal(normalizePriorResearchVerification(verifiedRecord).status, "verified");
+});
+
+test("a verified literature note returns to reviewed when its source loses a usable trace", () => {
+  const source = {
+    ...DEMO_PROJECTS[0].sources[1],
+    status: "verified" as const,
+    label: "Checked scholarly literature record",
+    note: "Checked source metadata, relevance, and original location before using this note for literature planning.",
+  };
+  const note = {
+    id: "LIT-01",
+    sourceId: source.id,
+    claim: "The source provides a scoped comparison point for the planned literature review.",
+    locator: "section 2.1",
+    use: "comparison" as const,
+    status: "verified" as const,
+  };
+
+  assert.equal(canMarkLiteratureNoteVerified(note, [source]), true);
+  assert.equal(canMarkLiteratureNoteVerified(note, [{ ...source, status: "reviewed" }]), false);
+  assert.equal(normalizeLiteratureVerification(note, [{ ...source, status: "reviewed" }]).status, "reviewed");
 });
 
 test("saved prior-research records can be corrected in place", () => {
@@ -735,6 +757,7 @@ test("the literature evidence matrix requests an own-words note and a source loc
   assert.match(markup, /short paraphrase in your own words/i);
   assert.match(markup, /Page, section, table, figure, or stable passage label/i);
   assert.match(markup, /Do not paste long excerpts/i);
+  assert.match(markup, /returns to reviewed/i);
 });
 
 test("the evidence ledger separates literature from direct result records", () => {

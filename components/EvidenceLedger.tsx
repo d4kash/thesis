@@ -1,6 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import { normalizeLiteratureVerification } from "@/lib/literature-readiness";
 import { hasMethodDataAndEthicsPlan } from "@/lib/method-readiness";
 import { canMarkResultVerified } from "@/lib/result-readiness";
 import type { EvidenceSource, EvidenceStatus, ThesisProject } from "@/lib/thesis-types";
@@ -130,11 +131,18 @@ export function EvidenceLedger({ project, onChange }: EvidenceLedgerProps) {
   }
 
   function updateSourceStatus(id: string, status: EvidenceStatus) {
+    const sources = project.sources.map((source) => source.id === id ? { ...source, status } : source);
+    const literatureNotes = (project.literatureNotes ?? []).map((note) => normalizeLiteratureVerification(note, sources));
+    const returnedToReviewed = literatureNotes.filter((note, index) => (
+      project.literatureNotes?.[index]?.status === "verified" && note.status === "reviewed"
+    )).length;
+
     onChange({
       ...project,
-      sources: project.sources.map((source) => source.id === id ? { ...source, status } : source),
+      sources,
+      literatureNotes,
     });
-    setMessage(`${id} marked ${status}.`);
+    setMessage(`${id} marked ${status}.${returnedToReviewed > 0 ? ` ${returnedToReviewed} linked literature note${returnedToReviewed === 1 ? "" : "s"} returned to reviewed.` : ""}`);
   }
 
   function updateResult(id: string, changes: { verification?: "unverified" | "verified"; sourceId?: string; methodId?: string }) {

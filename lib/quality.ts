@@ -4,6 +4,7 @@ import type {
   QualityReport,
   ThesisProject,
 } from "@/lib/thesis-types";
+import { canMarkLiteratureNoteVerified } from "@/lib/literature-readiness";
 import { hasMethodDataAndEthicsPlan } from "@/lib/method-readiness";
 import { canMarkPriorResearchVerified } from "@/lib/prior-research-readiness";
 import {
@@ -228,9 +229,7 @@ export function reviewProject(project: ThesisProject, draft: DraftSection[]): Qu
     }
 
     if (note.status === "verified") {
-      const hasParaphrase = note.claim.trim().length >= 12;
-      const hasLocator = note.locator.trim().length >= 2;
-      if (!hasParaphrase || !hasLocator || !isUsableVerifiedSource(source)) {
+      if (!canMarkLiteratureNoteVerified(note, project.sources)) {
         issues.push(
           issue(
             `literature-note-traceability-${note.id}`,
