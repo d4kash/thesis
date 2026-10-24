@@ -436,18 +436,33 @@ test("saved prior-research records can be corrected in place", () => {
 test("the start guide gives a plain next step for a new student", () => {
   const project = {
     ...DEMO_PROJECTS[0],
+    id: "local-plan",
+    demoLabel: "Your working project • add verified sources before using claims",
     title: "",
     researchQuestion: "",
     priorResearch: [],
+    sources: [],
   };
   const review = reviewProject(project, generateDraft(project));
   const markup = renderToStaticMarkup(createElement(GettingStartedGuide, { project, review }));
 
   assert.match(markup, /Six simple steps to use Thesis Studio/);
+  assert.match(markup, /1\/6 complete/);
   assert.match(markup, /Do this next:/);
   assert.match(markup, /Name your topic/);
   assert.match(markup, /Build your synopsis/);
   assert.match(markup, /Find source records/);
+});
+
+test("synthetic demos are not counted as a student's completed thesis workflow", () => {
+  const project = DEMO_PROJECTS[0];
+  const review = reviewProject(project, generateDraft(project));
+  const markup = renderToStaticMarkup(createElement(GettingStartedGuide, { project, review }));
+
+  assert.match(markup, /Example only/);
+  assert.match(markup, /synthetic example, not completed student research/i);
+  assert.match(markup, /Do this next:<\/strong> <a href="#project-picker">Start a new topic<\/a>/);
+  assert.equal((markup.match(/getting-started__step--done/g) ?? []).length, 0);
 });
 
 test("the research toolkit creates a topic-only discovery path and preserves a source boundary", () => {

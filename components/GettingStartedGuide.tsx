@@ -10,18 +10,18 @@ interface GettingStartedGuideProps {
 export function GettingStartedGuide({ project, review }: GettingStartedGuideProps) {
   const isNewWorkingProject = project.id === "local-plan";
   const synopsis = buildSynopsis(project);
-  const hasResearchNotes = project.priorResearch.some((record) =>
+  const hasResearchNotes = isNewWorkingProject && project.priorResearch.some((record) =>
     [record.context, record.researchQuestion, record.methodology, record.findings, record.limitations]
       .some((value) => value.trim().length >= 12),
   );
-  const hasSourceRecords = project.priorResearch.length > 0 || project.sources.length > 0;
+  const hasSourceRecords = isNewWorkingProject && (project.priorResearch.length > 0 || project.sources.length > 0);
   const steps = [
     { href: "#project-picker", label: "Start a new topic", detail: "Choose “Start a new topic” instead of changing a synthetic example.", done: isNewWorkingProject },
-    { href: "#research-brief", label: "Name your topic", detail: "Use a plain working title. You can improve it later.", done: hasTopic(project) },
-    { href: "#synopsis-builder", label: "Build your synopsis", detail: "Answer the short prompts, then review the editable plan for your question, scope, objectives, method, and ethics notes.", done: synopsis.isReadyForSupervisorReview },
+    { href: "#research-brief", label: "Name your topic", detail: "Use a plain working title. You can improve it later.", done: isNewWorkingProject && hasTopic(project) },
+    { href: "#synopsis-builder", label: "Build your synopsis", detail: "Answer the short prompts, then review the editable plan for your question, scope, objectives, method, and ethics notes.", done: isNewWorkingProject && synopsis.isReadyForSupervisorReview },
     { href: "#research-toolkit", label: "Find source records", detail: "Use the free toolkit to discover public records, then check the original source before bringing its details back here.", done: hasSourceRecords },
     { href: "#prior-research", label: "Add and compare earlier research", detail: "Paste a public source link, then record checked notes in your own words and map each literature point to its source location.", done: hasResearchNotes },
-    { href: "#quality-review", label: "Check and export a planning draft", detail: "Resolve critical checks, then take the draft to your supervisor for review.", done: review.canExportAsDraft && hasResearchNotes },
+    { href: "#quality-review", label: "Check and export a planning draft", detail: "Resolve critical checks, then take the draft to your supervisor for review.", done: isNewWorkingProject && review.canExportAsDraft && hasResearchNotes },
   ];
   const nextStep = steps.find((step) => !step.done);
   const completedCount = steps.filter((step) => step.done).length;
@@ -33,9 +33,13 @@ export function GettingStartedGuide({ project, review }: GettingStartedGuideProp
           <p className="eyebrow">START HERE</p>
           <h2 id="getting-started-heading">Six simple steps to use Thesis Studio</h2>
         </div>
-        <span className="status-pill">{completedCount}/6 complete</span>
+        <span className="status-pill">{isNewWorkingProject ? `${completedCount}/6 complete` : "Example only"}</span>
       </div>
-      <p className="review-intro">You do not need to know research software. Follow one step at a time; every item stays editable.</p>
+      <p className="review-intro">
+        {isNewWorkingProject
+          ? "You do not need to know research software. Follow one step at a time; every item stays editable."
+          : "This is a synthetic example, not completed student research. Start a new topic to track only your own sources, notes, and progress."}
+      </p>
       <ol className="getting-started__steps">
         {steps.map((step, index) => (
           <li className={step.done ? "getting-started__step getting-started__step--done" : "getting-started__step"} key={step.label}>
