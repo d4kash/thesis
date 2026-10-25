@@ -42,7 +42,7 @@ export function normalizeSourceVerification(source: EvidenceSource): EvidenceSou
 
 export function reviseEvidenceSource(
   source: EvidenceSource,
-  changes: Partial<Pick<EvidenceSource, "label" | "locator" | "checkedOn" | "note">>,
+  changes: Partial<Pick<EvidenceSource, "label" | "locator" | "checkedOn" | "kind" | "note">>,
 ): EvidenceSource {
   const revisedSource = { ...source, ...changes };
   const hasRevision = Object.values(changes).some((value) => value !== undefined);

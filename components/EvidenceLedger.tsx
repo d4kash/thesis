@@ -196,7 +196,7 @@ export function EvidenceLedger({ project, onChange }: EvidenceLedgerProps) {
 
   function updateSourceRecord(
     id: string,
-    changes: Partial<Pick<EvidenceSource, "label" | "locator" | "checkedOn" | "note">>,
+    changes: Partial<Pick<EvidenceSource, "label" | "locator" | "checkedOn" | "kind" | "note">>,
   ) {
     let sourceReturnedToReviewed = false;
     const sources = project.sources.map((source) => {
@@ -287,7 +287,7 @@ export function EvidenceLedger({ project, onChange }: EvidenceLedgerProps) {
       </div>
       <p className="field-note">Classify each record before using it. Literature supports background or comparison; a verified result needs a verified data, fieldwork, or policy record and its planned method. Fieldwork or analysis records stay in the evidence ledger and do not make a formal bibliography entry.</p>
       <p className="evidence-ledger__boundary">Checking a record here does not confirm ethics approval, consent, permission, or a completed study. Linking a result to a method does not approve that method. Record only what you can personally trace.</p>
-      <p className="evidence-ledger__boundary">Editing a verified source&apos;s title, relevance note, original-record locator, or check date returns it to reviewed, so you can re-check the revised record before using it again.</p>
+      <p className="evidence-ledger__boundary">Editing a verified source&apos;s title, relevance note, record type, original-record locator, or check date returns it to reviewed, so you can re-check the revised record before using it again.</p>
       <p className="evidence-ledger__boundary">Editing a verified result&apos;s label or supporting-record note returns it to unverified, so you can re-check the revised record before using it again.</p>
 
       <div className="ledger-form">
@@ -354,6 +354,13 @@ export function EvidenceLedger({ project, onChange }: EvidenceLedgerProps) {
                   <label>
                     Relevance and verification note
                     <textarea aria-label={`Edit ${source.id} relevance note`} onChange={(event) => updateSourceRecord(source.id, { note: event.target.value })} rows={3} value={source.note} />
+                  </label>
+                  <label>
+                    Record type
+                    <select aria-label={`Edit ${source.id} record type`} onChange={(event) => updateSourceRecord(source.id, { kind: event.target.value as EvidenceSource["kind"] })} value={source.kind}>
+                      {Object.entries(sourceKindLabels).map(([value, label]) => <option key={value} value={value}>{label}</option>)}
+                    </select>
+                    <small>Correct the classification before using a source for literature, citations, or direct evidence.</small>
                   </label>
                 </div>
               </details>
