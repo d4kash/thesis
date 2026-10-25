@@ -3,6 +3,7 @@ import type { EvidenceSource, LiteratureEvidenceNote, ThesisProject } from "@/li
 import { canMarkLiteratureNoteVerified } from "@/lib/literature-readiness";
 import { hasMethodDataAndEthicsPlan } from "@/lib/method-readiness";
 import { isUsableVerifiedCitationSource, isUsableVerifiedDirectEvidence } from "@/lib/result-readiness";
+import { escapeMarkdownInlineText } from "@/lib/markdown";
 
 export const DEFAULT_DISSERTATION_PAGE_TARGET = 300;
 
@@ -410,10 +411,10 @@ export function buildDissertationRoadmap(project: ThesisProject, requestedPageTa
 
 export function buildDissertationRoadmapMarkdown(roadmap: DissertationRoadmap): string {
   const plan = roadmap.items.map((item) => {
-    const linkedRecords = item.evidence.recordIds.length > 0 ? ` Linked records: ${item.evidence.recordIds.join(", ")}.` : "";
-    return `- ${item.heading}: ~${item.pageBudget} pages — ${item.nextStep}\n  Evidence plan: ${item.evidence.summary}${linkedRecords}`;
+    const linkedRecords = item.evidence.recordIds.length > 0 ? ` Linked records: ${item.evidence.recordIds.map(escapeMarkdownInlineText).join(", ")}.` : "";
+    return `- ${escapeMarkdownInlineText(item.heading)}: ~${item.pageBudget} pages — ${escapeMarkdownInlineText(item.nextStep)}\n  Evidence plan: ${escapeMarkdownInlineText(item.evidence.summary)}${linkedRecords}`;
   }).join("\n");
-  const checks = roadmap.originalityChecks.map((check) => `- ${check.label}: ${check.summary} Next: ${check.nextStep}`).join("\n");
+  const checks = roadmap.originalityChecks.map((check) => `- ${escapeMarkdownInlineText(check.label)}: ${escapeMarkdownInlineText(check.summary)} Next: ${escapeMarkdownInlineText(check.nextStep)}`).join("\n");
 
   return `## ${roadmap.pageTarget}-page dissertation roadmap\n\nThis is a source-linked chapter plan, not generated thesis content. Do not add filler, unverified claims, or copied text to reach a page count.\n\n${plan}\n\n### Originality and citation readiness\n\n${checks}`;
 }

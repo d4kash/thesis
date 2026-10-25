@@ -1,6 +1,7 @@
 import type { DraftSection, ThesisProject } from "@/lib/thesis-types";
 import { buildResearchLandscape } from "@/lib/research-landscape";
 import { buildStudentWritingStarter } from "@/lib/writing-support";
+import { escapeMarkdownInlineText } from "@/lib/markdown";
 
 function list(items: string[]): string {
   return items.map((item, index) => `${index + 1}. ${item}`).join("\n");
@@ -9,44 +10,44 @@ function list(items: string[]): string {
 export function generateDraft(project: ThesisProject): DraftSection[] {
   const landscape = buildResearchLandscape(project);
   const writingStarter = buildStudentWritingStarter(project);
-  const objectiveLines = project.objectives.map((objective) => `${objective.id}: ${objective.text}`);
+  const objectiveLines = project.objectives.map((objective) => `${escapeMarkdownInlineText(objective.id)}: ${escapeMarkdownInlineText(objective.text)}`);
   const methodLines = project.methods.map(
-    (method) => `${method.id} → ${method.objectiveIds.join(", ")}: ${method.text}\nData, permissions, and ethics plan: ${method.dataAndEthicsPlan?.trim() || "[NEEDS INPUT] Record the planned safeguards for this method."}`,
+    (method) => `${escapeMarkdownInlineText(method.id)} → ${method.objectiveIds.map(escapeMarkdownInlineText).join(", ") || "[NEEDS INPUT] Objective mapping"}: ${escapeMarkdownInlineText(method.text)}\nData, permissions, and ethics plan: ${escapeMarkdownInlineText(method.dataAndEthicsPlan) || "[NEEDS INPUT] Record the planned safeguards for this method."}`,
   );
   const sourceLines = project.sources.map(
-    (source) => `${source.id} (${source.status}): ${source.label}. Original record locator: ${source.locator?.trim() || "not recorded"}. Researcher check date: ${source.checkedOn?.trim() || "not recorded"}. ${source.note}`,
+    (source) => `${escapeMarkdownInlineText(source.id)} (${source.status}): ${escapeMarkdownInlineText(source.label)}. Original record locator: ${escapeMarkdownInlineText(source.locator) || "not recorded"}. Researcher check date: ${escapeMarkdownInlineText(source.checkedOn) || "not recorded"}. ${escapeMarkdownInlineText(source.note)}`,
   );
   const evidencePlan = sourceLines.length > 0
     ? list(sourceLines)
     : "No source records have been added. Add a source record before turning this outline into a literature review.";
   const resultLines = project.results.map(
-    (result) => `${result.id} (${result.verification}; sources: ${result.sourceIds.join(", ") || "none"}; methods: ${result.methodIds.join(", ") || "none"}): ${result.label}. ${result.note}`,
+    (result) => `${escapeMarkdownInlineText(result.id)} (${result.verification}; sources: ${result.sourceIds.map(escapeMarkdownInlineText).join(", ") || "none"}; methods: ${result.methodIds.map(escapeMarkdownInlineText).join(", ") || "none"}): ${escapeMarkdownInlineText(result.label)}. ${escapeMarkdownInlineText(result.note)}`,
   );
   const priorResearchLines = landscape.matches
     .filter((match) => match.matchedTerms.length > 0)
     .slice(0, 5)
     .map((match) => {
-      const terms = match.matchedTerms.join(", ");
-      return `${match.record.id} (${match.record.status}; ${match.relevance}% topic overlap): ${match.record.title}. Matched terms: ${terms}.`;
+      const terms = match.matchedTerms.map(escapeMarkdownInlineText).join(", ");
+      return `${escapeMarkdownInlineText(match.record.id)} (${match.record.status}; ${match.relevance}% topic overlap): ${escapeMarkdownInlineText(match.record.title)}. Matched terms: ${terms}.`;
     });
   const landscapePlan = priorResearchLines.length > 0
     ? list(priorResearchLines)
     : "No prior research records match the current topic terms yet. Add prior works with their context, method, and limitation notes before writing a synthesis.";
   const gapLines = landscape.candidateGaps.length > 0
-    ? list(landscape.candidateGaps.map((gap) => `${gap.recordId}: Candidate gap only — ${gap.text}`))
+    ? list(landscape.candidateGaps.map((gap) => `${escapeMarkdownInlineText(gap.recordId)}: Candidate gap only — ${escapeMarkdownInlineText(gap.text)}`))
     : "No candidate gaps have been recorded. Add the original work's stated limitations or unresolved questions; do not infer a gap from a title alone.";
 
   return [
     {
       id: "overview",
       heading: "1. What this study is about",
-      body: `${project.demoLabel}\n\n${writingStarter?.paragraph ?? "Add a topic to create an editable opening paragraph for this working draft."}\n\nResearch question: ${project.researchQuestion}\n\nScope: ${project.scope}\n\nThis working draft defines a research path. It does not present completed findings or citations that have not been verified.`,
+      body: `${escapeMarkdownInlineText(project.demoLabel)}\n\n${writingStarter ? escapeMarkdownInlineText(writingStarter.paragraph) : "Add a topic to create an editable opening paragraph for this working draft."}\n\nResearch question: ${escapeMarkdownInlineText(project.researchQuestion)}\n\nScope: ${escapeMarkdownInlineText(project.scope)}\n\nThis working draft defines a research path. It does not present completed findings or citations that have not been verified.`,
       claimIds: [],
     },
     {
       id: "research-landscape",
       heading: "2. Prior research landscape and synthesis plan",
-      body: `Topic terms used for this local map: ${landscape.topicTerms.join(", ") || "add a more specific topic or research question"}.\n\nMost aligned prior-research records\n${landscapePlan}\n\nCandidate gap signals\n${gapLines}\n\nThis is a comparison plan, not a claim that the prior works agree, differ, or establish a gap. Re-check every record against its original text before formal citation.`,
+      body: `Topic terms used for this local map: ${landscape.topicTerms.map(escapeMarkdownInlineText).join(", ") || "add a more specific topic or research question"}.\n\nMost aligned prior-research records\n${landscapePlan}\n\nCandidate gap signals\n${gapLines}\n\nThis is a comparison plan, not a claim that the prior works agree, differ, or establish a gap. Re-check every record against its original text before formal citation.`,
       claimIds: landscape.matches.filter((match) => match.matchedTerms.length > 0).map((match) => match.record.id),
     },
     {

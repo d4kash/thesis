@@ -3,9 +3,14 @@ import { buildDissertationRoadmap } from "@/lib/dissertation-roadmap";
 import { canMarkLiteratureNoteVerified } from "@/lib/literature-readiness";
 import { isUsableVerifiedPriorResearch } from "@/lib/prior-research-readiness";
 import { canMarkResultVerified, isUsableVerifiedCitationSource, isUsableVerifiedSource } from "@/lib/result-readiness";
+import { escapeMarkdownInlineText } from "@/lib/markdown";
 
 function listedRecords(records: string[], emptyMessage: string): string {
   return records.length > 0 ? records.join("\n") : emptyMessage;
+}
+
+function markdownValue(value: string | null | undefined, fallback: string): string {
+  return escapeMarkdownInlineText(value) || fallback;
 }
 
 function verificationLabel(recordedStatus: string, traceable: boolean): string {
@@ -29,9 +34,9 @@ export function buildDraftMarkdown(
   review: QualityReport,
 ): string {
   const status = review.canExportAsDraft ? "PASSED STRUCTURAL REVIEW" : "REVIEW REQUIRED";
-  const sections = draft.map((section) => `## ${section.heading}\n\n${section.body}`).join("\n\n");
+  const sections = draft.map((section) => `## ${escapeMarkdownInlineText(section.heading)}\n\n${section.body}`).join("\n\n");
 
-  return `# ${project.title}\n\n> ${project.demoLabel}\n> ${status}\n> This output is a topic-led research-planning draft. It is not a submitted thesis and contains no claimed findings.\n> Prior-research records are comparison notes until their original sources have been verified.\n\n${sections}\n\n## Quality review\n\nScore: ${review.score}/100\n\n${review.issues.length === 0 ? "No issues detected." : review.issues.map((entry) => `- **${entry.severity.toUpperCase()}** — ${entry.title}: ${entry.fix}`).join("\n")}`;
+  return `# ${markdownValue(project.title, "[NEEDS INPUT] Working title")}\n\n> ${markdownValue(project.demoLabel, "[NEEDS INPUT] Project label")}\n> ${status}\n> This output is a topic-led research-planning draft. It is not a submitted thesis and contains no claimed findings.\n> Prior-research records are comparison notes until their original sources have been verified.\n\n${sections}\n\n## Quality review\n\nScore: ${review.score}/100\n\n${review.issues.length === 0 ? "No issues detected." : review.issues.map((entry) => `- **${entry.severity.toUpperCase()}** — ${escapeMarkdownInlineText(entry.title)}: ${escapeMarkdownInlineText(entry.fix)}`).join("\n")}`;
 }
 
 export function buildSupervisorReviewMarkdown(
@@ -57,49 +62,49 @@ export function buildSupervisorReviewMarkdown(
             ? "Verification is incomplete. Do not use this as a formal citation until its original-record trace is complete."
             : "Not ready for formal citation until the researcher verifies the original source.";
 
-      return `- ${source.id} — ${sourceVerificationLabel(source)} ${source.kind}: ${source.label || "[NEEDS INPUT] Source title or citation"}\n  - Original record locator: ${source.locator?.trim() || "[NEEDS INPUT] Add a DOI, stable URL, repository/archive record, or local record ID."}\n  - Researcher check date: ${source.checkedOn?.trim() || "[NEEDS INPUT] Record the date the original record was checked."}\n  - Researcher note: ${source.note || "[NEEDS INPUT] Explain relevance and verification."}\n  - Attribution check: ${attributionCheck}`;
+      return `- ${markdownValue(source.id, "[NEEDS INPUT] Source identifier")} — ${sourceVerificationLabel(source)} ${escapeMarkdownInlineText(source.kind)}: ${markdownValue(source.label, "[NEEDS INPUT] Source title or citation")}\n  - Original record locator: ${markdownValue(source.locator, "[NEEDS INPUT] Add a DOI, stable URL, repository/archive record, or local record ID.")}\n  - Researcher check date: ${markdownValue(source.checkedOn, "[NEEDS INPUT] Record the date the original record was checked.")}\n  - Researcher note: ${markdownValue(source.note, "[NEEDS INPUT] Explain relevance and verification.")}\n  - Attribution check: ${attributionCheck}`;
     }),
     "- No source records yet. Do not add a bibliography from titles or memory.",
   );
   const literatureNotes = listedRecords(
     (project.literatureNotes ?? []).map((note) =>
-      `- ${note.id} — ${verificationLabel(note.status, canMarkLiteratureNoteVerified(note, project.sources))} · source ${note.sourceId || "[NEEDS INPUT]"} · ${note.use}\n  - Locator: ${note.locator || "[NEEDS INPUT] Add a specific page, section, table, figure, or dataset-field marker."}\n  - Researcher’s own-words note: ${note.claim || "[NEEDS INPUT] Record an own-words note after checking the original source."}`,
+      `- ${markdownValue(note.id, "[NEEDS INPUT] Literature-note identifier")} — ${verificationLabel(note.status, canMarkLiteratureNoteVerified(note, project.sources))} · source ${markdownValue(note.sourceId, "[NEEDS INPUT]")} · ${escapeMarkdownInlineText(note.use)}\n  - Locator: ${markdownValue(note.locator, "[NEEDS INPUT] Add a specific page, section, table, figure, or dataset-field marker.")}\n  - Researcher’s own-words note: ${markdownValue(note.claim, "[NEEDS INPUT] Record an own-words note after checking the original source.")}`,
     ),
     "- No literature evidence notes yet. Add only notes linked to a checked original source.",
   );
   const priorResearch = listedRecords(
     project.priorResearch.map((record) =>
-      `- ${record.id} — ${verificationLabel(record.status, isUsableVerifiedPriorResearch(record))}: ${record.title || "[NEEDS INPUT] Prior-work title"}\n  - Citation or stable source location: ${record.citation || "[NEEDS INPUT]"}\n  - Researcher check date: ${record.checkedOn?.trim() || "[NEEDS INPUT] Record the date the original work was checked."}\n  - Review boundary: Treat this as a comparison record until its original thesis or paper is verified.`,
+      `- ${markdownValue(record.id, "[NEEDS INPUT] Prior-work identifier")} — ${verificationLabel(record.status, isUsableVerifiedPriorResearch(record))}: ${markdownValue(record.title, "[NEEDS INPUT] Prior-work title")}\n  - Citation or stable source location: ${markdownValue(record.citation, "[NEEDS INPUT]")}\n  - Researcher check date: ${markdownValue(record.checkedOn, "[NEEDS INPUT] Record the date the original work was checked.")}\n  - Review boundary: Treat this as a comparison record until its original thesis or paper is verified.`,
     ),
     "- No prior-research records yet. Add original-record details before comparing earlier studies.",
   );
   const methodPlans = listedRecords(
     project.methods.map((method) =>
-      `- ${method.id} → ${method.objectiveIds.join(", ") || "[NEEDS INPUT] Objective mapping"}: ${method.text || "[NEEDS INPUT] Proposed method"}\n  - Data, permissions, and ethics plan: ${method.dataAndEthicsPlan?.trim() || "[NEEDS INPUT] Record planned safeguards before linking results."}`,
+      `- ${markdownValue(method.id, "[NEEDS INPUT] Method identifier")} → ${method.objectiveIds.map(escapeMarkdownInlineText).join(", ") || "[NEEDS INPUT] Objective mapping"}: ${markdownValue(method.text, "[NEEDS INPUT] Proposed method")}\n  - Data, permissions, and ethics plan: ${markdownValue(method.dataAndEthicsPlan, "[NEEDS INPUT] Record planned safeguards before linking results.")}`,
     ),
     "- No methods have been added yet.",
   );
   const resultRecords = listedRecords(
     project.results.map((result) =>
-      `- ${result.id} — ${verificationLabel(result.verification, canMarkResultVerified(result, project.sources, project.methods))}: ${result.label || "[NEEDS INPUT] Result label"}\n  - Direct record links: ${result.sourceIds.join(", ") || "none"}\n  - Planned method links: ${result.methodIds.join(", ") || "none"}\n  - Researcher note: ${result.note || "[NEEDS INPUT] Explain the traceable record or analysis."}`,
+      `- ${markdownValue(result.id, "[NEEDS INPUT] Result identifier")} — ${verificationLabel(result.verification, canMarkResultVerified(result, project.sources, project.methods))}: ${markdownValue(result.label, "[NEEDS INPUT] Result label")}\n  - Direct record links: ${result.sourceIds.map(escapeMarkdownInlineText).join(", ") || "none"}\n  - Planned method links: ${result.methodIds.map(escapeMarkdownInlineText).join(", ") || "none"}\n  - Researcher note: ${markdownValue(result.note, "[NEEDS INPUT] Explain the traceable record or analysis.")}`,
     ),
     "- No results recorded. This is appropriate for a planning-stage project; do not add findings before they exist and can be traced.",
   );
   const sectionMap = listedRecords(
-    draft.map((section) => `- ${section.heading}: linked records ${section.claimIds.length > 0 ? section.claimIds.join(", ") : "none required for this planning section"}.`),
+    draft.map((section) => `- ${escapeMarkdownInlineText(section.heading)}: linked records ${section.claimIds.length > 0 ? section.claimIds.map(escapeMarkdownInlineText).join(", ") : "none required for this planning section"}.`),
     "- No draft sections were generated.",
   );
   const qualityIssues = listedRecords(
-    review.issues.map((issue) => `- ${issue.severity.toUpperCase()}: ${issue.title}. Required action: ${issue.fix}`),
+    review.issues.map((issue) => `- ${issue.severity.toUpperCase()}: ${escapeMarkdownInlineText(issue.title)}. Required action: ${escapeMarkdownInlineText(issue.fix)}`),
     "- No structural issues detected. This does not replace source, citation, ethics, or supervisor review.",
   );
   const originalityChecks = roadmap.originalityChecks.map(
     (check) => `- ${check.status.toUpperCase()}: ${check.label}. ${check.summary} Next: ${check.nextStep}`,
   ).join("\n");
 
-  return `# Supervisor review packet: ${project.title || "[NEEDS INPUT] Working title"}
+  return `# Supervisor review packet: ${markdownValue(project.title, "[NEEDS INPUT] Working title")}
 
-> ${project.demoLabel}
+> ${markdownValue(project.demoLabel, "[NEEDS INPUT] Project label")}
 > ${status}
 > This editable packet lists only the project records already entered by the researcher and the current structural checks. It is not a thesis, a citation generator, an ethics approval, or an originality certificate.
 

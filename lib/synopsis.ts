@@ -1,5 +1,6 @@
 import { hasTopic } from "@/lib/topic-starter";
 import type { SynopsisDetails, ThesisProject } from "@/lib/thesis-types";
+import { escapeMarkdownInlineText } from "@/lib/markdown";
 
 const DEFAULT_RESEARCH_QUESTION = "What focused question will this project investigate?";
 const DEFAULT_SCOPE = "Define what the project will cover, what it will not cover, and what evidence it needs.";
@@ -127,9 +128,9 @@ export function buildSynopsis(project: ThesisProject): SynopsisPlan {
 
 export function buildSynopsisMarkdown(project: ThesisProject): string {
   const synopsis = buildSynopsis(project);
-  const title = hasTopic(project) ? project.title.trim() : "[NEEDS INPUT] Working title";
+  const title = hasTopic(project) ? escapeMarkdownInlineText(project.title) : "[NEEDS INPUT] Working title";
   const sections = synopsis.sections
-    .map((section) => `## ${section.heading}\n\n${section.value}\n\n_Student prompt: ${section.guidance}_`)
+    .map((section) => `## ${escapeMarkdownInlineText(section.heading)}\n\n${escapeMarkdownInlineText(section.value)}\n\n_Student prompt: ${section.guidance}_`)
     .join("\n\n");
 
   return `# Working synopsis: ${title}\n\n> This is an editable research-planning synopsis, not a completed study or submission-ready thesis.\n> It contains only the project details entered by the researcher. Missing items remain marked for completion.\n\n${sections}\n\n## Evidence boundary\n\nThis synopsis does not report findings, participant data, ethics approval, or verified citations. Add those only after they exist and can be traced.`;

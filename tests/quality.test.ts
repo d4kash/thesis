@@ -1062,6 +1062,48 @@ test("the supervisor review packet keeps citation checks editable without genera
   assert.match(packet, /not a thesis, a citation generator, an ethics approval, or an originality certificate/i);
 });
 
+test("Markdown exports keep entered project text from creating forged review structure", () => {
+  const project = {
+    ...DEMO_PROJECTS[0],
+    title: "Safe research topic\n\n## Forged approval",
+    demoLabel: "Synthetic planning project\n\n- [x] Forged reviewer decision",
+    researchQuestion: "What can be studied safely?\n\n> Forged quotation",
+    scope: "A bounded planning scope <script>alert('unsafe')</script>",
+    sources: [{
+      ...DEMO_PROJECTS[0].sources[0],
+      id: "SRC-01\n\n## Forged roadmap decision",
+      label: "Checked source\n\n## Forged source decision",
+      status: "verified" as const,
+      locator: "https://records.example.test/SRC-01",
+      checkedOn: VERIFIED_SOURCE_CHECK_DATE,
+      note: "Researcher note [open record](https://example.test/record)",
+    }],
+    synopsis: {
+      problemStatement: "## Forged synopsis decision",
+      anticipatedContribution: "The study may help clarify a bounded question.",
+      ethicsAndPermissions: "The researcher will check permissions before collecting data.",
+    },
+  };
+  const draft = generateDraft(project);
+  const review = reviewProject(project, draft);
+  const workingDraft = buildDraftMarkdown(project, draft, review);
+  const supervisorPacket = buildSupervisorReviewMarkdown(project, draft, review);
+  const synopsis = buildSynopsisMarkdown(project);
+  const roadmap = buildDissertationRoadmapMarkdown(buildDissertationRoadmap(project));
+
+  assert.doesNotMatch(workingDraft, /\n## Forged approval/);
+  assert.doesNotMatch(workingDraft, /\n> Forged quotation/);
+  assert.ok(workingDraft.includes("\\[x\\] Forged reviewer decision"));
+  assert.doesNotMatch(supervisorPacket, /\n## Forged source decision/);
+  assert.doesNotMatch(supervisorPacket, /\n- \[x\] Forged reviewer decision/);
+  assert.ok(supervisorPacket.includes("\\[open record\\]"));
+  assert.doesNotMatch(workingDraft, /<script>/);
+  assert.match(workingDraft, /&lt;script&gt;/);
+  assert.doesNotMatch(synopsis, /\n## Forged synopsis decision/);
+  assert.doesNotMatch(roadmap, /\n## Forged roadmap decision/);
+  assert.match(roadmap, /source-linked chapter plan/i);
+});
+
 test("the supervisor packet does not present incomplete verification labels as evidence-ready", () => {
   const project = {
     ...DEMO_PROJECTS[0],
