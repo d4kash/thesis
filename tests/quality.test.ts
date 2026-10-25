@@ -92,6 +92,46 @@ test("a validated local working project persists without saving synthetic demons
   assert.equal(loadLocalProject(malformedStorage), null);
 });
 
+test("local saves normalize stale verification before storage", () => {
+  const storage = createMemoryStorage();
+  const source = {
+    ...DEMO_PROJECTS[0].sources[0],
+    status: "verified" as const,
+    locator: "",
+    checkedOn: VERIFIED_SOURCE_CHECK_DATE,
+    note: "This source is missing its original-record locator and must not remain verified.",
+  };
+  const project = {
+    ...DEMO_PROJECTS[0],
+    id: "local-plan",
+    demoLabel: "Your working project • add verified sources before using claims",
+    sources: [source],
+    literatureNotes: [{
+      id: "LIT-01",
+      sourceId: source.id,
+      claim: "This own-words note must be rechecked when its source trace is incomplete.",
+      locator: "Section 2.1",
+      use: "comparison" as const,
+      status: "verified" as const,
+    }],
+    results: [{
+      id: "RES-01",
+      label: "Working result summary",
+      verification: "verified" as const,
+      note: "This result must be rechecked when its direct source record is incomplete.",
+      sourceIds: [source.id],
+      methodIds: ["MTH-01"],
+    }],
+  };
+
+  assert.equal(saveLocalProject(storage, project), true);
+
+  const stored = JSON.parse(storage.getItem(LOCAL_PROJECT_STORAGE_KEY) ?? "{}") as typeof project;
+  assert.equal(stored.sources[0]?.status, "reviewed");
+  assert.equal(stored.literatureNotes?.[0]?.status, "reviewed");
+  assert.equal(stored.results[0]?.verification, "unverified");
+});
+
 test("a portable local backup accepts only validated local project records", () => {
   const localProject = {
     ...DEMO_PROJECTS[1],

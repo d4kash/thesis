@@ -209,7 +209,7 @@ export function saveLocalProject(storage: LocalProjectStorage, project: ThesisPr
   if (!isStoredLocalProject(project)) return false;
 
   try {
-    storage.setItem(LOCAL_PROJECT_STORAGE_KEY, JSON.stringify(project));
+    storage.setItem(LOCAL_PROJECT_STORAGE_KEY, JSON.stringify(normalizeStoredLocalProject(project)));
     return true;
   } catch {
     return false;
