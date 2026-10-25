@@ -231,6 +231,7 @@ test("the topic map ranks supplied prior research and keeps limitations as candi
         id: "PRV-01",
         title: "Leaf image explanation study",
         citation: "Repository record: example/leaf-explanations",
+        accessNote: "Public repository metadata was checked; no full text was copied into this workspace.",
         checkedOn: VERIFIED_SOURCE_CHECK_DATE,
         context: "Flowering plant leaf-image classification with visual explanation checks.",
         researchQuestion: "How are explanation maps evaluated for leaf image classifiers?",
@@ -323,6 +324,7 @@ test("an incomplete prior-work record cannot retain verified status", () => {
     ...DEMO_PROJECTS[0].priorResearch[0],
     status: "verified" as const,
     citation: "Repository record: example/verified-prior-work",
+    accessNote: "Public repository metadata was checked; no full text was copied into this workspace.",
     checkedOn: VERIFIED_SOURCE_CHECK_DATE,
     context: "Checked original research context and scope recorded from the public source.",
   };
@@ -340,11 +342,60 @@ test("an incomplete prior-work record cannot retain verified status", () => {
   assert.equal(titlelessReview.issues.some((item) => item.id === "thin-verified-prior-research-PRV-01"), true);
 });
 
+test("a verified prior work records its access or permission basis", () => {
+  const missingAccessNote = {
+    ...DEMO_PROJECTS[0].priorResearch[0],
+    status: "verified" as const,
+    citation: "Repository record: example/verified-prior-work",
+    checkedOn: VERIFIED_SOURCE_CHECK_DATE,
+    context: "Checked original research context and scope recorded from the public source.",
+    accessNote: "",
+  };
+  const accessDocumented = {
+    ...missingAccessNote,
+    accessNote: "Public repository metadata was checked; no full text was copied into this workspace.",
+  };
+  const localProject = {
+    ...DEMO_PROJECTS[0],
+    id: "local-plan",
+    demoLabel: "Your working project • add verified sources before using claims",
+    priorResearch: [missingAccessNote],
+  };
+  const backup = buildLocalProjectBackup(localProject);
+  const normalizedBackup = backup ? parseLocalProjectBackup(backup) : null;
+  const malformedBackup = JSON.stringify({
+    format: LOCAL_PROJECT_BACKUP_FORMAT,
+    version: LOCAL_PROJECT_BACKUP_VERSION,
+    project: {
+      ...localProject,
+      priorResearch: [{ ...accessDocumented, accessNote: 42 }],
+    },
+  });
+  const documentedProject = { ...localProject, priorResearch: [accessDocumented] };
+  const documentedDraft = generateDraft(documentedProject);
+  const supervisorPacket = buildSupervisorReviewMarkdown(
+    documentedProject,
+    documentedDraft,
+    reviewProject(documentedProject, documentedDraft),
+  );
+
+  assert.equal(canMarkPriorResearchVerified(missingAccessNote), false);
+  assert.equal(normalizePriorResearchVerification(missingAccessNote).status, "reviewed");
+  assert.equal(normalizedBackup?.priorResearch[0]?.status, "reviewed");
+  assert.equal(parseLocalProjectBackup(malformedBackup), null);
+  assert.equal(canMarkPriorResearchVerified(accessDocumented), true);
+  assert.equal(revisePriorResearchRecord(accessDocumented, {
+    accessNote: "The researcher updated the record's public-access basis and must re-check it.",
+  }).status, "reviewed");
+  assert.match(supervisorPacket, /Access or permission note: Public repository metadata was checked/i);
+});
+
 test("a verified prior work needs a valid researcher check date", () => {
   const uncheckedRecord = {
     ...DEMO_PROJECTS[0].priorResearch[0],
     status: "verified" as const,
     citation: "Repository record: example/checked-prior-work",
+    accessNote: "Public repository metadata was checked; no full text was copied into this workspace.",
     checkedOn: "2026-02-30",
     context: "Checked original research context and scope recorded from the public source.",
   };
@@ -367,6 +418,7 @@ test("editing a verified prior-research record returns it to reviewed for a new 
     id: "PRV-01",
     title: "Checked prior research record",
     citation: "https://records.example.test/prior-research/PRV-01",
+    accessNote: "Public repository metadata was checked; no full text was copied into this workspace.",
     checkedOn: VERIFIED_SOURCE_CHECK_DATE,
     context: "A checked research context for a source-grounded comparison.",
     researchQuestion: "",
@@ -1032,6 +1084,7 @@ test("the supervisor review packet keeps citation checks editable without genera
     priorResearch: [{
       ...DEMO_PROJECTS[0].priorResearch[0],
       citation: "Repository record: example/verified-prior-work",
+      accessNote: "Public repository metadata was checked; no full text was copied into this workspace.",
       checkedOn: VERIFIED_SOURCE_CHECK_DATE,
       context: "Checked original research context and scope recorded from the public source.",
       status: "verified" as const,
@@ -1056,7 +1109,7 @@ test("the supervisor review packet keeps citation checks editable without genera
   assert.match(packet, /SRC-01 — VERIFIED AND TRACEABLE dataset/);
   assert.match(packet, /Original record locator: https:\/\/records\.example\.test\/datasets\/SRC-01/);
   assert.match(packet, /Researcher check date: 2026-10-24/);
-  assert.match(packet, /Citation or stable source location: Repository record: example\/verified-prior-work\n  - Researcher check date: 2026-10-24/);
+  assert.match(packet, /Citation or stable source location: Repository record: example\/verified-prior-work\n  - Access or permission note: Public repository metadata was checked; no full text was copied into this workspace\.\n  - Researcher check date: 2026-10-24/);
   assert.match(packet, /LIT-01/);
   assert.match(packet, /\[SUPERVISOR NOTE\]/);
   assert.match(packet, /not a thesis, a citation generator, an ethics approval, or an originality certificate/i);
@@ -1078,6 +1131,11 @@ test("Markdown exports keep entered project text from creating forged review str
       checkedOn: VERIFIED_SOURCE_CHECK_DATE,
       note: "Researcher note [open record](https://example.test/record)",
     }],
+    priorResearch: [{
+      ...DEMO_PROJECTS[0].priorResearch[0],
+      accessNote: "Public metadata\n\n## Forged access decision <script>alert('unsafe')</script>",
+      status: "reviewed" as const,
+    }],
     synopsis: {
       problemStatement: "## Forged synopsis decision",
       anticipatedContribution: "The study may help clarify a bounded question.",
@@ -1095,8 +1153,11 @@ test("Markdown exports keep entered project text from creating forged review str
   assert.doesNotMatch(workingDraft, /\n> Forged quotation/);
   assert.ok(workingDraft.includes("\\[x\\] Forged reviewer decision"));
   assert.doesNotMatch(supervisorPacket, /\n## Forged source decision/);
+  assert.doesNotMatch(supervisorPacket, /\n## Forged access decision/);
   assert.doesNotMatch(supervisorPacket, /\n- \[x\] Forged reviewer decision/);
   assert.ok(supervisorPacket.includes("\\[open record\\]"));
+  assert.match(supervisorPacket, /Access or permission note: Public metadata ## Forged access decision &lt;script&gt;/);
+  assert.doesNotMatch(supervisorPacket, /<script>/);
   assert.doesNotMatch(workingDraft, /<script>/);
   assert.match(workingDraft, /&lt;script&gt;/);
   assert.doesNotMatch(synopsis, /\n## Forged synopsis decision/);

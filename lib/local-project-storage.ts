@@ -82,6 +82,7 @@ function isPriorResearchRecord(value: unknown): value is PriorResearchRecord {
   return isRecord(value)
     && hasNonEmptyString(value, "id")
     && ["title", "citation", "context", "researchQuestion", "methodology", "findings", "limitations"].every((key) => hasString(value, key))
+    && hasOptionalString(value, "accessNote")
     && hasOptionalString(value, "checkedOn")
     && ["planned", "reviewed", "verified"].includes(value.status as string);
 }

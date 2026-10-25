@@ -24,7 +24,7 @@ export function GettingStartedGuide({ project, review }: GettingStartedGuideProp
     { href: "#research-brief", label: "Name your topic", detail: "Use a plain working title. You can improve it later.", done: isNewWorkingProject && hasTopic(project) },
     { href: "#synopsis-builder", label: "Build your synopsis", detail: "Answer the short prompts, then review the editable plan for your question, scope, objectives, method, and ethics notes.", done: isNewWorkingProject && synopsis.isReadyForSupervisorReview },
     { href: "#research-toolkit", label: "Find and verify source records", detail: "Use the free toolkit to discover public records, then check the original source before marking a record verified here.", done: hasCheckedResearchRecord },
-    { href: "#prior-research", label: "Map earlier research", detail: "Keep a checked prior-work record or a verified source-linked note in your own words, with a location you can re-check.", done: hasMappedEarlierResearch },
+    { href: "#prior-research", label: "Map earlier research", detail: "Keep a checked prior-work record or a verified source-linked note in your own words, with a location and access or permission basis you can re-check.", done: hasMappedEarlierResearch },
     { href: "#quality-review", label: "Check and export a planning draft", detail: "Resolve critical checks, then take the draft to your supervisor for review. This step never certifies a completed thesis or similarity result.", done: isNewWorkingProject && review.canExportAsDraft && hasCheckedResearchRecord && hasMappedEarlierResearch },
   ];
   const nextStep = steps.find((step) => !step.done);

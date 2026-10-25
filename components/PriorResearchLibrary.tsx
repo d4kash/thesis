@@ -24,7 +24,7 @@ interface PriorResearchLibraryProps {
   onChange: (project: ThesisProject) => void;
 }
 
-const verifiedPriorResearchRequirements = "A verified prior work needs a title, a citation, repository link, or stable source description, the date you checked the original work, and at least one usable checked research note.";
+const verifiedPriorResearchRequirements = "A verified prior work needs a title, a citation, repository link, or stable source description, an access or permission note, the date you checked the original work, and at least one usable checked research note.";
 
 function nextId(ids: string[]): string {
   const highest = ids.reduce((current, id) => {
@@ -42,6 +42,7 @@ export function PriorResearchLibrary({ project, onChange }: PriorResearchLibrary
   const [isPreviewing, setIsPreviewing] = useState(false);
   const [title, setTitle] = useState("");
   const [citation, setCitation] = useState("");
+  const [accessNote, setAccessNote] = useState("");
   const [checkedOn, setCheckedOn] = useState("");
   const [context, setContext] = useState("");
   const [researchQuestion, setResearchQuestion] = useState("");
@@ -104,6 +105,7 @@ export function PriorResearchLibrary({ project, onChange }: PriorResearchLibrary
       id: nextId(project.priorResearch.map((entry) => entry.id)),
       title: cleanTitle,
       citation: citation.trim(),
+      accessNote: accessNote.trim(),
       checkedOn,
       context: context.trim(),
       researchQuestion: researchQuestion.trim(),
@@ -127,6 +129,7 @@ export function PriorResearchLibrary({ project, onChange }: PriorResearchLibrary
     });
     setTitle("");
     setCitation("");
+    setAccessNote("");
     setCheckedOn("");
     setContext("");
     setResearchQuestion("");
@@ -159,7 +162,7 @@ export function PriorResearchLibrary({ project, onChange }: PriorResearchLibrary
     id: string,
     changes: Partial<Pick<
       PriorResearchRecord,
-      "title" | "citation" | "checkedOn" | "context" | "researchQuestion" | "methodology" | "findings" | "limitations"
+      "title" | "citation" | "accessNote" | "checkedOn" | "context" | "researchQuestion" | "methodology" | "findings" | "limitations"
     >>,
   ) {
     let returnedToReviewed = false;
@@ -195,7 +198,7 @@ export function PriorResearchLibrary({ project, onChange }: PriorResearchLibrary
       <p className="field-note">
         Add notes from the original thesis, dissertation, paper, or approved review. The studio compares the record with the current topic; it does not invent a citation, a finding, or a research gap.
       </p>
-      <p className="field-note">To mark a record verified, add a stable source description, the date you checked the original work, and a checked research note. Editing a verified record returns it to reviewed, so you can re-check the revised details against the original work.</p>
+      <p className="field-note">To mark a record verified, add a stable source description, an access or permission note, the date you checked the original work, and a checked research note. This records your basis for using metadata and your own notes; it does not certify a licence, copyright permission, or institutional approval. Editing a verified record returns it to reviewed, so you can re-check the revised details against the original work.</p>
 
       <div className="source-preview">
         <h3>1. Preview a public source</h3>
@@ -233,6 +236,16 @@ export function PriorResearchLibrary({ project, onChange }: PriorResearchLibrary
         <label>
           Citation, repository URL, or stable source description
           <textarea onChange={(event) => setCitation(event.target.value)} rows={2} value={citation} />
+        </label>
+        <label>
+          Access, licence, or permission note {status === "verified" ? "(required)" : "(needed before verification)"}
+          <textarea
+            onChange={(event) => setAccessNote(event.target.value)}
+            placeholder="For example: Public repository metadata checked; no full text copied into this workspace."
+            rows={2}
+            value={accessNote}
+          />
+          <small>Record why you may use this record&apos;s metadata and your own notes. This is not a legal determination.</small>
         </label>
         <label>
           When did you check the original work? {status === "verified" ? "(required)" : "(needed before verification)"}
@@ -279,6 +292,7 @@ export function PriorResearchLibrary({ project, onChange }: PriorResearchLibrary
               <strong>{record.id} · {record.status}</strong>
               <span>{record.title}</span>
               {record.citation ? <small>Citation/source: {record.citation}</small> : <small>No source location recorded yet.</small>}
+              {record.accessNote ? <small>Access/permission note: {record.accessNote}</small> : <small>No access or permission note recorded yet.</small>}
               <small>Researcher check date: {record.checkedOn?.trim() || "not recorded yet."}</small>
               {record.context ? <small>Context: {record.context}</small> : null}
               {record.methodology ? <small>Method: {record.methodology}</small> : null}
@@ -294,6 +308,10 @@ export function PriorResearchLibrary({ project, onChange }: PriorResearchLibrary
                   <label>
                     Citation, repository URL, or stable source description
                     <textarea aria-label={`Edit ${record.id} citation`} onChange={(event) => updateRecord(record.id, { citation: event.target.value })} rows={2} value={record.citation} />
+                  </label>
+                  <label>
+                    Access, licence, or permission note
+                    <textarea aria-label={`Edit ${record.id} access or permission note`} onChange={(event) => updateRecord(record.id, { accessNote: event.target.value })} rows={2} value={record.accessNote ?? ""} />
                   </label>
                   <label>
                     Original-work check date

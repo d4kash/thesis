@@ -36,7 +36,7 @@ npm run build
 - Presents the intake in student-friendly language, with an editable topic-based opening paragraph and a short own-voice phrase guide.
 - Provides an evidence-safe starter action that turns a new topic into a research question, scope, objectives, and auditable method plan while leaving results and citations empty.
 - Includes a student-facing free research toolkit for Crossref, OpenAlex, DOAJ, Shodhganga, Zotero, and ZoteroBib. It opens the official services in a new tab and never sends notes, PDFs, or source text from Thesis Studio.
-- Stores prior-thesis or paper notes locally: source trace, researcher check date, setting, question, method, reported finding, and stated limitation.
+- Stores prior-thesis or paper notes locally: source trace, access/licence/permission basis, researcher check date, setting, question, method, reported finding, and stated limitation.
 - Builds a transparent topic map that ranks local prior-work records by term overlap and surfaces only **candidate** gaps from notes supplied by the researcher.
 - Adds source records and result-ledger entries locally; verified sources need a reusable original-record locator, researcher check date, and relevance note, while verified results must link to verified direct evidence.
 - Requires verified literature notes to retain an own-words note plus a specific re-check marker such as a page, section, table, figure, or dataset field.

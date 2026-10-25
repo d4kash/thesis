@@ -74,7 +74,7 @@ export function buildSupervisorReviewMarkdown(
   );
   const priorResearch = listedRecords(
     project.priorResearch.map((record) =>
-      `- ${markdownValue(record.id, "[NEEDS INPUT] Prior-work identifier")} — ${verificationLabel(record.status, isUsableVerifiedPriorResearch(record))}: ${markdownValue(record.title, "[NEEDS INPUT] Prior-work title")}\n  - Citation or stable source location: ${markdownValue(record.citation, "[NEEDS INPUT]")}\n  - Researcher check date: ${markdownValue(record.checkedOn, "[NEEDS INPUT] Record the date the original work was checked.")}\n  - Review boundary: Treat this as a comparison record until its original thesis or paper is verified.`,
+      `- ${markdownValue(record.id, "[NEEDS INPUT] Prior-work identifier")} — ${verificationLabel(record.status, isUsableVerifiedPriorResearch(record))}: ${markdownValue(record.title, "[NEEDS INPUT] Prior-work title")}\n  - Citation or stable source location: ${markdownValue(record.citation, "[NEEDS INPUT]")}\n  - Access or permission note: ${markdownValue(record.accessNote, "[NEEDS INPUT] Record the public-access, licence, or permission basis before verification.")}\n  - Researcher check date: ${markdownValue(record.checkedOn, "[NEEDS INPUT] Record the date the original work was checked.")}\n  - Review boundary: Treat this as a comparison record until its original thesis or paper is verified.`,
     ),
     "- No prior-research records yet. Add original-record details before comparing earlier studies.",
   );
