@@ -21,7 +21,7 @@ import { createTopicStarter, hasTopic } from "../lib/topic-starter";
 import { reviewProject } from "../lib/quality";
 import { canMarkLiteratureNoteVerified, hasUsableLiteratureLocator, normalizeLiteratureVerification, reviseLiteratureEvidenceNote } from "../lib/literature-readiness";
 import { canMarkPriorResearchVerified, isUsableVerifiedPriorResearch, normalizePriorResearchVerification, revisePriorResearchRecord } from "../lib/prior-research-readiness";
-import { canMarkResultVerified, isUsableVerifiedCitationSource, isUsableVerifiedSource, normalizeResultVerification, normalizeSourceVerification } from "../lib/result-readiness";
+import { canMarkResultVerified, isUsableVerifiedCitationSource, isUsableVerifiedSource, normalizeResultVerification, normalizeSourceVerification, reviseEvidenceSource } from "../lib/result-readiness";
 import { extractPublicSourcePreview, parseSupportedPublicSourceUrl, PublicSourceUrlError } from "../lib/public-source-preview";
 import { buildSynopsis, buildSynopsisMarkdown } from "../lib/synopsis";
 import { buildStudentWritingStarter, WRITING_PHRASE_GROUPS } from "../lib/writing-support";
@@ -522,6 +522,27 @@ test("a verified source needs a valid researcher check date before it can suppor
   assert.equal(review.verifiedSourceCount, 0);
   assert.equal(review.issues.some((item) => item.id === "thin-verified-source-SRC-01"), true);
   assert.equal(review.issues.some((item) => item.id === "result-traceability-RES-01"), true);
+});
+
+test("editing a verified source returns it to reviewed for a new original-record check", () => {
+  const source = {
+    ...DEMO_PROJECTS[0].sources[0],
+    status: "verified" as const,
+    label: "Checked source record",
+    locator: "https://records.example.test/datasets/SRC-01",
+    checkedOn: VERIFIED_SOURCE_CHECK_DATE,
+    note: "Researcher checked the original record, its provenance, and its relevance to the planned study.",
+  };
+
+  assert.equal(isUsableVerifiedSource(source), true);
+  assert.equal(reviseEvidenceSource(source, {
+    locator: "https://records.example.test/datasets/SRC-01-revised",
+  }).status, "reviewed");
+  assert.equal(reviseEvidenceSource(source, { checkedOn: "2026-10-23" }).status, "reviewed");
+  assert.equal(reviseEvidenceSource({ ...source, status: "reviewed" }, {
+    locator: "https://records.example.test/datasets/SRC-01-reviewed",
+  }).status, "reviewed");
+  assert.equal(source.status, "verified");
 });
 
 test("a verified literature note needs a specific re-check location", () => {
@@ -1370,6 +1391,7 @@ test("the evidence ledger separates literature from direct result records", () =
   assert.match(markup, /Planned method with safeguards link/);
   assert.match(markup, /documented data and safeguards plan/i);
   assert.match(markup, /does not confirm ethics approval, consent, permission, or a completed study/i);
+  assert.match(markup, /Editing a verified source.*returns it to reviewed/i);
 });
 
 test("method readiness records a plan without claiming approval or collected data", () => {

@@ -40,6 +40,20 @@ export function normalizeSourceVerification(source: EvidenceSource): EvidenceSou
   return source;
 }
 
+export function reviseEvidenceSource(
+  source: EvidenceSource,
+  changes: Partial<Pick<EvidenceSource, "locator" | "checkedOn">>,
+): EvidenceSource {
+  const revisedSource = { ...source, ...changes };
+  const hasRevision = Object.values(changes).some((value) => value !== undefined);
+
+  if (source.status === "verified" && hasRevision) {
+    return { ...revisedSource, status: "reviewed" };
+  }
+
+  return normalizeSourceVerification(revisedSource);
+}
+
 export function isUsableVerifiedDirectEvidence(source: EvidenceSource | undefined): boolean {
   return isUsableVerifiedSource(source) && source?.kind !== "literature-map";
 }

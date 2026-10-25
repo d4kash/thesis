@@ -7,6 +7,7 @@ import {
   canMarkResultVerified,
   isUsableVerifiedDirectEvidence,
   isUsableVerifiedSource,
+  reviseEvidenceSource,
   normalizeResultVerification,
   normalizeSourceVerification,
 } from "@/lib/result-readiness";
@@ -199,7 +200,7 @@ export function EvidenceLedger({ project, onChange }: EvidenceLedgerProps) {
     let sourceReturnedToReviewed = false;
     const sources = project.sources.map((source) => {
       if (source.id !== id) return source;
-      const nextSource = normalizeSourceVerification({ ...source, ...changes });
+      const nextSource = reviseEvidenceSource(source, changes);
       sourceReturnedToReviewed ||= source.status === "verified" && nextSource.status === "reviewed";
       return nextSource;
     });
@@ -220,7 +221,7 @@ export function EvidenceLedger({ project, onChange }: EvidenceLedgerProps) {
     });
 
     if (sourceReturnedToReviewed) {
-      setMessage(`${id} returned to reviewed because its verified source trace is incomplete.${returnedToUnverified > 0 ? ` ${returnedToUnverified} linked result${returnedToUnverified === 1 ? "" : "s"} returned to unverified.` : ""} Recheck the original record before marking it verified again.`);
+      setMessage(`${id} returned to reviewed after an edit.${returnedToReviewed > 0 ? ` ${returnedToReviewed} linked literature note${returnedToReviewed === 1 ? "" : "s"} returned to reviewed.` : ""}${returnedToUnverified > 0 ? ` ${returnedToUnverified} linked result${returnedToUnverified === 1 ? "" : "s"} returned to unverified.` : ""} Recheck the original record before marking it verified again.`);
     } else if (returnedToReviewed > 0) {
       setMessage(`${id} no longer has a usable source trace, so ${returnedToReviewed} linked literature note${returnedToReviewed === 1 ? "" : "s"} returned to reviewed.`);
     } else if (returnedToUnverified > 0) {
@@ -267,6 +268,7 @@ export function EvidenceLedger({ project, onChange }: EvidenceLedgerProps) {
       </div>
       <p className="field-note">Classify each record before using it. Literature supports background or comparison; a verified result needs a verified data, fieldwork, or policy record and its planned method. Fieldwork or analysis records stay in the evidence ledger and do not make a formal bibliography entry.</p>
       <p className="evidence-ledger__boundary">Checking a record here does not confirm ethics approval, consent, permission, or a completed study. Linking a result to a method does not approve that method. Record only what you can personally trace.</p>
+      <p className="evidence-ledger__boundary">Editing a verified source&apos;s original-record locator or check date returns it to reviewed, so you can re-check the revised trace before using it again.</p>
 
       <div className="ledger-form">
         <h3>Add source record</h3>
