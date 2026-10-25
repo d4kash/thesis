@@ -539,6 +539,10 @@ test("editing a verified source returns it to reviewed for a new original-record
     locator: "https://records.example.test/datasets/SRC-01-revised",
   }).status, "reviewed");
   assert.equal(reviseEvidenceSource(source, { checkedOn: "2026-10-23" }).status, "reviewed");
+  assert.equal(reviseEvidenceSource(source, { label: "Corrected checked source record" }).status, "reviewed");
+  assert.equal(reviseEvidenceSource(source, {
+    note: "A corrected relevance note must be checked against the original source record before use.",
+  }).status, "reviewed");
   assert.equal(reviseEvidenceSource({ ...source, status: "reviewed" }, {
     locator: "https://records.example.test/datasets/SRC-01-reviewed",
   }).status, "reviewed");
@@ -1446,6 +1450,9 @@ test("the evidence ledger separates literature from direct result records", () =
   assert.match(markup, /documented data and safeguards plan/i);
   assert.match(markup, /does not confirm ethics approval, consent, permission, or a completed study/i);
   assert.match(markup, /Editing a verified source.*returns it to reviewed/i);
+  assert.match(markup, /title, relevance note, original-record locator, or check date/i);
+  assert.match(markup, /Edit SRC-01 title or citation/);
+  assert.match(markup, /Edit SRC-01 relevance note/);
   assert.match(markup, /Editing a verified result.*returns it to unverified/i);
 });
 

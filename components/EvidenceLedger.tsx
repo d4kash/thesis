@@ -194,9 +194,9 @@ export function EvidenceLedger({ project, onChange }: EvidenceLedgerProps) {
     setMessage(`${id} marked ${status}.${returnedToReviewed > 0 ? ` ${returnedToReviewed} linked literature note${returnedToReviewed === 1 ? "" : "s"} returned to reviewed.` : ""}${returnedToUnverified > 0 ? ` ${returnedToUnverified} linked result${returnedToUnverified === 1 ? "" : "s"} returned to unverified.` : ""}`);
   }
 
-  function updateSourceTrace(
+  function updateSourceRecord(
     id: string,
-    changes: Partial<Pick<EvidenceSource, "locator" | "checkedOn">>,
+    changes: Partial<Pick<EvidenceSource, "label" | "locator" | "checkedOn" | "note">>,
   ) {
     let sourceReturnedToReviewed = false;
     const sources = project.sources.map((source) => {
@@ -287,7 +287,7 @@ export function EvidenceLedger({ project, onChange }: EvidenceLedgerProps) {
       </div>
       <p className="field-note">Classify each record before using it. Literature supports background or comparison; a verified result needs a verified data, fieldwork, or policy record and its planned method. Fieldwork or analysis records stay in the evidence ledger and do not make a formal bibliography entry.</p>
       <p className="evidence-ledger__boundary">Checking a record here does not confirm ethics approval, consent, permission, or a completed study. Linking a result to a method does not approve that method. Record only what you can personally trace.</p>
-      <p className="evidence-ledger__boundary">Editing a verified source&apos;s original-record locator or check date returns it to reviewed, so you can re-check the revised trace before using it again.</p>
+      <p className="evidence-ledger__boundary">Editing a verified source&apos;s title, relevance note, original-record locator, or check date returns it to reviewed, so you can re-check the revised record before using it again.</p>
       <p className="evidence-ledger__boundary">Editing a verified result&apos;s label or supporting-record note returns it to unverified, so you can re-check the revised record before using it again.</p>
 
       <div className="ledger-form">
@@ -343,11 +343,25 @@ export function EvidenceLedger({ project, onChange }: EvidenceLedgerProps) {
               <span>{source.label}</span>
               <small>{sourceKindLabels[source.kind]} · Original record: {source.locator?.trim() || "not recorded yet."} · Check date: {source.checkedOn?.trim() || "not recorded yet."}</small>
               <small>{source.note}</small>
+              <details className="record-editor">
+                <summary>Edit this source record</summary>
+                <p className="record-editor__note">Editing a verified source returns it to reviewed until you re-check the revised description against the original record.</p>
+                <div className="record-editor__fields">
+                  <label>
+                    Source title or citation
+                    <input aria-label={`Edit ${source.id} title or citation`} onChange={(event) => updateSourceRecord(source.id, { label: event.target.value })} value={source.label} />
+                  </label>
+                  <label>
+                    Relevance and verification note
+                    <textarea aria-label={`Edit ${source.id} relevance note`} onChange={(event) => updateSourceRecord(source.id, { note: event.target.value })} rows={3} value={source.note} />
+                  </label>
+                </div>
+              </details>
               <label className="ledger-inline-control">
                 Original record locator
                 <input
                   aria-label={`${source.id} original record locator`}
-                  onChange={(event) => updateSourceTrace(source.id, { locator: event.target.value })}
+                  onChange={(event) => updateSourceRecord(source.id, { locator: event.target.value })}
                   placeholder="DOI, URL, repository/archive, or local ID"
                   value={source.locator ?? ""}
                 />
@@ -356,7 +370,7 @@ export function EvidenceLedger({ project, onChange }: EvidenceLedgerProps) {
                 Original record check date
                 <input
                   aria-label={`${source.id} original record check date`}
-                  onChange={(event) => updateSourceTrace(source.id, { checkedOn: event.target.value })}
+                  onChange={(event) => updateSourceRecord(source.id, { checkedOn: event.target.value })}
                   type="date"
                   value={source.checkedOn ?? ""}
                 />
