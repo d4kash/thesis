@@ -106,3 +106,19 @@ export function recheckResultsAfterMethodPlanEdit(
     return normalizeResultVerification(revisedResult, sources, methods);
   });
 }
+
+export function reviseResultLedgerItem(
+  result: ResultLedgerItem,
+  changes: Partial<Pick<ResultLedgerItem, "label" | "note">>,
+  sources: EvidenceSource[],
+  methods: ResearchMethod[],
+): ResultLedgerItem {
+  const revisedResult = { ...result, ...changes };
+  const hasRevision = Object.values(changes).some((value) => value !== undefined);
+
+  if (result.verification === "verified" && hasRevision) {
+    return { ...revisedResult, verification: "unverified" as const };
+  }
+
+  return normalizeResultVerification(revisedResult, sources, methods);
+}

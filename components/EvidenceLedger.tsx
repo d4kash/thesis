@@ -8,10 +8,11 @@ import {
   isUsableVerifiedDirectEvidence,
   isUsableVerifiedSource,
   reviseEvidenceSource,
+  reviseResultLedgerItem,
   normalizeResultVerification,
   normalizeSourceVerification,
 } from "@/lib/result-readiness";
-import type { EvidenceSource, EvidenceStatus, ThesisProject } from "@/lib/thesis-types";
+import type { EvidenceSource, EvidenceStatus, ResultLedgerItem, ThesisProject } from "@/lib/thesis-types";
 
 interface EvidenceLedgerProps {
   project: ThesisProject;
@@ -252,6 +253,24 @@ export function EvidenceLedger({ project, onChange }: EvidenceLedgerProps) {
     setMessage(`${id} updated. The structural review has been refreshed.`);
   }
 
+  function updateResultRecord(
+    id: string,
+    changes: Partial<Pick<ResultLedgerItem, "label" | "note">>,
+  ) {
+    let returnedToUnverified = false;
+    const results = project.results.map((result) => {
+      if (result.id !== id) return result;
+      const revisedResult = reviseResultLedgerItem(result, changes, project.sources, project.methods);
+      returnedToUnverified ||= result.verification === "verified" && revisedResult.verification === "unverified";
+      return revisedResult;
+    });
+
+    onChange({ ...project, results });
+    setMessage(returnedToUnverified
+      ? `${id} returned to unverified after an edit. Re-check the supporting record before marking it verified again.`
+      : `${id} updated.`);
+  }
+
   function removeResult(id: string) {
     onChange({ ...project, results: project.results.filter((result) => result.id !== id) });
     setMessage(`${id} removed from the result ledger.`);
@@ -269,6 +288,7 @@ export function EvidenceLedger({ project, onChange }: EvidenceLedgerProps) {
       <p className="field-note">Classify each record before using it. Literature supports background or comparison; a verified result needs a verified data, fieldwork, or policy record and its planned method. Fieldwork or analysis records stay in the evidence ledger and do not make a formal bibliography entry.</p>
       <p className="evidence-ledger__boundary">Checking a record here does not confirm ethics approval, consent, permission, or a completed study. Linking a result to a method does not approve that method. Record only what you can personally trace.</p>
       <p className="evidence-ledger__boundary">Editing a verified source&apos;s original-record locator or check date returns it to reviewed, so you can re-check the revised trace before using it again.</p>
+      <p className="evidence-ledger__boundary">Editing a verified result&apos;s label or supporting-record note returns it to unverified, so you can re-check the revised record before using it again.</p>
 
       <div className="ledger-form">
         <h3>Add source record</h3>
@@ -403,6 +423,20 @@ export function EvidenceLedger({ project, onChange }: EvidenceLedgerProps) {
               <strong>{result.id} · {result.verification}</strong>
               <span>{result.label}</span>
               <small>{result.note} {result.sourceIds.length > 0 ? `Data record: ${result.sourceIds.join(", ")}.` : "No data record linked."} {result.methodIds.length > 0 ? `Method: ${result.methodIds.join(", ")}.` : "No planned method linked."}</small>
+              <details className="record-editor">
+                <summary>Edit this result record</summary>
+                <p className="record-editor__note">Editing a verified result returns it to unverified until you re-check the revised label and supporting record.</p>
+                <div className="record-editor__fields">
+                  <label>
+                    Result label
+                    <input aria-label={`Edit ${result.id} result label`} onChange={(event) => updateResultRecord(result.id, { label: event.target.value })} value={result.label} />
+                  </label>
+                  <label>
+                    Supporting record note
+                    <textarea aria-label={`Edit ${result.id} supporting record note`} onChange={(event) => updateResultRecord(result.id, { note: event.target.value })} rows={3} value={result.note} />
+                  </label>
+                </div>
+              </details>
               <div className="ledger-inline-controls">
                 <label className="ledger-inline-control">
                   Status

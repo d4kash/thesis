@@ -21,7 +21,7 @@ import { createTopicStarter, hasTopic } from "../lib/topic-starter";
 import { reviewProject } from "../lib/quality";
 import { canMarkLiteratureNoteVerified, hasUsableLiteratureLocator, normalizeLiteratureVerification, reviseLiteratureEvidenceNote } from "../lib/literature-readiness";
 import { canMarkPriorResearchVerified, isUsableVerifiedPriorResearch, normalizePriorResearchVerification, revisePriorResearchRecord } from "../lib/prior-research-readiness";
-import { canMarkResultVerified, isUsableVerifiedCitationSource, isUsableVerifiedSource, normalizeResultVerification, normalizeSourceVerification, recheckResultsAfterMethodPlanEdit, reviseEvidenceSource } from "../lib/result-readiness";
+import { canMarkResultVerified, isUsableVerifiedCitationSource, isUsableVerifiedSource, normalizeResultVerification, normalizeSourceVerification, recheckResultsAfterMethodPlanEdit, reviseEvidenceSource, reviseResultLedgerItem } from "../lib/result-readiness";
 import { extractPublicSourcePreview, parseSupportedPublicSourceUrl, PublicSourceUrlError } from "../lib/public-source-preview";
 import { buildSynopsis, buildSynopsisMarkdown } from "../lib/synopsis";
 import { buildStudentWritingStarter, WRITING_PHRASE_GROUPS } from "../lib/writing-support";
@@ -1185,6 +1185,31 @@ test("editing a safeguard plan returns its linked verified result to unverified 
   assert.equal(linkedResult.verification, "verified");
 });
 
+test("editing a verified result record returns it to unverified for recheck", () => {
+  const source = {
+    ...DEMO_PROJECTS[0].sources[0],
+    status: "verified" as const,
+    locator: "https://records.example.test/datasets/SRC-01",
+    checkedOn: VERIFIED_SOURCE_CHECK_DATE,
+    note: "Verified dataset record with license, access date, and relevance notes.",
+  };
+  const result = {
+    id: "RES-01",
+    label: "Held-out evaluation summary",
+    verification: "verified" as const,
+    note: "A traceable summary was recorded from the documented analysis record.",
+    sourceIds: ["SRC-01"],
+    methodIds: ["MTH-01"],
+  };
+  const revisedNote = "A corrected traceable summary was recorded from the documented analysis record.";
+  const revisedResult = reviseResultLedgerItem(result, { note: revisedNote }, [source], DEMO_PROJECTS[0].methods);
+
+  assert.equal(canMarkResultVerified({ ...result, note: revisedNote }, [source], DEMO_PROJECTS[0].methods), true);
+  assert.equal(revisedResult.note, revisedNote);
+  assert.equal(revisedResult.verification, "unverified");
+  assert.equal(result.verification, "verified");
+});
+
 test("a verified result with a verified evidence link can remain a working draft", () => {
   const project = {
     ...DEMO_PROJECTS[0],
@@ -1421,6 +1446,7 @@ test("the evidence ledger separates literature from direct result records", () =
   assert.match(markup, /documented data and safeguards plan/i);
   assert.match(markup, /does not confirm ethics approval, consent, permission, or a completed study/i);
   assert.match(markup, /Editing a verified source.*returns it to reviewed/i);
+  assert.match(markup, /Editing a verified result.*returns it to unverified/i);
 });
 
 test("method readiness records a plan without claiming approval or collected data", () => {
