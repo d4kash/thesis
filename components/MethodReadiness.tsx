@@ -1,7 +1,8 @@
 "use client";
 
+import { useState } from "react";
 import { hasMethodDataAndEthicsPlan } from "@/lib/method-readiness";
-import { normalizeResultVerification } from "@/lib/result-readiness";
+import { normalizeResultVerification, recheckResultsAfterMethodPlanEdit } from "@/lib/result-readiness";
 import type { ThesisProject } from "@/lib/thesis-types";
 
 interface MethodReadinessProps {
@@ -11,17 +12,32 @@ interface MethodReadinessProps {
 
 export function MethodReadiness({ project, onChange }: MethodReadinessProps) {
   const documentedPlanCount = project.methods.filter(hasMethodDataAndEthicsPlan).length;
+  const [message, setMessage] = useState("");
 
   function updateMethodPlan(id: string, dataAndEthicsPlan: string) {
+    const current = project.methods.find((method) => method.id === id);
+    if (!current) return;
+
+    const planChanged = current.dataAndEthicsPlan !== dataAndEthicsPlan;
     const methods = project.methods.map((method) => (
       method.id === id ? { ...method, dataAndEthicsPlan } : method
     ));
+    const results = planChanged
+      ? recheckResultsAfterMethodPlanEdit(project.results, id, project.sources, methods)
+      : project.results.map((result) => normalizeResultVerification(result, project.sources, methods));
+    const returnedToUnverified = results.filter((result, index) => (
+      project.results[index]?.verification === "verified" && result.verification === "unverified"
+    )).length;
 
     onChange({
       ...project,
       methods,
-      results: project.results.map((result) => normalizeResultVerification(result, project.sources, methods)),
+      results,
     });
+
+    if (returnedToUnverified > 0) {
+      setMessage(`${id} safeguards plan changed. ${returnedToUnverified} linked result${returnedToUnverified === 1 ? "" : "s"} returned to unverified for a new check.`);
+    }
   }
 
   return (
@@ -37,7 +53,7 @@ export function MethodReadiness({ project, onChange }: MethodReadinessProps) {
         For each planned method, record how data will be obtained and what permissions, consent, privacy, or provenance steps need checking. This is an editable plan, not an approval record.
       </p>
       <p className="method-readiness__boundary">
-        A note here does not confirm ethics approval, consent, institutional permission, data access, or completed data collection. Record only the safeguards you can personally describe and verify later. If an edit leaves a safeguard plan incomplete, linked results return to unverified until you recheck them.
+        A note here does not confirm ethics approval, consent, institutional permission, data access, or completed data collection. Record only the safeguards you can personally describe and verify later. Editing a safeguard plan linked to a verified result returns that result to unverified until you recheck it.
       </p>
 
       {project.methods.length === 0 ? (
@@ -74,6 +90,7 @@ export function MethodReadiness({ project, onChange }: MethodReadinessProps) {
           })}
         </ol>
       )}
+      <p aria-live="polite" className="ledger-message">{message}</p>
     </section>
   );
 }

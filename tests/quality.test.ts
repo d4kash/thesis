@@ -21,7 +21,7 @@ import { createTopicStarter, hasTopic } from "../lib/topic-starter";
 import { reviewProject } from "../lib/quality";
 import { canMarkLiteratureNoteVerified, hasUsableLiteratureLocator, normalizeLiteratureVerification, reviseLiteratureEvidenceNote } from "../lib/literature-readiness";
 import { canMarkPriorResearchVerified, isUsableVerifiedPriorResearch, normalizePriorResearchVerification, revisePriorResearchRecord } from "../lib/prior-research-readiness";
-import { canMarkResultVerified, isUsableVerifiedCitationSource, isUsableVerifiedSource, normalizeResultVerification, normalizeSourceVerification, reviseEvidenceSource } from "../lib/result-readiness";
+import { canMarkResultVerified, isUsableVerifiedCitationSource, isUsableVerifiedSource, normalizeResultVerification, normalizeSourceVerification, recheckResultsAfterMethodPlanEdit, reviseEvidenceSource } from "../lib/result-readiness";
 import { extractPublicSourcePreview, parseSupportedPublicSourceUrl, PublicSourceUrlError } from "../lib/public-source-preview";
 import { buildSynopsis, buildSynopsisMarkdown } from "../lib/synopsis";
 import { buildStudentWritingStarter, WRITING_PHRASE_GROUPS } from "../lib/writing-support";
@@ -1156,6 +1156,35 @@ test("a verified result returns to unverified when its evidence or safeguard pla
   assert.equal(normalizeResultVerification(result, [source], methodsWithoutPlan).verification, "unverified");
 });
 
+test("editing a safeguard plan returns its linked verified result to unverified for recheck", () => {
+  const source = {
+    ...DEMO_PROJECTS[0].sources[0],
+    status: "verified" as const,
+    locator: "https://records.example.test/datasets/SRC-01",
+    checkedOn: VERIFIED_SOURCE_CHECK_DATE,
+    note: "Verified dataset record with license, access date, and relevance notes.",
+  };
+  const methods = DEMO_PROJECTS[0].methods.map((method) => (
+    method.id === "MTH-01"
+      ? { ...method, dataAndEthicsPlan: "Revised detailed safeguards plan for provenance, permissions, privacy, and retention review." }
+      : method
+  ));
+  const linkedResult = {
+    id: "RES-01",
+    label: "Held-out evaluation summary",
+    verification: "verified" as const,
+    note: "A traceable summary was recorded from the documented analysis record.",
+    sourceIds: ["SRC-01"],
+    methodIds: ["MTH-01"],
+  };
+  const unrelatedResult = { ...linkedResult, id: "RES-02", methodIds: ["MTH-02"] };
+  const results = recheckResultsAfterMethodPlanEdit([linkedResult, unrelatedResult], "MTH-01", [source], methods);
+
+  assert.equal(canMarkResultVerified(linkedResult, [source], methods), true);
+  assert.deepEqual(results.map((result) => result.verification), ["unverified", "verified"]);
+  assert.equal(linkedResult.verification, "verified");
+});
+
 test("a verified result with a verified evidence link can remain a working draft", () => {
   const project = {
     ...DEMO_PROJECTS[0],
@@ -1401,5 +1430,5 @@ test("method readiness records a plan without claiming approval or collected dat
 
   assert.match(markup, /Plan safeguards for each method/);
   assert.match(markup, /Data, permissions, and ethics plan/);
-  assert.match(markup, /does not confirm ethics approval, consent, institutional permission, data access, or completed data collection/i);
+  assert.match(markup, /Editing a safeguard plan linked to a verified result returns that result to unverified/i);
 });

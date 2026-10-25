@@ -91,3 +91,18 @@ export function normalizeResultVerification(
 
   return result;
 }
+
+export function recheckResultsAfterMethodPlanEdit(
+  results: ResultLedgerItem[],
+  methodId: string,
+  sources: EvidenceSource[],
+  methods: ResearchMethod[],
+): ResultLedgerItem[] {
+  return results.map((result) => {
+    const revisedResult = result.verification === "verified" && result.methodIds.includes(methodId)
+      ? { ...result, verification: "unverified" as const }
+      : result;
+
+    return normalizeResultVerification(revisedResult, sources, methods);
+  });
+}
