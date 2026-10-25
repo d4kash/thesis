@@ -29,6 +29,7 @@ npm run build
 - **Next.js** provides the dashboard and export workflow.
 - **Eve** compiles the thesis-planning agent; `next.config.ts` uses `withEve` so the agent and web app deploy as one Vercel project.
 - **Local demo data** keeps this first release reviewable with no credentials or researcher data. A production release should implement the persistence, provenance, revision, and access-control layers described in [`docs/REFERENCE_ARCHITECTURE.md`](docs/REFERENCE_ARCHITECTURE.md).
+- **AWS pilot path:** [`docs/AWS_FREE_TIER_PILOT.md`](docs/AWS_FREE_TIER_PILOT.md) defines the eligibility, cost, privacy, and authentication gates for a future six-month Free Tier proof of concept. It does not provision AWS resources or upload research data.
 
 ## What the upgraded workspace does
 
