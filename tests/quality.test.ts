@@ -41,6 +41,13 @@ import {
 
 const VERIFIED_SOURCE_CHECK_DATE = "2026-10-24";
 
+function localIsoDateAfter(days: number): string {
+  const date = new Date();
+  date.setDate(date.getDate() + days);
+
+  return [date.getFullYear(), String(date.getMonth() + 1).padStart(2, "0"), String(date.getDate()).padStart(2, "0")].join("-");
+}
+
 function createMemoryStorage(initialValues: Record<string, string> = {}): LocalProjectStorage {
   const values = new Map(Object.entries(initialValues));
 
@@ -411,6 +418,40 @@ test("a verified prior work needs a valid researcher check date", () => {
   assert.equal(review.verifiedPriorResearchCount, 0);
   assert.equal(review.issues.some((item) => item.id === "thin-verified-prior-research-PRV-01"), true);
   assert.equal(landscape.verifiedMatchCount, 0);
+});
+
+test("a future researcher check date cannot verify source or prior-work records", () => {
+  const futureCheckDate = localIsoDateAfter(2);
+  const source = {
+    ...DEMO_PROJECTS[0].sources[0],
+    status: "verified" as const,
+    locator: "https://records.example.test/datasets/SRC-01",
+    checkedOn: futureCheckDate,
+    note: "The researcher recorded a source note but cannot check a record in the future.",
+  };
+  const priorResearch = {
+    ...DEMO_PROJECTS[0].priorResearch[0],
+    status: "verified" as const,
+    citation: "Repository record: example/future-checked-prior-work",
+    accessNote: "Public repository metadata was checked; no full text was copied into this workspace.",
+    checkedOn: futureCheckDate,
+    context: "A source-linked comparison note cannot use a future researcher check date.",
+  };
+  const backup = buildLocalProjectBackup({
+    ...DEMO_PROJECTS[0],
+    id: "local-plan",
+    demoLabel: "Your working project • add verified sources before using claims",
+    sources: [source],
+    priorResearch: [priorResearch],
+  });
+  const normalizedBackup = backup ? parseLocalProjectBackup(backup) : null;
+
+  assert.equal(isUsableVerifiedSource(source), false);
+  assert.equal(normalizeSourceVerification(source).status, "reviewed");
+  assert.equal(canMarkPriorResearchVerified(priorResearch), false);
+  assert.equal(normalizePriorResearchVerification(priorResearch).status, "reviewed");
+  assert.equal(normalizedBackup?.sources[0]?.status, "reviewed");
+  assert.equal(normalizedBackup?.priorResearch[0]?.status, "reviewed");
 });
 
 test("editing a verified prior-research record returns it to reviewed for a new source check", () => {

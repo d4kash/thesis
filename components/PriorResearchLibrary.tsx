@@ -24,7 +24,7 @@ interface PriorResearchLibraryProps {
   onChange: (project: ThesisProject) => void;
 }
 
-const verifiedPriorResearchRequirements = "A verified prior work needs a title, a citation, repository link, or stable source description, an access or permission note, the date you checked the original work, and at least one usable checked research note.";
+const verifiedPriorResearchRequirements = "A verified prior work needs a title, a citation, repository link, or stable source description, an access or permission note, a valid non-future date you checked the original work, and at least one usable checked research note.";
 
 function nextId(ids: string[]): string {
   const highest = ids.reduce((current, id) => {
@@ -250,7 +250,7 @@ export function PriorResearchLibrary({ project, onChange }: PriorResearchLibrary
         <label>
           When did you check the original work? {status === "verified" ? "(required)" : "(needed before verification)"}
           <input onChange={(event) => setCheckedOn(event.target.value)} type="date" value={checkedOn} />
-          <small>Record the day you personally checked the original work. This is not the publication date or a proof of approval.</small>
+          <small>Record the day you personally checked the original work. It cannot be a future date. This is not the publication date or a proof of approval.</small>
         </label>
         <label>
           Context, setting, population, or corpus

@@ -35,7 +35,7 @@ const verifiedResultRequirements = [
 const verifiedSourceRequirements = [
   "To mark a source verified, add a meaningful title or citation,",
   "an original-record locator (such as a DOI, stable URL, repository/archive record, or local record ID),",
-  "the date you checked the original record,",
+  "a valid, non-future date you checked the original record,",
   "and a checked relevance note.",
 ].join(" ");
 
@@ -312,7 +312,7 @@ export function EvidenceLedger({ project, onChange }: EvidenceLedgerProps) {
             type="date"
             value={sourceCheckedOn}
           />
-          <small>Record the day you personally checked the source. This is not the publication date or a proof of approval.</small>
+          <small>Record the day you personally checked the source. It cannot be a future date. This is not the publication date or a proof of approval.</small>
         </label>
         <label>
           Record type

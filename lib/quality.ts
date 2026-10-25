@@ -90,8 +90,8 @@ export function reviewProject(project: ThesisProject, draft: DraftSection[]): Qu
           `thin-verified-source-${source.id}`,
           "warning",
           "Verified source lacks a traceable original record",
-          `${source.id} is marked verified but needs a meaningful title or citation, original-record locator, check date, and relevance note.`,
-          "Add a DOI, stable URL, repository or archive record, or local record ID; record the date you checked it; then check it against the original source before using it.",
+          `${source.id} is marked verified but needs a meaningful title or citation, original-record locator, valid non-future check date, and relevance note.`,
+          "Add a DOI, stable URL, repository or archive record, or local record ID; record a date you have already checked it; then check it against the original source before using it.",
         ),
       );
     }
@@ -117,8 +117,8 @@ export function reviewProject(project: ThesisProject, draft: DraftSection[]): Qu
           `thin-verified-prior-research-${record.id}`,
           "critical",
           "Verified prior work lacks a usable trace",
-          `${record.id} is marked verified but does not include a usable title, stable citation, researcher check date, access or permission note, and usable research note.`,
-          "Record the title, citation or stable source location, the date you checked it, and the public-access, licence, or permission basis, then add at least one context, method, finding, or limitation note from the original work.",
+          `${record.id} is marked verified but does not include a usable title, stable citation, valid non-future researcher check date, access or permission note, and usable research note.`,
+          "Record the title, citation or stable source location, a date you have already checked it, and the public-access, licence, or permission basis, then add at least one context, method, finding, or limitation note from the original work.",
         ),
       );
     }

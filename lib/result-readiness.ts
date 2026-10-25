@@ -8,16 +8,26 @@ const SOURCE_NOTE_MINIMUM_LENGTH = 12;
 export const SOURCE_LOCATOR_MINIMUM_LENGTH = 8;
 const ISO_CHECK_DATE_PATTERN = /^\d{4}-\d{2}-\d{2}$/;
 
+function localCalendarDate(now: Date): string {
+  return [
+    now.getFullYear(),
+    String(now.getMonth() + 1).padStart(2, "0"),
+    String(now.getDate()).padStart(2, "0"),
+  ].join("-");
+}
+
 export function hasUsableSourceLocator(source: EvidenceSource | undefined): boolean {
   return (source?.locator?.trim().length ?? 0) >= SOURCE_LOCATOR_MINIMUM_LENGTH;
 }
 
-export function hasUsableResearcherCheckDate(value: string | undefined): boolean {
+export function hasUsableResearcherCheckDate(value: string | undefined, now = new Date()): boolean {
   const cleanValue = value?.trim() ?? "";
   if (!ISO_CHECK_DATE_PATTERN.test(cleanValue)) return false;
 
   const date = new Date(`${cleanValue}T00:00:00.000Z`);
-  return !Number.isNaN(date.valueOf()) && date.toISOString().slice(0, 10) === cleanValue;
+  return !Number.isNaN(date.valueOf())
+    && date.toISOString().slice(0, 10) === cleanValue
+    && cleanValue <= localCalendarDate(now);
 }
 
 export function hasUsableSourceCheckDate(source: EvidenceSource | undefined): boolean {
