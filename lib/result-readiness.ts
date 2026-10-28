@@ -90,6 +90,44 @@ export function canMarkResultVerified(
     && result.methodIds.some((id) => hasMethodDataAndEthicsPlan(methodById.get(id)));
 }
 
+export function updateResultVerificationAndLinks(
+  result: ResultLedgerItem,
+  changes: Partial<Pick<ResultLedgerItem, "verification" | "sourceIds" | "methodIds">>,
+  sources: EvidenceSource[],
+  methods: ResearchMethod[],
+): ResultLedgerItem | null {
+  const nextResult = {
+    ...result,
+    verification: changes.verification ?? result.verification,
+    sourceIds: changes.sourceIds ?? result.sourceIds,
+    methodIds: changes.methodIds ?? result.methodIds,
+  };
+  const linksChanged = nextResult.sourceIds.length !== result.sourceIds.length
+    || nextResult.sourceIds.some((id, index) => id !== result.sourceIds[index])
+    || nextResult.methodIds.length !== result.methodIds.length
+    || nextResult.methodIds.some((id, index) => id !== result.methodIds[index]);
+
+  // Eligible replacement records do not inherit the researcher's previous result check.
+  // A separate status-only action is required even if this edit also requests verification.
+  if (linksChanged) nextResult.verification = "unverified";
+  if (nextResult.verification === "verified" && !canMarkResultVerified(nextResult, sources, methods)) return null;
+  return nextResult;
+}
+
+export function recheckResultsAfterSourceChange(
+  results: ResultLedgerItem[],
+  sourceId: string,
+  sources: EvidenceSource[],
+  methods: ResearchMethod[],
+): ResultLedgerItem[] {
+  const sourceExists = sources.some((source) => source.id === sourceId);
+  return results.map((result) => normalizeResultVerification({
+    ...result,
+    verification: result.sourceIds.includes(sourceId) ? "unverified" : result.verification,
+    sourceIds: sourceExists ? result.sourceIds : result.sourceIds.filter((id) => id !== sourceId),
+  }, sources, methods));
+}
+
 export function normalizeResultVerification(
   result: ResultLedgerItem,
   sources: EvidenceSource[],

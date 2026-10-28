@@ -11,6 +11,8 @@ import {
   reviseResultLedgerItem,
   normalizeResultVerification,
   normalizeSourceVerification,
+  recheckResultsAfterSourceChange,
+  updateResultVerificationAndLinks,
 } from "@/lib/result-readiness";
 import type { EvidenceSource, EvidenceStatus, ResultLedgerItem, ThesisProject } from "@/lib/thesis-types";
 
@@ -148,11 +150,7 @@ export function EvidenceLedger({ project, onChange }: EvidenceLedgerProps) {
 
   function removeSource(id: string) {
     const sources = project.sources.filter((source) => source.id !== id);
-    const results = project.results.map((result) => normalizeResultVerification(
-      { ...result, sourceIds: result.sourceIds.filter((sourceId) => sourceId !== id) },
-      sources,
-      project.methods,
-    ));
+    const results = recheckResultsAfterSourceChange(project.results, id, sources, project.methods);
     const returnedToUnverified = results.filter((result, index) => (
       project.results[index]?.verification === "verified" && result.verification === "unverified"
     )).length;
@@ -180,7 +178,9 @@ export function EvidenceLedger({ project, onChange }: EvidenceLedgerProps) {
     const returnedToReviewed = literatureNotes.filter((note, index) => (
       project.literatureNotes?.[index]?.status === "verified" && note.status === "reviewed"
     )).length;
-    const results = project.results.map((result) => normalizeResultVerification(result, sources, project.methods));
+    const results = current.status === status
+      ? project.results.map((result) => normalizeResultVerification(result, sources, project.methods))
+      : recheckResultsAfterSourceChange(project.results, id, sources, project.methods);
     const returnedToUnverified = results.filter((result, index) => (
       project.results[index]?.verification === "verified" && result.verification === "unverified"
     )).length;
@@ -209,7 +209,7 @@ export function EvidenceLedger({ project, onChange }: EvidenceLedgerProps) {
     const returnedToReviewed = literatureNotes.filter((note, index) => (
       project.literatureNotes?.[index]?.status === "verified" && note.status === "reviewed"
     )).length;
-    const results = project.results.map((result) => normalizeResultVerification(result, sources, project.methods));
+    const results = recheckResultsAfterSourceChange(project.results, id, sources, project.methods);
     const returnedToUnverified = results.filter((result, index) => (
       project.results[index]?.verification === "verified" && result.verification === "unverified"
     )).length;
@@ -226,19 +226,20 @@ export function EvidenceLedger({ project, onChange }: EvidenceLedgerProps) {
     } else if (returnedToReviewed > 0) {
       setMessage(`${id} no longer has a usable source trace, so ${returnedToReviewed} linked literature note${returnedToReviewed === 1 ? "" : "s"} returned to reviewed.`);
     } else if (returnedToUnverified > 0) {
-      setMessage(`${id} no longer supports ${returnedToUnverified} linked result${returnedToUnverified === 1 ? "" : "s"}, so it returned to unverified.`);
+      setMessage(`${id} changed. ${returnedToUnverified} linked result${returnedToUnverified === 1 ? "" : "s"} returned to unverified for a new check.`);
     }
   }
 
   function updateResult(id: string, changes: { verification?: "unverified" | "verified"; sourceId?: string; methodId?: string }) {
     const current = project.results.find((result) => result.id === id);
     if (!current) return;
-    const nextVerification = changes.verification ?? current.verification;
-    const nextSourceIds = changes.sourceId === undefined ? current.sourceIds : changes.sourceId ? [changes.sourceId] : [];
-    const nextMethodIds = changes.methodId === undefined ? current.methodIds : changes.methodId ? [changes.methodId] : [];
-    const nextResult = { ...current, verification: nextVerification, sourceIds: nextSourceIds, methodIds: nextMethodIds };
+    const nextResult = updateResultVerificationAndLinks(current, {
+      verification: changes.verification,
+      sourceIds: changes.sourceId === undefined ? current.sourceIds : changes.sourceId ? [changes.sourceId] : [],
+      methodIds: changes.methodId === undefined ? current.methodIds : changes.methodId ? [changes.methodId] : [],
+    }, project.sources, project.methods);
 
-    if (nextVerification === "verified" && !canMarkResultVerified(nextResult, project.sources, project.methods)) {
+    if (!nextResult) {
       setMessage(verifiedResultRequirements);
       return;
     }
@@ -250,7 +251,12 @@ export function EvidenceLedger({ project, onChange }: EvidenceLedgerProps) {
         return nextResult;
       }),
     });
-    setMessage(`${id} updated. The structural review has been refreshed.`);
+    const needsRecheck = current.verification === "verified"
+      && nextResult.verification === "unverified"
+      && (changes.sourceId !== undefined || changes.methodId !== undefined);
+    setMessage(needsRecheck
+      ? `${id} returned to unverified after changing its links. Re-check the result against its linked records and method before marking it verified again.`
+      : `${id} updated. The structural review has been refreshed.`);
   }
 
   function updateResultRecord(
@@ -289,6 +295,7 @@ export function EvidenceLedger({ project, onChange }: EvidenceLedgerProps) {
       <p className="evidence-ledger__boundary">Checking a record here does not confirm ethics approval, consent, permission, or a completed study. Linking a result to a method does not approve that method. Record only what you can personally trace.</p>
       <p className="evidence-ledger__boundary">Editing a verified source&apos;s title, relevance note, record type, original-record locator, or check date returns it to reviewed, so you can re-check the revised record before using it again.</p>
       <p className="evidence-ledger__boundary">Editing a verified result&apos;s label or supporting-record note returns it to unverified, so you can re-check the revised record before using it again.</p>
+      <p className="evidence-ledger__boundary">Changing a result&apos;s evidence or method links returns it to unverified. Editing, downgrading, or removing a linked source also requires a new result check, even when another linked source is still verified. Re-check the result before marking it verified again; selecting a checked source is not a result check.</p>
 
       <div className="ledger-form">
         <h3>Add source record</h3>
