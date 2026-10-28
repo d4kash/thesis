@@ -42,6 +42,7 @@ npm run build
 - Adds source records and result-ledger entries locally; verified sources need a reusable original-record locator, researcher check date, and relevance note, while verified results must link to verified direct evidence.
 - Requires verified literature notes to retain an own-words note plus a specific re-check marker such as a page, section, table, figure, or dataset field.
 - Assembles eligible checked own-words literature notes into section 3 of the working draft, grouped by purpose with source IDs, original-record locators, re-check locations, and dates. Edit the notes in the evidence matrix; changed notes need a new check before reappearing. This is local assembly, not model-generated synthesis or independent verification.
+- Saves the selected page target with the local project and its backup. The chapter plan, copied roadmap, and supervisor packet share the same page budgets after reload or restore. Choose 200, 250, 300, or 350 pages in the long-form plan and check the save status; these are planning allocations, not completed pages. Demo selections remain temporary. Older backups without a target keep the 300-page planning default.
 - Keeps the two bundled projects clearly marked as synthetic demonstrations with no findings or citations.
 - Exports a clearly watermarked Markdown working draft only after the structural review has no critical issues.
 - Runs the same tests, type check, and production build in GitHub Actions on pushes and pull requests.

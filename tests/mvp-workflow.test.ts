@@ -58,8 +58,9 @@ function exerciseWorkflow(input: ThesisProject) {
   project.literatureNotes![0].status = "verified";
   assert.match(section().body, /Notes included: 1/);
   assert.deepEqual(section().claimIds, ["LIT-01", "SRC-01"]);
-  const roadmap = buildDissertationRoadmap(project, 300);
-  assert.equal(roadmap.items.reduce((sum, item) => sum + item.pageBudget, 0), 300);
+  project.dissertationPageTarget = 250;
+  const roadmap = buildDissertationRoadmap(project);
+  assert.equal(roadmap.items.reduce((sum, item) => sum + item.pageBudget, 0), 250);
   assert.ok(roadmap.items.some((item) => item.evidence.recordIds.includes("LIT-01")));
   project.methods[0].dataAndEthicsPlan = "Synthetic safeguards plan only; no approval or data collection has occurred.";
   const pendingResult = {
@@ -82,6 +83,7 @@ function exerciseWorkflow(input: ThesisProject) {
   assert.ok(backup);
   const restored = parseLocalProjectBackup(backup);
   assert.deepEqual(restored, project);
+  assert.equal(buildDissertationRoadmap(restored!).pageTarget, 250);
   assert.equal(parseLocalProjectBackup('{"format":"unknown","project":{}}'), null);
   assert.deepEqual(loadLocalProject(storage), project);
   const draft = generateDraft(restored!);
@@ -93,6 +95,7 @@ function exerciseWorkflow(input: ThesisProject) {
   assert.match(markdown, /Re-check location: Section 2\.1/);
   assert.match(markdown, /\[NEEDS INPUT\]/);
   assert.match(packet, /supervisor review/i);
+  assert.match(packet, /250-page dissertation roadmap/);
   assert.match(packet, /RES-01 — UNVERIFIED/);
   assert.ok(packet.includes(project.priorResearch[0].accessNote!));
   assert.ok(packet.includes(project.methods[0].dataAndEthicsPlan!));

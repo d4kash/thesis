@@ -12,6 +12,7 @@ import type { ThesisProject } from "@/lib/thesis-types";
 
 interface DissertationRoadmapProps {
   project: ThesisProject;
+  onChange: (project: ThesisProject) => void;
 }
 
 const PAGE_TARGETS = [200, 250, DEFAULT_DISSERTATION_PAGE_TARGET, 350];
@@ -38,10 +39,10 @@ const ORIGINALITY_STATUS_LABELS = {
   "manual-check": "Manual check",
 } as const;
 
-export function DissertationRoadmap({ project }: DissertationRoadmapProps) {
-  const [pageTarget, setPageTarget] = useState(DEFAULT_DISSERTATION_PAGE_TARGET);
+export function DissertationRoadmap({ project, onChange }: DissertationRoadmapProps) {
   const [message, setMessage] = useState("");
-  const roadmap = buildDissertationRoadmap(project, pageTarget);
+  const roadmap = buildDissertationRoadmap(project);
+  const pageTarget = roadmap.pageTarget;
 
   async function copyRoadmap() {
     try {
@@ -71,13 +72,22 @@ export function DissertationRoadmap({ project }: DissertationRoadmapProps) {
             aria-pressed={pageTarget === target}
             className={pageTarget === target ? "roadmap-target roadmap-target--selected" : "roadmap-target"}
             key={target}
-            onClick={() => setPageTarget(target)}
+            onClick={() => {
+              setMessage("");
+              onChange({ ...project, dissertationPageTarget: target });
+            }}
             type="button"
           >
             {target} pages
           </button>
         ))}
       </div>
+
+      <p className="field-note">
+        {project.id === "local-plan"
+          ? "This target is part of your local project and backup. The copied roadmap and supervisor packet use the same chapter budgets. Check the save status before leaving."
+          : "Demo changes are temporary. Start your own topic to save a page target with your local project and backup."}
+      </p>
 
       <ol className="roadmap-list">
         {roadmap.items.map((item) => (

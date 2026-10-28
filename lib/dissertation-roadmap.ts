@@ -4,8 +4,9 @@ import { canMarkLiteratureNoteVerified } from "@/lib/literature-readiness";
 import { hasMethodDataAndEthicsPlan } from "@/lib/method-readiness";
 import { isUsableVerifiedCitationSource, isUsableVerifiedDirectEvidence } from "@/lib/result-readiness";
 import { escapeMarkdownInlineText } from "@/lib/markdown";
+import { DEFAULT_DISSERTATION_PAGE_TARGET, MAX_DISSERTATION_PAGE_TARGET, MIN_DISSERTATION_PAGE_TARGET } from "@/lib/dissertation-page-target";
 
-export const DEFAULT_DISSERTATION_PAGE_TARGET = 300;
+export { DEFAULT_DISSERTATION_PAGE_TARGET } from "@/lib/dissertation-page-target";
 
 export type RoadmapStatus = "ready" | "needs-brief" | "needs-sources" | "needs-data" | "needs-review";
 export type ChapterEvidenceStatus = "tracked" | "needs-source" | "needs-data" | "needs-input" | "not-applicable";
@@ -106,7 +107,7 @@ const ROADMAP_BLUEPRINT: BlueprintItem[] = [
 
 function clampPageTarget(value: number): number {
   if (!Number.isFinite(value)) return DEFAULT_DISSERTATION_PAGE_TARGET;
-  return Math.min(600, Math.max(80, Math.round(value)));
+  return Math.min(MAX_DISSERTATION_PAGE_TARGET, Math.max(MIN_DISSERTATION_PAGE_TARGET, Math.round(value)));
 }
 
 function allocatePages(pageTarget: number): number[] {
@@ -392,7 +393,10 @@ function buildOriginalityChecks(project: ThesisProject): OriginalityCheckpoint[]
   ];
 }
 
-export function buildDissertationRoadmap(project: ThesisProject, requestedPageTarget = DEFAULT_DISSERTATION_PAGE_TARGET): DissertationRoadmap {
+export function buildDissertationRoadmap(
+  project: ThesisProject,
+  requestedPageTarget = project.dissertationPageTarget ?? DEFAULT_DISSERTATION_PAGE_TARGET,
+): DissertationRoadmap {
   const pageTarget = clampPageTarget(requestedPageTarget);
   const pages = allocatePages(pageTarget);
   const evidenceContext = buildEvidenceContext(project);
@@ -409,12 +413,15 @@ export function buildDissertationRoadmap(project: ThesisProject, requestedPageTa
   };
 }
 
-export function buildDissertationRoadmapMarkdown(roadmap: DissertationRoadmap): string {
+export function buildDissertationChapterPlanMarkdown(roadmap: DissertationRoadmap): string {
   const plan = roadmap.items.map((item) => {
     const linkedRecords = item.evidence.recordIds.length > 0 ? ` Linked records: ${item.evidence.recordIds.map(escapeMarkdownInlineText).join(", ")}.` : "";
     return `- ${escapeMarkdownInlineText(item.heading)}: ~${item.pageBudget} pages — ${escapeMarkdownInlineText(item.nextStep)}\n  Evidence plan: ${escapeMarkdownInlineText(item.evidence.summary)}${linkedRecords}`;
   }).join("\n");
-  const checks = roadmap.originalityChecks.map((check) => `- ${escapeMarkdownInlineText(check.label)}: ${escapeMarkdownInlineText(check.summary)} Next: ${escapeMarkdownInlineText(check.nextStep)}`).join("\n");
+  return `## ${roadmap.pageTarget}-page dissertation roadmap\n\nThis is a source-linked chapter plan, not generated thesis content. Do not add filler, unverified claims, or copied text to reach a page count.\n\n${plan}`;
+}
 
-  return `## ${roadmap.pageTarget}-page dissertation roadmap\n\nThis is a source-linked chapter plan, not generated thesis content. Do not add filler, unverified claims, or copied text to reach a page count.\n\n${plan}\n\n### Originality and citation readiness\n\n${checks}`;
+export function buildDissertationRoadmapMarkdown(roadmap: DissertationRoadmap): string {
+  const checks = roadmap.originalityChecks.map((check) => `- ${escapeMarkdownInlineText(check.label)}: ${escapeMarkdownInlineText(check.summary)} Next: ${escapeMarkdownInlineText(check.nextStep)}`).join("\n");
+  return `${buildDissertationChapterPlanMarkdown(roadmap)}\n\n### Originality and citation readiness\n\n${checks}`;
 }

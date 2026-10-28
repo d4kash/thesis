@@ -1,50 +1,56 @@
 # Thesis Studio MVP acceptance checkpoint
 
-Updated: 28 October 2026. Reviewed remote baseline: `813b4a0f45c539ceb376fe4501a5ba6a213e7aba`.
+Updated: 28 October 2026. Reviewed and fast-forwarded against remote baseline `e0c9d3fdece8f0d285672a78d781e21e1f81c05c`.
 
-**Local verification passed; complete MVP sign-off is pending.** Results below are local, not proof of deployed behavior. No AWS resources, new paid services, or paid AI calls were used. `AWS_FREE_TIER_PILOT.md` is unchanged.
+**Page-budget candidate verified locally; not released to main or Vercel. Complete MVP sign-off remains pending.** No AWS resources, new paid services, or paid AI calls were used. `AWS_FREE_TIER_PILOT.md`, dependencies, hosting settings, and evidence-verification rules are unchanged.
 
-## Capability delivered in this change
+## Capability in this candidate
 
-Section 3 assembles eligible researcher-written literature notes into background, methods, comparison, and limitation groups. Each note retains its source ID/title, original-record locator, precise re-check location, and check date. Edit notes in the evidence matrix; edits invalidate verification until the researcher checks them again. This is deterministic local assembly, not generated synthesis or independent verification.
+The selected page target is now a project preference rather than temporary component state. Local save/reload and version-one backup/restore retain it. The UI, copied roadmap, and supervisor-editable packet use the same chapter allocations; the packet now includes the source-linked chapter plan. Demo changes remain temporary and bundled fixtures are unchanged.
 
-Acceptance: only uniquely identified, checked notes with eligible checked sources enter the section; incomplete, stale, ambiguous, or edited notes stay out; missing inputs remain explicit; preview, backup, and exports preserve the source trail. No new citations, findings, research gaps, or source text are invented.
+Acceptance and trust boundaries: older backups without the optional field default to 300; imported values must be integer numbers between the planner's existing bounds of 80 and 600; strings, objects, null, non-finite, fractional, and out-of-range values are rejected without overwriting a valid save. A page preference cannot grant verification, create findings, change source permissions, or promise completed pages.
 
 ## Acceptance checklist
 
-| Researcher capability | Concrete local evidence | Remaining limitation |
+| Researcher capability | Concrete evidence | Remaining limitation |
 | --- | --- | --- |
-| Start a topic | Topic-starter tests; new-topic integration flow | Browser interaction sign-off pending |
-| Complete/revise synopsis | Both demo flows complete and revise the synopsis; generated text retains revisions | Copy interaction not browser-tested |
-| Authorised prior-work metadata/notes | Permission/date/locator regressions; full-flow permission removal and edit-invalidation checks | Recorded checks do not certify rights or factual accuracy |
-| Editable source-linked literature draft | Nine focused regressions; both demos and new-topic edit → exclude → re-check → include flows | Editing is through the matrix; no independent synthesis editor |
-| Chapter/page plan | Full flows verify linked note IDs and a 300-page budget sum | Selected UI page target is not persisted; supervisor export uses the default target |
-| Methods/ethics/results ledger | Full flows retain safeguards and reject literature as direct result evidence | No actual findings or approvals generated; only synthetic placeholders tested |
-| Local save/restore | Both demos converted to local fixtures plus new-topic flow: save, reload, backup, restore, malformed-input rejection | Browser downloads/import interaction pending; local storage/backups are not encrypted |
-| Supervisor-editable export | Both Markdown exports retain source trails, permission notes, unresolved results, and draft warnings | Markdown only; no Word/PDF export |
-| Both synthetic demos | `tests/mvp-workflow.test.ts` exercises both complete application-data flows without changing bundled fixtures | These are integration tests, not browser click tests |
+| Start a topic | Topic-starter regressions and new-topic integration workflow | Browser interaction sign-off pending |
+| Complete/revise synopsis | Both synthetic demo workflows complete and revise the synopsis | Browser copy interaction unverified |
+| Authorised prior-work metadata/own notes | Permission/date/locator regressions, edit invalidation, and full-workflow checks | Recorded checks are researcher assertions, not certified rights or facts |
+| Editable source-linked literature draft | Nine focused regressions and edit → exclude → re-check → include flows | Edit through the matrix; no model-generated synthesis |
+| Chapter/page plan | Seven focused page-target tests; both demo workflows persist a 250-page plan through restore and supervisor export | This candidate is not on main; browser clicks unverified |
+| Methods/ethics/results ledger | Full workflows retain safeguards and reject literature as direct result evidence | Synthetic placeholders only; no actual findings or approvals created |
+| Local save/restore | Save, reload, backup, restore and malformed-input checks, including new target validation | Browser file interaction unverified; local storage/backups are not encrypted |
+| Supervisor-editable export | Markdown exports preserve source trails, permission notes, unresolved items and matching chapter budgets | Markdown only; download interaction unverified |
+| Both synthetic demos | `tests/mvp-workflow.test.ts` exercises both full application-data flows and preserves original fixtures | Integration tests, not browser click tests |
 
-## Test and security evidence
+## TDD and security evidence
 
-- TDD: nine literature regressions failed before the assembly implementation, then passed. Five build-runner tests failed before the runner was added, then passed. Three full workflow tests preserve the cross-feature regression path.
-- `npm test`: **82/82 passed**. `npm run typecheck`: passed. `npm run build`: full Eve + Next production build passed, exit 0. `git diff --check`: passed.
-- Local production HTTP smoke passed: status 200 with both demo controls, the new literature section, restore, and supervisor export controls. This checks server rendering, not browser interaction.
-- Source/note eligibility is re-evaluated when rendering. Duplicate IDs, missing/future check dates, wrong source kinds, and edited verification cannot supply an assembled note. Stored verification is a researcher assertion, not an independent fact check.
-- Imported backups remain size/shape/reference validated. The new path adds no schema, credentials, uploads, external calls, or access-control assumptions. Do not store participant PII in shared-browser local storage or backups.
-- React renders note text as text; Markdown uses the existing literal-text escaping helper. Regressions cover HTML, JavaScript links, and forged headings. Source locators in this path are text, not automatically fetched URLs.
-- Build privacy: `scripts/build.mjs` retains both full build stages and failure propagation while setting documented `EVE_TELEMETRY_DISABLED=1` and `NEXT_TELEMETRY_DISABLED=1`. The installed Eve 0.82.0 compiler's catalog lookup is a public GET to `https://ai-gateway.vercel.sh/v1/models/catalog`, with package-version user-agent and no body/authorization header at that call site. It is not a model turn. The safety uncertainty was investigated before the successful retry; no stage or safety control was bypassed.
-- No full copyrighted work was retrieved, downloaded, or rewritten. All new inputs are original synthetic test fixtures.
+- Baseline: `npm test` passed **82/82** tests before changes. Seven focused page-target regressions were added first: **five failed, two passed**. The same seven passed after implementation.
+- Candidate: `npm test` **89/89 passed**; `npm run typecheck` passed; full `npm run build` (Eve + Next) passed, exit 0; `git diff --check` passed. Existing installed dependencies were reused, not reinstalled.
+- Both synthetic demo workflows and the new-topic workflow now retain a 250-page target through local persistence, portable backup, restore, and supervisor export. Both demo fixtures remain unchanged.
+- React guidance: derive the displayed target from the active project; send changes through the existing project-update/autosave path. Do not keep a second target state or synchronize it with an effect. `aria-pressed` follows the saved target in server-rendered regression tests.
+- Imports/backups: additive optional number in the existing version-one schema; strict validation at load, save, backup creation and restore. Invalid input does not replace a good saved project. No coercion of text or malformed JSON values into a page count.
+- Provenance/stale verification: budgets do not modify notes, sources, permission records, results or quality results. Existing verification normalization and eligibility checks remain in place; regression tests prove that changing the target neither verifies evidence nor creates research text.
+- Injection/output: the supervisor packet reuses the existing Markdown-escaping chapter-plan renderer; untrusted text/identifier injection regressions still pass. The new field only accepts bounded numbers at the storage boundary.
+- Access/PII/external calls: no new accounts, authentication assumptions, credentials, uploads, network fetches, AI calls or source URL handling. Same-browser local data remains unencrypted; do not store participant PII or secrets in the project or backups. No copyrighted full text was retrieved or rewritten.
 
-## Verification limits and next criterion
+## Browser and release evidence
 
-Chromium is unavailable; the earlier browser installation attempt returned invalid/empty archives and was stopped. No browser interaction success is claimed. The existing GitHub baseline has successful CI/Vercel statuses, but the connected `dakshjhas-projects` team returns 404 for `thesis` and its linked deployment; repository-filtered project discovery returned no matches. Deployment access/linkage must be resolved before live sign-off. No hosting settings or credentials were changed.
+Browser interaction remains **unverified**. Playwright is present but its Chromium executable is absent; no new browser installation was attempted. The managed preview launcher was available, but passed `next dev --host 0.0.0.0 --port 4173 --strictPort`, which exited with `unknown option '--host'`. The failed preview was stopped. No working application code, network permissions or hosting configuration was changed to compensate for the preview environment.
 
-Next capability to address: persist the chosen chapter page target and use the same target after reload, backup/restore, and supervisor export. Inspection shows the selection currently lives only in `DissertationRoadmap` component state, while `buildSupervisorReviewMarkdown` independently uses the default. Reproduce this with a failing regression before changing it. Do not claim 300 completed pages or a complete MVP while this consistency gap and browser/deployment verification remain open.
+For baseline `e0c9d3f`, [GitHub Actions run 40607272708](https://github.com/d4kash/thesis/actions/runs/40607272708) completed successfully. The GitHub Vercel status reports **Deployment rate limited — retry in 24 hours**, recorded at 28 October 2026, 05:42:33 IST. Earliest retry is 29 October 2026, 05:42:33 IST, subject to provider availability. The candidate is being preserved without updating a branch ref or triggering a deployment during that cooldown; baseline CI success is not candidate CI evidence.
 
-## Quick start for this capability
+Earlier connected-team inspection returned 404 for the linked project/deployment. Live deployment access and browser verification still need resolution. No new deployment URL or live-MVP claim is made.
 
-1. Start a topic and revise the brief and synopsis.
-2. Record authorised prior-work metadata and permission/check details. Add a literature source with an original-record locator, relevance note, and check date.
-3. Write a short own-words note in the evidence matrix; select its source, purpose, and precise page/section/table locator.
-4. Check the original record and note before marking each verified. Eligible notes appear in section 3.
-5. Edit in the matrix, re-check, save a local backup, and download the working draft and supervisor packet. Resolve missing inputs and write your own synthesis with your supervisor; record IDs are not finished citations.
+## Next unmet criterion and release handoff
+
+After the cooldown, inspect the current remote head, reconcile this candidate without overwriting intervening work, rerun the suite if inputs changed, and only then update main with a guarded ref update. Verify that candidate's own CI and Vercel checks. Complete the researcher browser flow (topic, synopsis revision, authorised notes, literature draft, page choice, safeguards/result ledger, reload, backup/restore, and exports) on a functioning preview or the linked deployment before MVP sign-off. Do not generate more features solely because release verification is temporarily blocked.
+
+## Quick start once released
+
+1. Start your own topic, then complete and revise the brief and synopsis.
+2. Record authorised prior-work metadata and permission/check details. Link own-words literature notes to checked source records and precise page/section/table locators.
+3. Choose a page target in the long-form plan. Confirm the local save status; the target also belongs to the backup.
+4. Record proposed methods and safeguards. Add result records only when genuine direct evidence exists; missing findings remain explicit.
+5. Save a backup and download the working draft plus supervisor packet. The packet includes the matching chapter budget and unresolved review items, not a completed or approved thesis.

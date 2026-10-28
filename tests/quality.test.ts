@@ -971,7 +971,7 @@ test("the chapter plan links verified local records without inventing literature
 });
 
 test("the long-form roadmap makes citation readiness explicit and rejects plagiarism-removal framing", () => {
-  const markup = renderToStaticMarkup(createElement(DissertationRoadmap, { project: DEMO_PROJECTS[0] }));
+  const markup = renderToStaticMarkup(createElement(DissertationRoadmap, { project: DEMO_PROJECTS[0], onChange: () => undefined }));
 
   assert.match(markup, /Build a source-grounded 300-page plan/);
   assert.match(markup, /Evidence for this chapter/);

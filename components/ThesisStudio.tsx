@@ -243,7 +243,7 @@ export function ThesisStudio() {
           <ProjectEditor onChange={updateProject} project={project} />
           <SynopsisBuilder onChange={updateProject} project={project} />
           <MethodReadiness onChange={updateProject} project={project} />
-          <DissertationRoadmap project={project} />
+          <DissertationRoadmap onChange={updateProject} project={project} />
           <WritingCoach project={project} />
           <ResearchToolkit project={project} />
           <PriorResearchLibrary key={`${project.id}-prior-research`} onChange={updateProject} project={project} />

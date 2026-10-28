@@ -9,6 +9,7 @@ import type {
   ThesisProject,
 } from "@/lib/thesis-types";
 import { normalizeLiteratureVerification } from "@/lib/literature-readiness";
+import { isDissertationPageTarget } from "@/lib/dissertation-page-target";
 import { normalizePriorResearchVerification } from "@/lib/prior-research-readiness";
 import { normalizeResultVerification, normalizeSourceVerification } from "@/lib/result-readiness";
 
@@ -122,6 +123,7 @@ export function isStoredLocalProject(value: unknown): value is ThesisProject {
   if (!isRecord(value) || value.id !== "local-plan") return false;
 
   const hasValidShape = ["demoLabel", "title", "discipline", "researchQuestion", "scope"].every((key) => hasString(value, key))
+    && (value.dissertationPageTarget === undefined || isDissertationPageTarget(value.dissertationPageTarget))
     && Array.isArray(value.objectives) && value.objectives.every(isResearchObjective)
     && Array.isArray(value.methods) && value.methods.every(isResearchMethod)
     && Array.isArray(value.priorResearch) && value.priorResearch.every(isPriorResearchRecord)

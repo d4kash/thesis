@@ -79,6 +79,7 @@ export interface ThesisProject {
   discipline: string;
   researchQuestion: string;
   scope: string;
+  dissertationPageTarget?: number;
   objectives: ResearchObjective[];
   methods: ResearchMethod[];
   synopsis?: SynopsisDetails;

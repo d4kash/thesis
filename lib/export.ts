@@ -1,5 +1,5 @@
 import type { DraftSection, QualityReport, ThesisProject } from "@/lib/thesis-types";
-import { buildDissertationRoadmap } from "@/lib/dissertation-roadmap";
+import { buildDissertationChapterPlanMarkdown, buildDissertationRoadmap } from "@/lib/dissertation-roadmap";
 import { canMarkLiteratureNoteVerified } from "@/lib/literature-readiness";
 import { isUsableVerifiedPriorResearch } from "@/lib/prior-research-readiness";
 import { canMarkResultVerified, isUsableVerifiedCitationSource, isUsableVerifiedSource } from "@/lib/result-readiness";
@@ -143,6 +143,8 @@ ${resultRecords}
 ## Draft section map
 
 ${sectionMap}
+
+${buildDissertationChapterPlanMarkdown(roadmap)}
 
 ## Structural review
 
