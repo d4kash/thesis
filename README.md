@@ -41,6 +41,7 @@ npm run build
 - Builds a transparent topic map that ranks local prior-work records by term overlap and surfaces only **candidate** gaps from notes supplied by the researcher.
 - Adds source records and result-ledger entries locally; verified sources need a reusable original-record locator, researcher check date, and relevance note, while verified results must link to verified direct evidence.
 - Requires verified literature notes to retain an own-words note plus a specific re-check marker such as a page, section, table, figure, or dataset field.
+- Assembles eligible checked own-words literature notes into section 3 of the working draft, grouped by purpose with source IDs, original-record locators, re-check locations, and dates. Edit the notes in the evidence matrix; changed notes need a new check before reappearing. This is local assembly, not model-generated synthesis or independent verification.
 - Keeps the two bundled projects clearly marked as synthetic demonstrations with no findings or citations.
 - Exports a clearly watermarked Markdown working draft only after the structural review has no critical issues.
 - Runs the same tests, type check, and production build in GitHub Actions on pushes and pull requests.
@@ -51,8 +52,14 @@ The Eve agent also includes a source-grounded drafting skill for conversations t
 
 `.github/workflows/ci.yml` runs `npm test`, `npm run typecheck`, and `npm run build` on `main` and pull requests. Once the repository is linked to a Vercel project, Vercel can deploy the production branch automatically; no provider API key is committed to this repository.
 
+`npm run build` runs the existing full Eve and Next builds through `scripts/build.mjs`, with both frameworks' documented optional telemetry disabled. Build failures still stop the pipeline. Eve may read the public model catalog during compilation; this is not a paid model-generation call. The researcher-facing local workflow does not invoke a model.
+
 ## Research guardrails
 
 A final thesis requires verified sources, approved research methods, and traceable result records. The structural review and topic map are quality aids, not academic approval or automatic literature review systems.
 
 The phrase guide is for expressing a writer's own verified ideas more clearly. It does not rewrite copied passages, bypass plagiarism checks, or remove the need to cite a source.
+
+## MVP verification status
+
+See [`docs/MVP_STATUS.md`](docs/MVP_STATUS.md) for the acceptance checklist, concrete local test evidence, verification limits, and next unmet criterion. `tests/mvp-workflow.test.ts` exercises both synthetic demos and a new-topic flow through synopsis, references, literature notes, page planning, safeguards, save/restore, and exports. These application-data integration tests do not replace browser interaction checks. Implemented locally does not mean deployed or supervisor-approved.

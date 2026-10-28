@@ -135,6 +135,7 @@ export function LiteratureEvidenceMatrix({ project, onChange }: LiteratureEviden
         <span className="status-pill">Local only</span>
       </div>
       <p className="field-note">For every point you may use in a literature review, keep a short own-words note and the place to check it again.</p>
+      <p className="field-note">Checked notes appear automatically in section 3 of your working draft and its download, grouped by how you will use them. Edit a note here, re-check it, then mark it verified again. Reviewed or incomplete notes stay out of that assembled section; nothing is sent to an AI service.</p>
       <p className="literature-evidence-matrix__boundary">Do not paste long excerpts or try to change wording to avoid attribution. A paraphrase still needs a citation to the original source.</p>
       <p className="literature-evidence-matrix__boundary">Only records classified as Literature source can support a verified literature note. Keep datasets, fieldwork, and policy records in the evidence and result workflow.</p>
       <p className="literature-evidence-matrix__boundary">If its source later becomes incomplete or no longer verified, a verified note returns to reviewed until you check it again.</p>

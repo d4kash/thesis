@@ -8,7 +8,7 @@
     "#evals/*": "./evals/*"
   },
   "scripts": {
-    "build": "eve build && next build",
+    "build": "node scripts/build.mjs",
     "deploy": "eve deploy",
     "dev": "next dev",
     "start": "next start",

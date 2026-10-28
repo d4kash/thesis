@@ -2,6 +2,7 @@ import type { DraftSection, ThesisProject } from "@/lib/thesis-types";
 import { buildResearchLandscape } from "@/lib/research-landscape";
 import { buildStudentWritingStarter } from "@/lib/writing-support";
 import { escapeMarkdownInlineText } from "@/lib/markdown";
+import { buildLiteratureWorkingDraft } from "@/lib/literature-draft";
 
 function list(items: string[]): string {
   return items.map((item, index) => `${index + 1}. ${item}`).join("\n");
@@ -10,6 +11,7 @@ function list(items: string[]): string {
 export function generateDraft(project: ThesisProject): DraftSection[] {
   const landscape = buildResearchLandscape(project);
   const writingStarter = buildStudentWritingStarter(project);
+  const literature = buildLiteratureWorkingDraft(project);
   const objectiveLines = project.objectives.map((objective) => `${escapeMarkdownInlineText(objective.id)}: ${escapeMarkdownInlineText(objective.text)}`);
   const methodLines = project.methods.map(
     (method) => `${escapeMarkdownInlineText(method.id)} → ${method.objectiveIds.map(escapeMarkdownInlineText).join(", ") || "[NEEDS INPUT] Objective mapping"}: ${escapeMarkdownInlineText(method.text)}\nData, permissions, and ethics plan: ${escapeMarkdownInlineText(method.dataAndEthicsPlan) || "[NEEDS INPUT] Record the planned safeguards for this method."}`,
@@ -52,9 +54,9 @@ export function generateDraft(project: ThesisProject): DraftSection[] {
     },
     {
       id: "literature-plan",
-      heading: "3. Literature and evidence plan",
-      body: `This section is a source-grounded writing plan, not a literature review with invented citations.\n\nCurrent evidence ledger\n${evidencePlan}\n\nFor each final paragraph, retain the source identifier, a verified citation record, the claim it supports, and the reason the source is relevant.`,
-      claimIds: project.sources.map((source) => source.id),
+      heading: "3. Source-linked literature working draft",
+      body: literature.body,
+      claimIds: literature.claimIds,
     },
     {
       id: "research-design",
@@ -65,7 +67,7 @@ export function generateDraft(project: ThesisProject): DraftSection[] {
     {
       id: "evidence-plan",
       heading: "5. Claim and evidence ledger",
-      body: `Every substantive claim in a final thesis must point to a verified source or a traceable result record.\n\nUse the ledger to distinguish: (a) claims planned for the literature review, (b) methods proposed for the study, and (c) results that have actually been verified.`,
+      body: `Every substantive claim in a final thesis must point to a verified source or a traceable result record.\n\nCurrent evidence ledger (recorded status; not independent verification)\n${evidencePlan}\n\nUse the ledger to distinguish: (a) claims planned for the literature review, (b) methods proposed for the study, and (c) results that have actually been verified.`,
       claimIds: project.sources.map((source) => source.id),
     },
     {
