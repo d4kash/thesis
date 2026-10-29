@@ -1,8 +1,8 @@
 # Thesis Studio MVP acceptance checkpoint
 
-Updated: 28 October 2026. Remote main remains `e0c9d3fdece8f0d285672a78d781e21e1f81c05c`. This candidate builds on preserved page-budget candidate `503125465ff8b6a3b3cc7c0ac94e852755bf6e0f` without updating a remote branch ref.
+Updated: 29 October 2026. Release commit `59e362cbc320f1da4df9953d86bf4f142f17bacf` is on `main`; it builds on preserved page-budget candidate `503125465ff8b6a3b3cc7c0ac94e852755bf6e0f`.
 
-**Page-budget persistence and result-link recheck candidate verified locally; not released to main or Vercel. Complete MVP sign-off remains pending.** No AWS resources, new paid services, or paid AI calls were used. `AWS_FREE_TIER_PILOT.md`, dependencies and hosting settings are unchanged. Only the stale-result-verification transition was changed in this run.
+**Page-budget persistence and result-link recheck are released to main and deployed to Vercel. Complete MVP sign-off remains pending only on browser interaction verification.** No AWS resources, new paid services, or paid AI calls were used. `AWS_FREE_TIER_PILOT.md`, dependencies and hosting settings are unchanged.
 
 ## Capability in this candidate
 
@@ -24,8 +24,8 @@ Acceptance and trust boundaries: older backups without the optional field defaul
 | Complete/revise synopsis | Both synthetic demo workflows complete and revise the synopsis | Browser copy interaction unverified |
 | Authorised prior-work metadata/own notes | Permission/date/locator regressions, edit invalidation, and full-workflow checks | Recorded checks are researcher assertions, not certified rights or facts |
 | Editable source-linked literature draft | Nine focused regressions and edit → exclude → re-check → include flows | Edit through the matrix; no model-generated synthesis |
-| Chapter/page plan | Seven focused page-target tests; both demo workflows persist a 250-page plan through restore and supervisor export | This candidate is not on main; browser clicks unverified |
-| Methods/ethics/results ledger | Nine new recheck regressions; full workflows retain safeguards and reject literature as direct result evidence | Local candidate only; browser edit interactions unverified; no actual findings or approvals created |
+| Chapter/page plan | Seven focused page-target tests; both demo workflows persist a 250-page plan through restore and supervisor export | Browser clicks unverified |
+| Methods/ethics/results ledger | Nine new recheck regressions; full workflows retain safeguards and reject literature as direct result evidence | Browser edit interactions unverified; no actual findings or approvals created |
 | Local save/restore | Save, reload, backup, restore and malformed-input checks, including new target validation | Browser file interaction unverified; local storage/backups are not encrypted |
 | Supervisor-editable export | Markdown exports preserve source trails, permission notes, unresolved items and matching chapter budgets | Markdown only; download interaction unverified |
 | Both synthetic demos | `tests/mvp-workflow.test.ts` exercises both full application-data flows and preserves original fixtures | Integration tests, not browser click tests |
@@ -47,13 +47,11 @@ Acceptance and trust boundaries: older backups without the optional field defaul
 
 Browser interaction remains **unverified**. Playwright is present but its Chromium executable is absent; no new browser installation was attempted. The managed preview launcher was available, but passed `next dev --host 0.0.0.0 --port 4173 --strictPort`, which exited with `unknown option '--host'`. The failed preview was stopped. No working application code, network permissions or hosting configuration was changed to compensate for the preview environment.
 
-For baseline `e0c9d3f`, [GitHub Actions run 40607272708](https://github.com/d4kash/thesis/actions/runs/40607272708) completed successfully. The GitHub Vercel status reports **Deployment rate limited — retry in 24 hours**, recorded at 28 October 2026, 05:42:33 IST. Earliest retry is 29 October 2026, 05:42:33 IST, subject to provider availability. The candidate is being preserved without updating a branch ref or triggering a deployment during that cooldown; baseline CI success is not candidate CI evidence.
-
-Earlier connected-team inspection returned 404 for the linked project/deployment. Live deployment access and browser verification still need resolution. No new deployment URL or live-MVP claim is made.
+Release evidence: [GitHub Actions run 40924867475](https://github.com/d4kash/thesis/actions/runs/40924867475) completed successfully for `59e362c`. Vercel reported the corresponding production deployment **READY** at [thesis-gkte30zaf-dakshjhas-projects.vercel.app](https://thesis-gkte30zaf-dakshjhas-projects.vercel.app). This verifies the deployed build, not an interactive researcher workflow.
 
 ## Next unmet criterion and release handoff
 
-After the cooldown, inspect the current remote head, reconcile this candidate without overwriting intervening work, rerun the suite if inputs changed, and only then update main with a guarded ref update. Verify that candidate's own CI and Vercel checks. Complete the researcher browser flow (topic, synopsis revision, authorised notes, literature draft, page choice, safeguards/result ledger, reload, backup/restore, and exports) on a functioning preview or the linked deployment before MVP sign-off. Do not generate more features solely because release verification is temporarily blocked.
+Complete the researcher browser flow (topic, synopsis revision, authorised notes, literature draft, page choice, safeguards/result ledger, reload, backup/restore, and exports) on the deployed application before MVP sign-off. The current execution environment has no usable browser runtime, so this remains a verification gap rather than an inferred pass. Do not claim a completed thesis, verified external evidence, or automatic academic approval.
 
 ## Quick start once released
 
